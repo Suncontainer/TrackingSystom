@@ -15,11 +15,11 @@
 | Phase 8 - Optional Emails | Complete | 2026-06-14 |
 | Phase 9 - Dashboard and Operational Polish | Complete | 2026-06-14 |
 | Phase 10 - Security, Monitoring and Production Readiness | Complete | 2026-06-14 |
-| Phase 11 - Vercel Deployment | Not started | - |
+| Phase 11 - Vercel Deployment | Repository complete | 2026-06-14 |
 
 ## Current Phase
 
-Phase 10 added centralized security headers and CSP, production HSTS, Sentry server/edge initialization with redaction, deployment rollback/smoke-test documentation, retention notes, and a high-severity dependency audit fix through an `esbuild` override.
+Phase 11 added the final Vercel deployment checklist, external-input list, environment variable checklist, cron options, production smoke tests, and rollback procedure. External vendor/account configuration is still required before the production domain can be verified end-to-end.
 
 ## Validation Results
 
@@ -50,7 +50,7 @@ Phase 10 added centralized security headers and CSP, production HSTS, Sentry ser
 
 ## Next Phase
 
-Phase 11 - Vercel Deployment.
+All repository phases are complete. Remaining work is external deployment configuration and production smoke testing with real credentials.
 
 ## Manual Setup Still Required
 

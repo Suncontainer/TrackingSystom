@@ -71,6 +71,8 @@ Database rollback:
 
 ## Production Smoke Test
 
+Use the detailed [Vercel deployment checklist](VERCEL_DEPLOYMENT_CHECKLIST.md) during launch.
+
 Before launch:
 
 - `pnpm lint`
