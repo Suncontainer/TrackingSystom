@@ -1,5 +1,7 @@
 import { AdminPageShell } from "@/components/admin/admin-page-shell";
 import { requirePermission } from "@/features/auth/guards";
+import { hasPermission } from "@/features/auth/permissions";
+import { retryEmailAction } from "@/features/email/actions";
 import { listEmailHistory } from "@/features/email/outbox";
 
 export const metadata = {
@@ -17,8 +19,13 @@ function formatDate(value: string | Date | null) {
   }).format(new Date(value));
 }
 
+function canRetryStatus(status: string) {
+  return ["FAILED", "BOUNCED", "COMPLAINED", "SUPPRESSED"].includes(status);
+}
+
 export default async function EmailsPage() {
-  await requirePermission("emails:read");
+  const profile = await requirePermission("emails:read");
+  const canRetry = hasPermission(profile.role, "emails:retry");
   const emails = await listEmailHistory().catch(() => []);
 
   return (
@@ -39,6 +46,7 @@ export default async function EmailsPage() {
                   <th>Versuche</th>
                   <th>Provider</th>
                   <th>Erstellt</th>
+                  {canRetry ? <th>Aktion</th> : null}
                 </tr>
               </thead>
               <tbody>
@@ -53,6 +61,18 @@ export default async function EmailsPage() {
                     <td>{email.attemptCount}</td>
                     <td>{email.providerMessageId ?? email.lastErrorCode ?? "-"}</td>
                     <td>{formatDate(email.createdAt)}</td>
+                    {canRetry ? (
+                      <td>
+                        {canRetryStatus(email.status) ? (
+                          <form action={retryEmailAction}>
+                            <input type="hidden" name="emailId" value={email.id} />
+                            <button type="submit" className="auth-link">Erneut senden</button>
+                          </form>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>

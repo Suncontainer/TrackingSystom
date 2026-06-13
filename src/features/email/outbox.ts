@@ -8,6 +8,7 @@ import { siteConfig } from "@/config/site";
 import { getDb } from "@/db/client";
 import { customers, emailOutbox, emailSuppressions, orders, type EmailStatus, type EmailType } from "@/db/schema";
 import type { AppLocale } from "@/i18n/types";
+import { formatCustomerName } from "@/features/customers/normalization";
 import { createTrackingToken } from "@/features/tracking/tokens";
 
 import { getNextAttemptAt, getStaleProcessingCutoff } from "./backoff";
@@ -308,6 +309,63 @@ export async function triggerImmediateEmailDispatch(limit = 5) {
   } catch (error) {
     console.error("email_outbox_immediate_dispatch_failed", error);
   }
+}
+
+export async function retryEmailOutboxEntry(emailId: string) {
+  const db = getDb();
+  const [entry] = await db
+    .select({
+      customerId: emailOutbox.customerId,
+      id: emailOutbox.id,
+      recipientEmail: emailOutbox.recipientEmail,
+      recipientName: emailOutbox.recipientName
+    })
+    .from(emailOutbox)
+    .where(eq(emailOutbox.id, emailId))
+    .limit(1);
+
+  if (!entry) {
+    throw new Error("Email outbox entry not found.");
+  }
+
+  const [customer] = entry.customerId
+    ? await db
+      .select({
+        email: customers.email,
+        firstName: customers.firstName,
+        lastName: customers.lastName
+      })
+      .from(customers)
+      .where(eq(customers.id, entry.customerId))
+      .limit(1)
+    : [];
+  const recipientEmail = customer?.email ?? entry.recipientEmail;
+  const recipientName = customer ? formatCustomerName(customer.firstName, customer.lastName) : entry.recipientName;
+
+  await db
+    .update(emailOutbox)
+    .set({
+      attemptCount: 0,
+      bouncedAt: null,
+      complainedAt: null,
+      deliveredAt: null,
+      failedAt: null,
+      idempotencyKey: `manual-retry/${entry.id}/${Date.now()}`,
+      lastErrorCode: null,
+      lastErrorMessage: null,
+      lockedAt: null,
+      lockedBy: null,
+      nextAttemptAt: new Date(),
+      providerMessageId: null,
+      recipientEmail,
+      recipientName,
+      sentAt: null,
+      status: "QUEUED",
+      updatedAt: new Date()
+    })
+    .where(eq(emailOutbox.id, entry.id));
+
+  await triggerImmediateEmailDispatch(1);
 }
 
 export async function listEmailHistory() {

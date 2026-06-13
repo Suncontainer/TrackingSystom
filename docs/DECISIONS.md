@@ -139,3 +139,11 @@ Order creation, mandatory status changes, and optional delivery-date notificatio
 ## 2026-06-14 - Vercel Hobby Cron Limitation
 
 The email outbox cron endpoint is implemented at `/api/cron/process-email-outbox`, but the every-5-minute schedule is not stored in `vercel.json` because Vercel Hobby rejects cron expressions that run more than once per day. Scheduled execution remains a deployment configuration decision: use a daily Hobby cron, an external scheduler, manual invocation, or a Vercel Pro plan for the original cadence.
+
+## 2026-06-14 - Phase 7 Resend Webhook Verification
+
+Resend webhook handling uses `standardwebhooks` with support for both `webhook-*` and legacy `svix-*` header names. The verified header event ID is the dedupe key stored in `email_delivery_events.provider_event_id`, and unknown verified events are stored even when they do not map to an outbox status.
+
+## 2026-06-14 - Phase 7 Retry Controls
+
+Manual email retry is restricted to roles with `emails:retry`. Retrying a failed, bounced, complained, or suppressed row refreshes the recipient from the current customer record, clears delivery failure fields, replaces the provider idempotency key for a new send attempt, and then triggers the outbox processor after the update.
