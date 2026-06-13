@@ -29,6 +29,7 @@ import {
   isMissingDatabaseConfiguration,
   toDemoOrderList
 } from "@/features/demo/admin-data";
+import { triggerImmediateEmailDispatch } from "@/features/email/outbox";
 
 import {
   type OrderListFilters
@@ -984,6 +985,8 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
           templateKey: "order-received",
           templateVariables: {
             customerName,
+            customerEmail,
+            estimatedDeliveryDate: createdOrder.currentEstimatedDeliveryDate,
             orderId: createdOrder.id,
             orderNumber: createdOrder.orderNumber,
             trackingNumber: createdOrder.trackingNumber
@@ -1002,11 +1005,14 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
             ? formatCustomerName(assignedSalespersonProfile.firstName, assignedSalespersonProfile.lastName)
             : null,
           subject: buildSalespersonSubject(createdOrder.orderNumber),
-          templateKey: "salesperson-notification",
+          templateKey: "salesperson-new-order",
           templateVariables: {
             customerName,
+            customerEmail,
+            estimatedDeliveryDate: createdOrder.currentEstimatedDeliveryDate,
             orderId: createdOrder.id,
             orderNumber: createdOrder.orderNumber,
+            productDescription: createdOrder.productDescription,
             trackingNumber: createdOrder.trackingNumber
           }
         }
@@ -1048,7 +1054,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
         afterData: {
           idempotencyKey: `order-created/sales/${createdOrder.id}`,
           subject: buildSalespersonSubject(createdOrder.orderNumber),
-          templateKey: "salesperson-notification"
+          templateKey: "salesperson-new-order"
         },
         entityType: "email_outbox",
         orderId: createdOrder.id
@@ -1065,6 +1071,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
     revalidatePath(routes.admin.orders);
     revalidatePath(routes.admin.home);
     revalidatePath(routes.admin.customerDetails(createdOrder.customerId));
+    await triggerImmediateEmailDispatch();
 
     return createdOrder;
   } catch (error) {
@@ -1425,6 +1432,7 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
   revalidatePath(routes.admin.orders);
   revalidatePath(routes.admin.orderDetails(data.orderId));
   revalidatePath(routes.admin.customerDetails(result.customerId));
+  await triggerImmediateEmailDispatch();
 
   return result;
 }
@@ -1558,6 +1566,7 @@ export async function updateEstimatedDeliveryDate(input: unknown, actor: Pick<Pr
   revalidatePath(routes.admin.orders);
   revalidatePath(routes.admin.orderDetails(data.orderId));
   revalidatePath(routes.admin.customerDetails(result.customerId));
+  await triggerImmediateEmailDispatch();
 
   return result;
 }

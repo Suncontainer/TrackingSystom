@@ -127,3 +127,15 @@ Turnstile and Upstash rate-limit adapters fail closed in production when credent
 ## 2026-06-13 - Out-of-Order Dashboard Slice
 
 The admin dashboard was implemented before Phase 6-8 because the user requested it explicitly. The page uses the same server-side role scoping as order access: sales users see only assigned-order metrics and activity, while broader roles see all orders. This does not mark the full Phase 9 operational-polish phase complete.
+
+## 2026-06-14 - Phase 6 Email Rendering
+
+Transactional templates use React Email components with `@react-email/render` instead of direct `react-dom/server` rendering. Next.js/Turbopack blocks direct `react-dom/server` imports from app route dependency graphs, and the dedicated renderer preserves the React Email foundation without breaking production builds.
+
+## 2026-06-14 - Phase 6 Outbox Dispatch Boundary
+
+Order creation, mandatory status changes, and optional delivery-date notifications still queue emails inside the database transaction, then trigger the outbox processor after the transaction commits. Provider failures are caught by the processor and stored on `email_outbox`, so they do not roll back order/customer workflow changes.
+
+## 2026-06-14 - Vercel Hobby Cron Limitation
+
+The email outbox cron endpoint is implemented at `/api/cron/process-email-outbox`, but the every-5-minute schedule is not stored in `vercel.json` because Vercel Hobby rejects cron expressions that run more than once per day. Scheduled execution remains a deployment configuration decision: use a daily Hobby cron, an external scheduler, manual invocation, or a Vercel Pro plan for the original cadence.

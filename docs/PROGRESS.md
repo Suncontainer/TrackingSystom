@@ -10,7 +10,7 @@
 | Phase 3 - Order and Customer Management | Complete | 2026-06-13 |
 | Phase 4 - Status and Delivery Date Workflow | Complete | 2026-06-13 |
 | Phase 5 - Public Tracking Portal | Complete | 2026-06-13 |
-| Phase 6 - Email Templates and Outbox | Not started | - |
+| Phase 6 - Email Templates and Outbox | Complete | 2026-06-14 |
 | Phase 7 - Webhooks and Delivery Monitoring | Not started | - |
 | Phase 8 - Optional Emails | Not started | - |
 | Phase 9 - Dashboard and Operational Polish | Partial | - |
@@ -19,17 +19,17 @@
 
 ## Current Phase
 
-Phase 5 added the public tracking portal. After that, an out-of-order Phase 9 dashboard slice was completed: `/admin` now shows role-scoped operational metrics, overdue and due-soon order alerts, failed mandatory-email warnings, recent status changes, period selection, and a quick create-order action. The rest of Phase 9 remains incomplete.
+Phase 6 added React Email templates, outbox processing, retry/backoff handling, cron authorization, suppression checks, immediate post-transaction dispatch triggers, and the admin email history page. The out-of-order Phase 9 dashboard slice remains complete, but the rest of Phase 9 is still pending.
 
 ## Validation Results
 
 - `pnpm lint` - passed.
 - `pnpm typecheck` - passed.
-- `pnpm test` - passed. 11 test files, 43 tests.
+- `pnpm test` - passed. 14 test files, 50 tests.
 - `pnpm db:generate` - passed. No schema changes after the initial migration.
 - `pnpm db:validate:phase1` - passed against disposable local PostgreSQL on port `55432`.
 - `pnpm db:seed` - passed against the same disposable local PostgreSQL database using a seeded Supabase Auth user ID.
-- `pnpm build` - passed. Public root, lookup API, `/track/[token]`, and admin routes are dynamic.
+- `npm run build` - passed. Public root, lookup API, `/track/[token]`, email cron route, and admin routes are dynamic.
 
 ## Known Blockers
 
@@ -39,12 +39,14 @@ Phase 5 added the public tracking portal. After that, an out-of-order Phase 9 da
 - Phase 3 order creation was validated through type-safe unit coverage and production build only; live create/update/note transactions were not exercised against a configured Supabase/PostgreSQL environment in this phase.
 - Phase 4 workflow transactions were validated through unit coverage, type checking, linting, and production build only; live status/date/archive writes still need a configured Supabase/PostgreSQL environment.
 - Phase 5 public lookup transactions were validated through unit coverage, type checking, linting, and production build only; live lookup, Turnstile, Upstash rate limiting, and lookup-attempt writes still need configured Supabase/PostgreSQL, Cloudflare Turnstile, and Upstash credentials.
+- Phase 6 outbox behavior was validated through unit coverage, type checking, linting, and production build only; live delivery still needs a configured Supabase/PostgreSQL database, Resend credentials, sender DNS, `CRON_SECRET`, `TRACKING_LINK_SECRET`, and `NEXT_PUBLIC_APP_URL`.
+- Vercel Hobby does not allow the every-5-minute cron schedule from the original specification. The cron route exists, but scheduled execution must be handled manually, by a daily Hobby cron, or by upgrading the Vercel plan.
 - The dashboard page is ready, but the wider Phase 9 scope still needs responsive admin navigation refinements, broader loading/error-state polish, and final accessibility/brand review.
 - Production credentials and vendor accounts are not available yet.
 
 ## Next Phase
 
-Phase 6 - Email Templates and Outbox.
+Phase 7 - Webhooks and Delivery Monitoring.
 
 ## Manual Setup Still Required
 
