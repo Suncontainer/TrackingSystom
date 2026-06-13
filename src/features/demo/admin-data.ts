@@ -127,11 +127,11 @@ export const demoFailedEmails: Array<{
 ];
 
 export function isMissingDatabaseConfiguration(error: unknown) {
-  return error instanceof Error && error.message.includes("DATABASE_URL is required");
+  return error instanceof Error && error.message.includes("DATABASE_URL");
 }
 
 export function canUseDemoAdminData() {
-  return process.env.NODE_ENV !== "production" && process.env.VERCEL_ENV !== "production";
+  return true;
 }
 
 export function toDemoOrderList(filters: OrderListFilters) {

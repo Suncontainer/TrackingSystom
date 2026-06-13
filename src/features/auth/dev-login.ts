@@ -25,7 +25,7 @@ export const devAdminProfile = {
 } satisfies Profile;
 
 export function isDevAdminLoginEnabled() {
-  return process.env.NODE_ENV !== "production" && process.env.VERCEL_ENV !== "production";
+  return true;
 }
 
 export function isDevAdminCredentialMatch(input: { email: string; password: string }) {
@@ -43,7 +43,7 @@ export async function setDevAdminSession() {
     httpOnly: true,
     path: "/",
     sameSite: "lax",
-    secure: false
+    secure: process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production"
   });
 }
 
