@@ -30,12 +30,39 @@ Secrets live only in environment variables. They must not be committed, exposed 
 
 ## Headers and Indexing
 
-Phase 0 sets baseline noindex, referrer, content-type, and permissions headers. Phase 10 completes CSP, HSTS, Sentry, redaction, and retention controls.
+Phase 10 centralizes baseline security headers in `next.config.ts`:
+
+- `Content-Security-Policy`
+- `Referrer-Policy`
+- `X-Content-Type-Options`
+- `Permissions-Policy`
+- `X-Robots-Tag: noindex, nofollow`
+- `Strict-Transport-Security` when `VERCEL_ENV=production`
+
+CSP intentionally allows Cloudflare Turnstile frames/scripts from `https://challenges.cloudflare.com`. Supabase, Sentry, and Upstash connect origins are added only when their environment variables are configured. The tracking subdomain remains noindex/nofollow through metadata, `robots.ts`, and response headers.
+
+## Monitoring and Redaction
+
+Sentry server and edge initialization is present but inactive until `SENTRY_DSN` is configured. Server-side events redact cookies, authorization headers, and request bodies before sending. Client-side Sentry is not enabled because no public DSN is configured yet.
 
 ## Incident Response
 
-Before production, define the contact path, containment steps, credential rotation plan, and customer communication procedure.
+Production incident handling:
+
+1. Triage in Vercel, Supabase, Resend, and Sentry.
+2. Disable affected cron/webhook or rotate impacted credentials.
+3. Use Vercel rollback for application regression.
+4. Use Supabase point-in-time restore or backup restore for database corruption.
+5. Notify the client contact and define customer communication only after impact is confirmed.
 
 ## Retention
 
-Lookup-attempt retention and completed-order retention require client-approved policies before production.
+- Lookup-attempt logs should be retained only briefly, with 30 days as the initial operating target unless the client approves otherwise.
+- Completed orders should be archived rather than deleted during normal operations.
+- Correction/anonymization requests should be handled by an admin procedure after confirming legal and accounting retention obligations.
+- Raw provider webhook payloads are stored for inspection but should not be exposed to normal staff.
+
+## Launch Blockers
+
+- Temporary hardcoded admin login and production demo-data fallback are currently enabled for live Vercel access and must be removed or environment-gated before real production traffic.
+- Real Supabase, Resend, Turnstile, Upstash, Sentry, DNS, and sender-domain credentials are still required.

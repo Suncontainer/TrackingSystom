@@ -14,12 +14,12 @@
 | Phase 7 - Webhooks and Delivery Monitoring | Complete | 2026-06-14 |
 | Phase 8 - Optional Emails | Complete | 2026-06-14 |
 | Phase 9 - Dashboard and Operational Polish | Complete | 2026-06-14 |
-| Phase 10 - Security, Monitoring and Production Readiness | Not started | - |
+| Phase 10 - Security, Monitoring and Production Readiness | Complete | 2026-06-14 |
 | Phase 11 - Vercel Deployment | Not started | - |
 
 ## Current Phase
 
-Phase 9 completed the remaining operational polish: responsive admin navigation, mobile-safe admin tables with order cards, admin loading/error states, clearer failed-email warnings, and expanded email history delivery timing.
+Phase 10 added centralized security headers and CSP, production HSTS, Sentry server/edge initialization with redaction, deployment rollback/smoke-test documentation, retention notes, and a high-severity dependency audit fix through an `esbuild` override.
 
 ## Validation Results
 
@@ -30,6 +30,8 @@ Phase 9 completed the remaining operational polish: responsive admin navigation,
 - `pnpm db:validate:phase1` - passed against disposable local PostgreSQL on port `55432`.
 - `pnpm db:seed` - passed against the same disposable local PostgreSQL database using a seeded Supabase Auth user ID.
 - `npm run build` - passed. Public root, lookup API, `/track/[token]`, email cron route, and admin routes are dynamic.
+- `VERCEL_ENV=production npm run build` - passed.
+- `pnpm audit --audit-level high` - passed. One moderate advisory remains.
 
 ## Known Blockers
 
@@ -43,11 +45,12 @@ Phase 9 completed the remaining operational polish: responsive admin navigation,
 - Phase 7 webhook behavior was validated through unit coverage, type checking, linting, and production build only; live webhook verification still needs the real Resend webhook secret and provider-side webhook configuration.
 - Phase 8 optional email behavior was validated through unit coverage, type checking, linting, and production build only; live optional sends still need the configured database and Resend delivery credentials from Phase 6 and 7.
 - Vercel Hobby does not allow the every-5-minute cron schedule from the original specification. The cron route exists, but scheduled execution must be handled manually, by a daily Hobby cron, or by upgrading the Vercel plan.
+- Temporary hardcoded admin login and production demo-data fallback remain enabled for current live access at the user's request. They must be removed or environment-gated before real customer traffic.
 - Production credentials and vendor accounts are not available yet.
 
 ## Next Phase
 
-Phase 10 - Security, Monitoring and Production Readiness.
+Phase 11 - Vercel Deployment.
 
 ## Manual Setup Still Required
 

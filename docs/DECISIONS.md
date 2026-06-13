@@ -155,3 +155,11 @@ Optional service emails are customer-by-customer only. Preference toggles defaul
 ## 2026-06-14 - Phase 9 Mobile Admin Tables
 
 Admin tables now remain horizontally scrollable on mobile by default. The order list is the only table hidden below the small-screen breakpoint because it has purpose-built mobile order cards; other operational tables must remain visible unless they receive their own mobile card equivalent.
+
+## 2026-06-14 - Phase 10 CSP and Monitoring
+
+Security headers are generated centrally in `next.config.ts`. CSP is intentionally restrictive but allows Cloudflare Turnstile, configured Supabase/Sentry/Upstash connect origins, local fonts/assets, and inline styles/scripts required by the current Next.js runtime. Sentry is server/edge only until a public client DSN is intentionally introduced.
+
+## 2026-06-14 - Phase 10 Dependency Audit
+
+`pnpm audit --audit-level high` initially reported high `esbuild` advisories through dev tooling. A pnpm override forces `esbuild@0.28.1` across the tree; the high-severity audit now passes, with one moderate advisory remaining for later dependency review.
