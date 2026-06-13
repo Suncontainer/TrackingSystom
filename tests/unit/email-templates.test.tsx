@@ -54,4 +54,16 @@ describe("email templates", () => {
     expect(rendered.text).toContain("customer@example.com");
     expect(rendered.html).toContain("https://example.com/admin/orders/order-1");
   });
+
+  it("renders optional service emails after explicit opt-in flow", async () => {
+    const rendered = await renderEmailTemplate({
+      emailType: "REVIEW_REQUEST",
+      locale: "de",
+      templateVariables: baseVariables
+    });
+
+    expect(rendered.subject).toBe("Ihre Bewertung fuer Sun Container");
+    expect(rendered.html).toContain("Wie war Ihre Erfahrung?");
+    expect(rendered.text).toContain("https://example.com/track/token");
+  });
 });

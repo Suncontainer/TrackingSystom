@@ -693,6 +693,19 @@ textarea {
   gap: 16px;
 }
 
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.checkbox-row--muted {
+  color: var(--text-muted);
+}
+
 .form-segmented {
   display: flex;
   flex-wrap: wrap;

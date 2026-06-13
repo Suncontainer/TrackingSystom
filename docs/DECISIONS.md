@@ -147,3 +147,7 @@ Resend webhook handling uses `standardwebhooks` with support for both `webhook-*
 ## 2026-06-14 - Phase 7 Retry Controls
 
 Manual email retry is restricted to roles with `emails:retry`. Retrying a failed, bounced, complained, or suppressed row refreshes the recipient from the current customer record, clears delivery failure fields, replaces the provider idempotency key for a new send attempt, and then triggers the outbox processor after the update.
+
+## 2026-06-14 - Phase 8 Optional Email Guardrails
+
+Optional service emails are customer-by-customer only. Preference toggles default off and never send by themselves; each send requires a delivered order, no active suppression, a saved preference, preview acknowledgement, and explicit confirmation. Promotional email remains disabled in the MVP even if a checkbox-like preference exists in the schema.

@@ -6,6 +6,17 @@ import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { routes } from "@/config/routes";
 import { AuthorizationError } from "@/features/auth/errors";
 import { requirePermission } from "@/features/auth/guards";
+import { hasPermission } from "@/features/auth/permissions";
+import {
+  sendOptionalEmailAction,
+  updateCustomerCommunicationPreferencesAction
+} from "@/features/email/actions";
+import {
+  getCustomerOptionalEmailState,
+  isOptionalEmailEligible,
+  optionalEmailDefinitions,
+  optionalEmailTypes
+} from "@/features/email/optional";
 import { getCustomerDetail } from "@/features/orders/service";
 import { NotFoundError } from "@/lib/errors/app-error";
 
@@ -52,6 +63,110 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
         </div>
       </section>
 
+      {detail.canManageOptionalEmail ? (
+        <section className="admin-card admin-section">
+          <div className="section-heading">
+            <h2 className="font-heading">Optionale E-Mails</h2>
+            <p>Alle Kategorien sind standardmaessig deaktiviert und senden erst nach bestaetigter Aktion.</p>
+          </div>
+
+          <form action={updateCustomerCommunicationPreferencesAction} className="form-grid">
+            <input type="hidden" name="customerId" value={detail.customer.id} />
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                name="reviewRequestAllowed"
+                defaultChecked={detail.optionalEmailState.preferences.reviewRequestAllowed}
+              />
+              Bewertungsanfrage erlaubt
+            </label>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                name="satisfactionSurveyAllowed"
+                defaultChecked={detail.optionalEmailState.preferences.satisfactionSurveyAllowed}
+              />
+              Zufriedenheitsumfrage erlaubt
+            </label>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                name="maintenanceRecommendationAllowed"
+                defaultChecked={detail.optionalEmailState.preferences.maintenanceRecommendationAllowed}
+              />
+              Wartungsempfehlung erlaubt
+            </label>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                name="warrantyReminderAllowed"
+                defaultChecked={detail.optionalEmailState.preferences.warrantyReminderAllowed}
+              />
+              Garantie-Erinnerung erlaubt
+            </label>
+            <label className="checkbox-row checkbox-row--muted">
+              <input type="checkbox" disabled />
+              Promotion deaktiviert
+            </label>
+            <button type="submit" className="button-base button-primary">Praeferenzen speichern</button>
+          </form>
+
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Vorlage</th>
+                  <th>Status</th>
+                  <th>Bisher</th>
+                  <th>Vorschau</th>
+                  <th>Aktion</th>
+                </tr>
+              </thead>
+              <tbody>
+                {optionalEmailTypes.map((emailType) => {
+                  const definition = optionalEmailDefinitions[emailType];
+                  const preferenceAllowed = detail.optionalEmailState.preferences[definition.preferenceKey];
+                  const eligible = isOptionalEmailEligible({
+                    emailType,
+                    lastDeliveredOrderId: detail.optionalEmailState.lastDeliveredOrderId,
+                    preferenceAllowed,
+                    suppressed: detail.optionalEmailState.suppressed
+                  });
+
+                  return (
+                    <tr key={emailType}>
+                      <td>
+                        <div className="table-primary">{definition.label}</div>
+                        <div className="table-secondary">{definition.subject}</div>
+                      </td>
+                      <td>{eligible ? "Bereit" : "Gesperrt"}</td>
+                      <td>{detail.optionalEmailState.sentCounts[emailType]}</td>
+                      <td>{definition.preview}</td>
+                      <td>
+                        {eligible ? (
+                          <form action={sendOptionalEmailAction}>
+                            <input type="hidden" name="customerId" value={detail.customer.id} />
+                            <input type="hidden" name="emailType" value={emailType} />
+                            <input type="hidden" name="previewed" value="yes" />
+                            <label className="checkbox-row">
+                              <input type="checkbox" name="confirmed" value="yes" required />
+                              Bestaetigt
+                            </label>
+                            <button type="submit" className="auth-link">Senden</button>
+                          </form>
+                        ) : (
+                          "Nicht verfuegbar"
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
       <section className="admin-card admin-section">
         <div className="section-heading">
           <h2 className="font-heading">Auftraege des Kunden</h2>
@@ -92,7 +207,13 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
 async function loadCustomerPageData(customerId: string) {
   try {
     const profile = await requirePermission("orders:read");
-    return await getCustomerDetail(customerId, profile);
+    const detail = await getCustomerDetail(customerId, profile);
+
+    return {
+      ...detail,
+      canManageOptionalEmail: hasPermission(profile.role, "emails:send-optional"),
+      optionalEmailState: await getCustomerOptionalEmailState(customerId)
+    };
   } catch (error) {
     if (error instanceof AuthorizationError || error instanceof NotFoundError) {
       notFound();

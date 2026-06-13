@@ -213,6 +213,53 @@ function renderDeliveryDate(locale: AppLocale, variables: EmailTemplateVariables
   );
 }
 
+function renderOptionalService(locale: AppLocale, variables: EmailTemplateVariables, emailType: EmailType) {
+  const copy = {
+    MAINTENANCE_RECOMMENDATION: {
+      de: ["Wartungsempfehlung - Sun Container", "Empfehlung fuer Ihren Container", "Wir teilen eine kurze Empfehlung zur Pflege und Wartung Ihres Containers."],
+      en: ["Maintenance recommendation - Sun Container", "Recommendation for your container", "We are sharing a short recommendation for care and maintenance of your container."]
+    },
+    REVIEW_REQUEST: {
+      de: ["Ihre Bewertung fuer Sun Container", "Wie war Ihre Erfahrung?", "Wenn alles gut angekommen ist, freuen wir uns ueber Ihre Bewertung."],
+      en: ["Your review for Sun Container", "How was your experience?", "If everything arrived well, we would appreciate your review."]
+    },
+    SATISFACTION_SURVEY: {
+      de: ["Ihre Erfahrung mit Sun Container", "Sind Sie zufrieden?", "Wir moechten kurz wissen, ob Ihre Lieferung und Betreuung gepasst haben."],
+      en: ["Your experience with Sun Container", "Are you satisfied?", "We would like to know whether delivery and service met your expectations."]
+    },
+    WARRANTY_REMINDER: {
+      de: ["Garantie-Erinnerung - Sun Container", "Hinweis zu Ihrer Garantie", "Wir erinnern Sie freundlich an relevante Informationen zu Garantie und Unterlagen."],
+      en: ["Warranty reminder - Sun Container", "Warranty information", "We are sending a friendly reminder about relevant warranty and document information."]
+    }
+  } as const;
+  const selected =
+    emailType === "MAINTENANCE_RECOMMENDATION"
+      ? copy.MAINTENANCE_RECOMMENDATION
+      : emailType === "SATISFACTION_SURVEY"
+        ? copy.SATISFACTION_SURVEY
+        : emailType === "WARRANTY_REMINDER"
+          ? copy.WARRANTY_REMINDER
+          : copy.REVIEW_REQUEST;
+  const [subject, title, body] = selected[locale];
+  const text = [title, variables.customerName ?? "", variables.orderNumber ?? "", body, variables.secureTrackingUrl ?? ""]
+    .filter(Boolean)
+    .join("\n");
+
+  return render(
+    title,
+    subject,
+    locale,
+    <>
+      {paragraph(locale === "de" ? `Hallo ${variables.customerName ?? ""},` : `Hello ${variables.customerName ?? ""},`)}
+      {paragraph(body)}
+      {paragraph(`${locale === "de" ? "Auftrag" : "Order"}: ${variables.orderNumber ?? "-"}`)}
+      {link(variables.secureTrackingUrl, locale === "de" ? "Auftrag ansehen" : "View order")}
+    </>,
+    text,
+    subject
+  );
+}
+
 export async function renderEmailTemplate(input: {
   emailType: EmailType;
   locale: AppLocale;
@@ -229,6 +276,11 @@ export async function renderEmailTemplate(input: {
       return renderSalesperson(input.locale, input.templateVariables);
     case "DELIVERY_DATE_UPDATED":
       return renderDeliveryDate(input.locale, input.templateVariables);
+    case "REVIEW_REQUEST":
+    case "SATISFACTION_SURVEY":
+    case "MAINTENANCE_RECOMMENDATION":
+    case "WARRANTY_REMINDER":
+      return renderOptionalService(input.locale, input.templateVariables, input.emailType);
     default:
       throw new Error(`Template not implemented for ${input.emailType}.`);
   }
