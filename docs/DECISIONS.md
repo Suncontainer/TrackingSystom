@@ -151,3 +151,7 @@ Manual email retry is restricted to roles with `emails:retry`. Retrying a failed
 ## 2026-06-14 - Phase 8 Optional Email Guardrails
 
 Optional service emails are customer-by-customer only. Preference toggles default off and never send by themselves; each send requires a delivered order, no active suppression, a saved preference, preview acknowledgement, and explicit confirmation. Promotional email remains disabled in the MVP even if a checkbox-like preference exists in the schema.
+
+## 2026-06-14 - Phase 9 Mobile Admin Tables
+
+Admin tables now remain horizontally scrollable on mobile by default. The order list is the only table hidden below the small-screen breakpoint because it has purpose-built mobile order cards; other operational tables must remain visible unless they receive their own mobile card equivalent.

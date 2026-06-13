@@ -44,8 +44,8 @@ export default async function EmailsPage() {
                   <th>Empfaenger</th>
                   <th>Status</th>
                   <th>Versuche</th>
-                  <th>Provider</th>
-                  <th>Erstellt</th>
+                  <th>Zeiten</th>
+                  <th>Hinweis</th>
                   {canRetry ? <th>Aktion</th> : null}
                 </tr>
               </thead>
@@ -59,8 +59,15 @@ export default async function EmailsPage() {
                     <td>{email.recipientEmail}</td>
                     <td>{email.status}</td>
                     <td>{email.attemptCount}</td>
-                    <td>{email.providerMessageId ?? email.lastErrorCode ?? "-"}</td>
-                    <td>{formatDate(email.createdAt)}</td>
+                    <td>
+                      <div className="table-secondary">Queue: {formatDate(email.createdAt)}</div>
+                      <div className="table-secondary">Sent: {formatDate(email.sentAt)}</div>
+                      <div className="table-secondary">Delivered: {formatDate(email.deliveredAt)}</div>
+                      <div className="table-secondary">
+                        Failed: {formatDate(email.bouncedAt ?? email.complainedAt ?? email.failedAt)}
+                      </div>
+                    </td>
+                    <td>{email.lastErrorCode ?? email.providerMessageId ?? "-"}</td>
                     {canRetry ? (
                       <td>
                         {canRetryStatus(email.status) ? (

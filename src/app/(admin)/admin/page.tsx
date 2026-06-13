@@ -189,7 +189,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                     <p>{email.emailType} · {email.recipientEmail}</p>
                   </div>
                   <div>
-                    <span className="order-status order-status--delivered">{email.status}</span>
+                    <span className="order-status email-status--warning">{email.status}</span>
                     <p>{email.lastErrorCode ?? formatDateTime(email.createdAt)}</p>
                   </div>
                 </Link>

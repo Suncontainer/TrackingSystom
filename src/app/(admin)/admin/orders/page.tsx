@@ -160,7 +160,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 
         {orderList.rows.length > 0 ? (
           <>
-            <div className="admin-table-wrap">
+            <div className="admin-table-wrap orders-table-wrap">
               <table className="admin-table">
                 <thead>
                   <tr>

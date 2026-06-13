@@ -13,13 +13,13 @@
 | Phase 6 - Email Templates and Outbox | Complete | 2026-06-14 |
 | Phase 7 - Webhooks and Delivery Monitoring | Complete | 2026-06-14 |
 | Phase 8 - Optional Emails | Complete | 2026-06-14 |
-| Phase 9 - Dashboard and Operational Polish | Partial | - |
+| Phase 9 - Dashboard and Operational Polish | Complete | 2026-06-14 |
 | Phase 10 - Security, Monitoring and Production Readiness | Not started | - |
 | Phase 11 - Vercel Deployment | Not started | - |
 
 ## Current Phase
 
-Phase 8 added customer communication preference UI, optional service templates, explicit confirmed optional-send actions, eligibility checks, audit entries, and a disabled promotional placeholder. The out-of-order Phase 9 dashboard slice remains complete, but the rest of Phase 9 is still pending.
+Phase 9 completed the remaining operational polish: responsive admin navigation, mobile-safe admin tables with order cards, admin loading/error states, clearer failed-email warnings, and expanded email history delivery timing.
 
 ## Validation Results
 
@@ -43,12 +43,11 @@ Phase 8 added customer communication preference UI, optional service templates, 
 - Phase 7 webhook behavior was validated through unit coverage, type checking, linting, and production build only; live webhook verification still needs the real Resend webhook secret and provider-side webhook configuration.
 - Phase 8 optional email behavior was validated through unit coverage, type checking, linting, and production build only; live optional sends still need the configured database and Resend delivery credentials from Phase 6 and 7.
 - Vercel Hobby does not allow the every-5-minute cron schedule from the original specification. The cron route exists, but scheduled execution must be handled manually, by a daily Hobby cron, or by upgrading the Vercel plan.
-- The dashboard page is ready, but the wider Phase 9 scope still needs responsive admin navigation refinements, broader loading/error-state polish, and final accessibility/brand review.
 - Production credentials and vendor accounts are not available yet.
 
 ## Next Phase
 
-Phase 9 - Dashboard and Operational Polish.
+Phase 10 - Security, Monitoring and Production Readiness.
 
 ## Manual Setup Still Required
 
