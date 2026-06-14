@@ -1,3 +1,4 @@
+import { ShieldCheck } from "lucide-react";
 import Script from "next/script";
 
 type TurnstileFieldProps = {
@@ -8,7 +9,10 @@ export function TurnstileField({ siteKey }: TurnstileFieldProps) {
   if (!siteKey) {
     return (
       <div className="turnstile-placeholder" aria-label="Sicherheitsprüfung">
-        <span>Sicherheitsprüfung</span>
+        <span>
+          <ShieldCheck size={18} aria-hidden="true" />
+          Sicherheitsprüfung
+        </span>
         <input name="turnstileToken" type="hidden" value="development-bypass" />
       </div>
     );

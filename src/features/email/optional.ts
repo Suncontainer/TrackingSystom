@@ -16,6 +16,11 @@ import {
 import type { Profile } from "@/db/schema/types";
 import { insertAuditEntry } from "@/features/audit/service";
 import { formatCustomerName, normalizeCustomerEmail } from "@/features/customers/normalization";
+import {
+  getDemoOptionalEmailState,
+  isDemoMode,
+  queueDemoOptionalEmail
+} from "@/features/demo/store";
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors/app-error";
 
 import { triggerImmediateEmailDispatch } from "./outbox";
@@ -67,6 +72,10 @@ function defaultPreferences() {
 }
 
 export async function getCustomerOptionalEmailState(customerId: string): Promise<CustomerOptionalEmailState> {
+  if (isDemoMode()) {
+    return getDemoOptionalEmailState(customerId);
+  }
+
   const db = getDb();
   const [[preferences], [lastDeliveredOrder], [suppression], counts] = await Promise.all([
     db
@@ -131,6 +140,12 @@ export async function updateCustomerCommunicationPreferences(input: unknown, act
   }
 
   const data = parsed.data;
+
+  if (isDemoMode()) {
+    revalidatePath(routes.admin.customerDetails(data.customerId));
+    return;
+  }
+
   const db = getDb();
 
   await db.transaction(async (tx) => {
@@ -176,6 +191,15 @@ export async function queueOptionalCustomerEmail(input: unknown, actor: Pick<Pro
   }
 
   const data = parsed.data;
+
+  if (isDemoMode()) {
+    const result = await queueDemoOptionalEmail(data.customerId, data.emailType);
+
+    revalidatePath(routes.admin.customerDetails(result.customerId));
+
+    return result;
+  }
+
   const definition = optionalEmailDefinitions[data.emailType];
   const state = await getCustomerOptionalEmailState(data.customerId);
   const preferenceAllowed = state.preferences[definition.preferenceKey];

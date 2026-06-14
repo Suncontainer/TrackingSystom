@@ -36,6 +36,18 @@ Temporary hardcoded admin login and demo admin data are currently enabled for li
 
 ## Environment Variables
 
+For the temporary fully dummy deployment, set these first:
+
+```text
+DEMO_MODE=true
+NEXT_PUBLIC_APP_URL=https://tracking.suncontainer.de
+NEXT_PUBLIC_MAIN_SITE_URL=https://suncontainer.de
+APP_DEFAULT_LOCALE=de
+EMAIL_MODE=log
+```
+
+With `DEMO_MODE=true`, the admin panel, order creation, customer reuse, status changes, delivery-date updates, archive actions, public lookup, and simulated email history use temporary demo data instead of Supabase, Resend, Upstash, or Turnstile.
+
 Set these in Vercel production:
 
 ```text
@@ -44,6 +56,7 @@ VERCEL_ENV=production
 NEXT_PUBLIC_APP_URL=https://tracking.suncontainer.de
 NEXT_PUBLIC_MAIN_SITE_URL=https://suncontainer.de
 APP_DEFAULT_LOCALE=de
+DEMO_MODE=false
 TRACKING_LINK_SECRET=<strong random secret>
 CRON_SECRET=<strong random secret>
 NEXT_PUBLIC_SUPABASE_URL=<supabase project url>

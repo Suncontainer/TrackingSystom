@@ -26,9 +26,22 @@ import { insertAuditEntry } from "@/features/audit/service";
 import { formatCustomerName, normalizeCustomerEmail } from "@/features/customers/normalization";
 import {
   canUseDemoAdminData,
-  isMissingDatabaseConfiguration,
-  toDemoOrderList
+  isMissingDatabaseConfiguration
 } from "@/features/demo/admin-data";
+import {
+  addDemoInternalNote,
+  changeDemoOrderStatus,
+  createDemoOrder,
+  getDemoCustomerDetail,
+  getDemoOrderDetail,
+  isDemoMode,
+  listDemoAssignableSalespeople,
+  searchDemoCustomersForReuse,
+  setDemoOrderArchiveState,
+  toDemoOrderList,
+  updateDemoEstimatedDeliveryDate,
+  updateDemoOrderDetails
+} from "@/features/demo/store";
 import { triggerImmediateEmailDispatch } from "@/features/email/outbox";
 
 import {
@@ -469,6 +482,10 @@ function validateExistingCustomerSelection(input: string) {
 }
 
 export async function listAssignableSalespeople() {
+  if (isDemoMode()) {
+    return listDemoAssignableSalespeople();
+  }
+
   const db = getDb();
 
   return db
@@ -489,6 +506,10 @@ export async function searchCustomersForReuse(query: string) {
 
   if (!normalizedQuery) {
     return [];
+  }
+
+  if (isDemoMode()) {
+    return searchDemoCustomersForReuse(normalizedQuery);
   }
 
   const db = getDb();
@@ -520,6 +541,10 @@ export async function searchCustomersForReuse(query: string) {
 }
 
 export async function listOrders(filters: OrderListFilters, profile: Pick<Profile, "id" | "role">) {
+  if (isDemoMode()) {
+    return toDemoOrderList(filters);
+  }
+
   let db: ReturnType<typeof getDb>;
 
   try {
@@ -584,6 +609,10 @@ export async function listOrders(filters: OrderListFilters, profile: Pick<Profil
 }
 
 export async function getOrderDetail(orderId: string, profile: Pick<Profile, "id" | "role">) {
+  if (isDemoMode()) {
+    return getDemoOrderDetail(orderId, profile);
+  }
+
   const db = getDb();
   const [order] = await db
     .select({
@@ -730,6 +759,10 @@ export async function getOrderDetail(orderId: string, profile: Pick<Profile, "id
 }
 
 export async function getCustomerDetail(customerId: string, profile: Pick<Profile, "id" | "role">) {
+  if (isDemoMode()) {
+    return getDemoCustomerDetail(customerId);
+  }
+
   const db = getDb();
   const customerScope =
     profile.role === "SALES"
@@ -797,6 +830,17 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
   }
 
   const data = parsed.data;
+
+  if (isDemoMode()) {
+    const createdOrder = await createDemoOrder(data, actor);
+
+    revalidatePath(routes.admin.orders);
+    revalidatePath(routes.admin.home);
+    revalidatePath(routes.admin.customerDetails(createdOrder.customerId));
+
+    return createdOrder;
+  }
+
   const db = getDb();
   const assignedSalespersonProfile = await resolveAssignedSalesperson(normalizeOptionalString(data.assignedSalespersonId));
   const fallbackSalesEmail =
@@ -1087,6 +1131,17 @@ export async function updateOrderDetails(input: unknown, actor: Pick<Profile, "i
   }
 
   const data = parsed.data;
+
+  if (isDemoMode()) {
+    const result = await updateDemoOrderDetails(data);
+
+    revalidatePath(routes.admin.orders);
+    revalidatePath(routes.admin.orderDetails(data.orderId));
+    revalidatePath(routes.admin.customerDetails(result.customerId));
+
+    return result;
+  }
+
   const db = getDb();
   const assignedSalespersonProfile = await resolveAssignedSalesperson(normalizeOptionalString(data.assignedSalespersonId));
   const fallbackSalesEmail =
@@ -1218,8 +1273,17 @@ export async function addInternalNote(input: unknown, actor: Pick<Profile, "id" 
     throw new ValidationError("Internal note is invalid.", toFieldErrors(parsed.error));
   }
 
-  const db = getDb();
   const data = parsed.data;
+
+  if (isDemoMode()) {
+    const note = await addDemoInternalNote(data, actor);
+
+    revalidatePath(routes.admin.orderDetails(data.orderId));
+
+    return note;
+  }
+
+  const db = getDb();
 
   const createdNote = await db.transaction(async (tx) => {
     const [note] = await tx
@@ -1266,6 +1330,17 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
   }
 
   const data = parsed.data;
+
+  if (isDemoMode()) {
+    const result = await changeDemoOrderStatus(data, actor);
+
+    revalidatePath(routes.admin.orders);
+    revalidatePath(routes.admin.orderDetails(data.orderId));
+    revalidatePath(routes.admin.customerDetails(result.customerId));
+
+    return result;
+  }
+
   const db = getDb();
 
   const result = await db.transaction(async (tx) => {
@@ -1446,6 +1521,22 @@ export async function updateEstimatedDeliveryDate(input: unknown, actor: Pick<Pr
 
   const data = parsed.data;
   const newDate = validateDateForField(data.newDate, "newDate");
+
+  if (isDemoMode()) {
+    const result = await updateDemoEstimatedDeliveryDate({
+      customerNotificationRequested: data.customerNotificationRequested,
+      newDate,
+      orderId: data.orderId,
+      reason: data.reason
+    });
+
+    revalidatePath(routes.admin.orders);
+    revalidatePath(routes.admin.orderDetails(data.orderId));
+    revalidatePath(routes.admin.customerDetails(result.customerId));
+
+    return result;
+  }
+
   const db = getDb();
 
   const result = await db.transaction(async (tx) => {
@@ -1579,6 +1670,17 @@ export async function setOrderArchiveState(input: unknown, actor: Pick<Profile, 
   }
 
   const data = parsed.data;
+
+  if (isDemoMode()) {
+    const result = await setDemoOrderArchiveState(data);
+
+    revalidatePath(routes.admin.orders);
+    revalidatePath(routes.admin.orderDetails(data.orderId));
+    revalidatePath(routes.admin.customerDetails(result.customerId));
+
+    return result;
+  }
+
   const db = getDb();
 
   const result = await db.transaction(async (tx) => {

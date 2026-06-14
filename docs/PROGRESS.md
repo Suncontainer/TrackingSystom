@@ -19,7 +19,7 @@
 
 ## Current Phase
 
-Phase 11 added the final Vercel deployment checklist, external-input list, environment variable checklist, cron options, production smoke tests, and rollback procedure. External vendor/account configuration is still required before the production domain can be verified end-to-end.
+Phase 11 added the final Vercel deployment checklist, external-input list, environment variable checklist, cron options, production smoke tests, and rollback procedure. A temporary `DEMO_MODE=true` path is now available for Vercel so the full order journey can be clicked through without Supabase, Resend, Upstash, or Turnstile.
 
 ## Validation Results
 
@@ -46,6 +46,7 @@ Phase 11 added the final Vercel deployment checklist, external-input list, envir
 - Phase 8 optional email behavior was validated through unit coverage, type checking, linting, and production build only; live optional sends still need the configured database and Resend delivery credentials from Phase 6 and 7.
 - Vercel Hobby does not allow the every-5-minute cron schedule from the original specification. The cron route exists, but scheduled execution must be handled manually, by a daily Hobby cron, or by upgrading the Vercel plan.
 - Temporary hardcoded admin login and production demo-data fallback remain enabled for current live access at the user's request. They must be removed or environment-gated before real customer traffic.
+- `DEMO_MODE=true` uses browser cookies for temporary dummy changes. It is suitable for live review only, not shared production data.
 - Production credentials and vendor accounts are not available yet.
 
 ## Next Phase

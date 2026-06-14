@@ -48,91 +48,111 @@ export async function createOrderAction(
   _previousState: OrderActionState,
   formData: FormData
 ): Promise<OrderActionState> {
+  let orderId: string;
+
   try {
     const profile = await requirePermission("orders:create");
     const order = await createOrder(formDataToObject(formData), profile);
-
-    redirect(`${routes.admin.orderDetails(order.id)}?created=1`);
+    orderId = order.id;
   } catch (error) {
     return getActionErrorState(error);
   }
+
+  redirect(`${routes.admin.orderDetails(orderId)}?created=1`);
 }
 
 export async function updateOrderAction(
   _previousState: OrderActionState,
   formData: FormData
 ): Promise<OrderActionState> {
+  let orderId: string;
+
   try {
     const profile = await requirePermission("orders:update");
     const result = await updateOrderDetails(formDataToObject(formData), profile);
-
-    redirect(`${routes.admin.orderDetails(result.id)}?updated=1`);
+    orderId = result.id;
   } catch (error) {
     return getActionErrorState(error);
   }
+
+  redirect(`${routes.admin.orderDetails(orderId)}?updated=1`);
 }
 
 export async function addInternalNoteAction(
   _previousState: OrderActionState,
   formData: FormData
 ): Promise<OrderActionState> {
+  let orderId: string;
+
   try {
-    const orderId = String(formData.get("orderId") ?? "");
-    const profile = await requireOrderAccess(orderId);
+    const targetOrderId = String(formData.get("orderId") ?? "");
+    const profile = await requireOrderAccess(targetOrderId);
     assertCan(profile.role, "notes:create");
     const note = await addInternalNote(formDataToObject(formData), profile);
-
-    redirect(`${routes.admin.orderDetails(note.orderId)}?noted=1`);
+    orderId = note.orderId;
   } catch (error) {
     return getActionErrorState(error);
   }
+
+  redirect(`${routes.admin.orderDetails(orderId)}?noted=1`);
 }
 
 export async function changeOrderStatusAction(
   _previousState: OrderActionState,
   formData: FormData
 ): Promise<OrderActionState> {
+  let orderId: string;
+
   try {
-    const orderId = String(formData.get("orderId") ?? "");
-    const profile = await requireOrderAccess(orderId);
+    const targetOrderId = String(formData.get("orderId") ?? "");
+    const profile = await requireOrderAccess(targetOrderId);
     assertCan(profile.role, "orders:update");
     const order = await changeOrderStatus(formDataToObject(formData), profile);
-
-    redirect(`${routes.admin.orderDetails(order.id)}?statusChanged=1`);
+    orderId = order.id;
   } catch (error) {
     return getActionErrorState(error);
   }
+
+  redirect(`${routes.admin.orderDetails(orderId)}?statusChanged=1`);
 }
 
 export async function updateEstimatedDeliveryDateAction(
   _previousState: OrderActionState,
   formData: FormData
 ): Promise<OrderActionState> {
+  let orderId: string;
+
   try {
-    const orderId = String(formData.get("orderId") ?? "");
-    const profile = await requireOrderAccess(orderId);
+    const targetOrderId = String(formData.get("orderId") ?? "");
+    const profile = await requireOrderAccess(targetOrderId);
     assertCan(profile.role, "orders:update");
     const order = await updateEstimatedDeliveryDate(formDataToObject(formData), profile);
-
-    redirect(`${routes.admin.orderDetails(order.id)}?dateChanged=1`);
+    orderId = order.id;
   } catch (error) {
     return getActionErrorState(error);
   }
+
+  redirect(`${routes.admin.orderDetails(orderId)}?dateChanged=1`);
 }
 
 export async function setOrderArchiveStateAction(
   _previousState: OrderActionState,
   formData: FormData
 ): Promise<OrderActionState> {
+  let orderId: string;
+  let redirectMode: string;
+
   try {
-    const orderId = String(formData.get("orderId") ?? "");
+    const targetOrderId = String(formData.get("orderId") ?? "");
     const mode = String(formData.get("mode") ?? "archive");
-    const profile = await requireOrderAccess(orderId);
+    const profile = await requireOrderAccess(targetOrderId);
     assertCan(profile.role, "orders:archive");
     const order = await setOrderArchiveState(formDataToObject(formData), profile);
-
-    redirect(`${routes.admin.orderDetails(order.id)}?${mode === "restore" ? "restored" : "archived"}=1`);
+    orderId = order.id;
+    redirectMode = mode;
   } catch (error) {
     return getActionErrorState(error);
   }
+
+  redirect(`${routes.admin.orderDetails(orderId)}?${redirectMode === "restore" ? "restored" : "archived"}=1`);
 }

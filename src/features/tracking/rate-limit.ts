@@ -63,6 +63,10 @@ function getIdentityLimiter() {
 }
 
 export async function checkTrackingLookupRateLimit(ipHash: string | null, identityHash: string | null): Promise<RateLimitCheck> {
+  if (process.env.DEMO_MODE === "true" || !process.env.DATABASE_URL) {
+    return { ok: true, mode: "skipped" };
+  }
+
   const env = getServerEnv();
   const limiterChecks: Array<Promise<{ success: boolean }>> = [];
 

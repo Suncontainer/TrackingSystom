@@ -7,10 +7,9 @@ import { customers, emailOutbox, orderStatusHistory, orders, type DbOrderStatus,
 import type { Profile } from "@/db/schema/types";
 import {
   canUseDemoAdminData,
-  demoFailedEmails,
-  demoOrders,
   isMissingDatabaseConfiguration
 } from "@/features/demo/admin-data";
+import { getDemoDashboardData, isDemoMode } from "@/features/demo/store";
 import { formatCustomerName } from "@/features/customers/normalization";
 import { formatTrackingNumber } from "@/features/orders/identifiers";
 
@@ -37,52 +36,11 @@ function toNumber(value: number | string | null | undefined) {
   return Number(value ?? 0);
 }
 
-function getDemoDashboardData(period: DashboardPeriod) {
-  const dueSoonDateTo = new Date();
-  dueSoonDateTo.setDate(dueSoonDateTo.getDate() + 7);
-  const today = new Date().toISOString().slice(0, 10);
-  const activeOrders = demoOrders.filter((order) => order.status !== "DELIVERED");
-  const dueSoonOrders = activeOrders.filter(
-    (order) => order.currentEstimatedDeliveryDate >= today && order.currentEstimatedDeliveryDate <= dueSoonDateTo.toISOString().slice(0, 10)
-  );
-  const overdueOrders = activeOrders.filter((order) => order.currentEstimatedDeliveryDate < today);
-  const withDisplay = (order: (typeof demoOrders)[number]) => ({
-    ...order,
-    customerName: formatCustomerName(order.customerFirstName, order.customerLastName),
-    trackingNumberDisplay: formatTrackingNumber(order.trackingNumber)
-  });
-
-  return {
-    dueSoonDateTo: dueSoonDateTo.toISOString().slice(0, 10),
-    dueSoonOrders: dueSoonOrders.map(withDisplay),
-    failedEmails: demoFailedEmails,
-    metrics: {
-      activeOrders: activeOrders.length,
-      deliveredInPeriod: demoOrders.filter((order) => order.status === "DELIVERED").length,
-      dueSoon: dueSoonOrders.length,
-      failedMandatoryEmails: demoFailedEmails.length,
-      inProduction: activeOrders.filter((order) => order.status === "IN_PRODUCTION").length,
-      inTransit: activeOrders.filter((order) => order.status === "IN_TRANSIT").length,
-      orderReceived: activeOrders.filter((order) => order.status === "ORDER_RECEIVED").length,
-      overdueActive: overdueOrders.length
-    },
-    overdueOrders: overdueOrders.map(withDisplay),
-    period,
-    recentStatusChanges: demoOrders.map((order) => ({
-      changeType: "demo",
-      createdAt: order.updatedAt,
-      customerFirstName: order.customerFirstName,
-      customerLastName: order.customerLastName,
-      customerName: formatCustomerName(order.customerFirstName, order.customerLastName),
-      newStatus: order.status,
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      previousStatus: null
-    }))
-  };
-}
-
 export async function getDashboardData(profile: Pick<Profile, "id" | "role">, period: DashboardPeriod) {
+  if (isDemoMode()) {
+    return getDemoDashboardData(period);
+  }
+
   let db: ReturnType<typeof getDb>;
 
   try {

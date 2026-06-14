@@ -8,6 +8,12 @@ import { getDb } from "@/db/client";
 import { customers, orders, trackingLookupAttempts } from "@/db/schema";
 import { normalizeCustomerEmail } from "@/features/customers/normalization";
 import {
+  findDemoPublicOrder,
+  findDemoPublicOrderById,
+  isDemoMode,
+  toDemoPublicRow
+} from "@/features/demo/store";
+import {
   formatTrackingNumber,
   normalizeManualOrderNumber,
   normalizeTrackingNumber
@@ -59,6 +65,10 @@ type PublicOrderRow = {
 };
 
 function getTrackingSecret() {
+  if (isDemoMode()) {
+    return "demo-tracking-link-secret";
+  }
+
   const env = getServerEnv();
 
   if (env.TRACKING_LINK_SECRET) {
@@ -208,7 +218,10 @@ export async function lookupTrackingOrder(input: unknown, headers: Headers): Pro
     return { ok: false, reason: "turnstile_failed" };
   }
 
-  const row = await findPublicOrderByManualLookup(parsed.identifier, parsed.email);
+  const demoOrder = isDemoMode() ? await findDemoPublicOrder(parsed.identifier, parsed.email) : null;
+  const row = isDemoMode()
+    ? demoOrder ? toDemoPublicRow(demoOrder) : null
+    : await findPublicOrderByManualLookup(parsed.identifier, parsed.email);
   if (!row) {
     await logLookupAttempt({ emailHash, identifierHash, ipHash, result: "not_found", userAgentHash });
     return { ok: false, reason: "not_found" };
@@ -232,7 +245,10 @@ export async function getTrackingOrderByToken(token: string): Promise<TrackingLo
     return { ok: false, reason: "token_invalid" };
   }
 
-  const row = await findPublicOrderById(payload.orderId);
+  const demoOrder = isDemoMode() ? await findDemoPublicOrderById(payload.orderId) : null;
+  const row = isDemoMode()
+    ? demoOrder ? toDemoPublicRow(demoOrder) : null
+    : await findPublicOrderById(payload.orderId);
 
   if (!row || !isTrackingTokenVersionCurrent(payload, row.trackingLinkVersion)) {
     return { ok: false, reason: "token_invalid" };

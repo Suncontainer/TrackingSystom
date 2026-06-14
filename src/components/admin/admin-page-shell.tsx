@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { Gauge, LogOut, Mail, Settings, ShoppingBag, Users } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -19,11 +19,26 @@ export function AdminPageShell({ eyebrow, title, children }: AdminPageShellProps
         <aside className="admin-sidebar">
           <SunContainerLogo variant="horizontal-light" decorative />
           <nav className="admin-nav" aria-label="Admin Navigation">
-            <Link href={routes.admin.home}>Dashboard</Link>
-            <Link href={routes.admin.orders}>Aufträge</Link>
-            <Link href={routes.admin.emails}>E-Mails</Link>
-            <Link href={routes.admin.users}>Benutzer</Link>
-            <Link href={routes.admin.settings}>Einstellungen</Link>
+            <Link href={routes.admin.home}>
+              <Gauge size={18} aria-hidden="true" />
+              Dashboard
+            </Link>
+            <Link href={routes.admin.orders}>
+              <ShoppingBag size={18} aria-hidden="true" />
+              Aufträge
+            </Link>
+            <Link href={routes.admin.emails}>
+              <Mail size={18} aria-hidden="true" />
+              E-Mails
+            </Link>
+            <Link href={routes.admin.users}>
+              <Users size={18} aria-hidden="true" />
+              Benutzer
+            </Link>
+            <Link href={routes.admin.settings}>
+              <Settings size={18} aria-hidden="true" />
+              Einstellungen
+            </Link>
           </nav>
           <form action={signOutAction} className="admin-sidebar__footer">
             <button className="button-base button-ghost admin-logout" type="submit">

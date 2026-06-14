@@ -1,4 +1,4 @@
-import { PackageCheck } from "lucide-react";
+import { ClipboardCheck, LockKeyhole, MailCheck, PackageCheck, Route } from "lucide-react";
 import Link from "next/link";
 
 import { SunContainerLogo } from "@/components/brand/logo";
@@ -31,6 +31,25 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const dictionary = getPublicDictionary(locale);
   const failed = getQueryValue(params, "lookup") === "failed";
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const demoMode = process.env.DEMO_MODE === "true" || !process.env.DATABASE_URL;
+  const journeyCards = [
+    {
+      icon: ClipboardCheck,
+      label: locale === "de" ? "Auftrag erfasst" : "Order received"
+    },
+    {
+      icon: MailCheck,
+      label: locale === "de" ? "E-Mail simuliert" : "Email simulated"
+    },
+    {
+      icon: Route,
+      label: locale === "de" ? "Status live" : "Live status"
+    },
+    {
+      icon: LockKeyhole,
+      label: locale === "de" ? "Geschützter Zugriff" : "Protected access"
+    }
+  ];
 
   return (
     <div className="public-shell">
@@ -61,6 +80,19 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </h1>
           <p className="hero-intro">{dictionary.lookup.intro}</p>
 
+          <div className="journey-card-grid" aria-label="Tracking Journey">
+            {journeyCards.map((card) => {
+              const Icon = card.icon;
+
+              return (
+                <div className="journey-card" key={card.label}>
+                  <Icon size={20} aria-hidden="true" />
+                  <span>{card.label}</span>
+                </div>
+              );
+            })}
+          </div>
+
           <div className="status-strip" aria-label="Statusschritte">
             {orderStatuses.map((status) => (
               <div className="status-chip" key={status}>
@@ -68,6 +100,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               </div>
             ))}
           </div>
+
+          {demoMode ? (
+            <div className="demo-lookup-panel">
+              <strong>{locale === "de" ? "Demo Lookup" : "Demo lookup"}</strong>
+              <span>SC-2026-000001</span>
+              <span>max.mustermann@example.com</span>
+            </div>
+          ) : null}
         </section>
 
         <TrackingLookupForm dictionary={dictionary} failed={failed} siteKey={siteKey} />

@@ -9,6 +9,7 @@ import { getDb } from "@/db/client";
 import { customers, emailOutbox, emailSuppressions, orders, type EmailStatus, type EmailType } from "@/db/schema";
 import type { AppLocale } from "@/i18n/types";
 import { formatCustomerName } from "@/features/customers/normalization";
+import { isDemoMode, listDemoEmailHistory } from "@/features/demo/store";
 import { createTrackingToken } from "@/features/tracking/tokens";
 
 import { getNextAttemptAt, getStaleProcessingCutoff } from "./backoff";
@@ -369,6 +370,10 @@ export async function retryEmailOutboxEntry(emailId: string) {
 }
 
 export async function listEmailHistory() {
+  if (isDemoMode()) {
+    return listDemoEmailHistory();
+  }
+
   return getDb()
     .select({
       attemptCount: emailOutbox.attemptCount,

@@ -12,6 +12,10 @@ type TurnstileResponse = {
 };
 
 export async function verifyTurnstileToken(token: string | null | undefined, ipAddress?: string): Promise<TurnstileResult> {
+  if (process.env.DEMO_MODE === "true" || !process.env.DATABASE_URL) {
+    return { ok: true, mode: "skipped" };
+  }
+
   const env = getServerEnv();
 
   if (!env.TURNSTILE_SECRET_KEY) {

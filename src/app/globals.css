@@ -153,9 +153,9 @@ textarea {
   margin: 0;
   color: var(--brand-black-deep);
   font-family: var(--font-montserrat), Arial, Helvetica, sans-serif;
-  font-size: 3.45rem;
+  font-size: 3.2rem;
   line-height: 1.08;
-  font-weight: 700;
+  font-weight: 650;
 }
 
 .hero-title span {
@@ -168,6 +168,32 @@ textarea {
   color: var(--text-secondary);
   font-size: 1.15rem;
   line-height: 1.75;
+}
+
+.journey-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.journey-card {
+  min-height: 76px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 14px;
+  color: var(--brand-black);
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.journey-card svg {
+  color: var(--brand-yellow-active);
 }
 
 .lookup-card {
@@ -259,6 +285,16 @@ textarea {
   color: var(--text-secondary);
 }
 
+.turnstile-placeholder span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.turnstile-placeholder svg {
+  color: var(--success);
+}
+
 .turnstile-frame {
   min-height: 76px;
   display: flex;
@@ -339,6 +375,35 @@ textarea {
   background: var(--brand-white);
   padding: 12px;
   font-weight: 650;
+}
+
+.demo-lookup-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 18px;
+  border: 1px solid rgba(22, 121, 74, 0.2);
+  border-radius: var(--radius-lg);
+  background: rgba(22, 121, 74, 0.07);
+  padding: 12px 14px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.demo-lookup-panel strong {
+  color: var(--success);
+}
+
+.demo-lookup-panel span {
+  border: 1px solid rgba(22, 121, 74, 0.18);
+  border-radius: var(--radius-sm);
+  background: var(--brand-white);
+  padding: 6px 8px;
+  color: var(--brand-black);
+  font-weight: 700;
 }
 
 .public-footer {
@@ -535,6 +600,9 @@ textarea {
 }
 
 .admin-nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.76);
@@ -1126,6 +1194,7 @@ textarea {
   }
 
   .status-strip,
+  .journey-card-grid,
   .admin-grid,
   .tracking-summary,
   .tracking-details,
@@ -1197,6 +1266,7 @@ textarea {
   }
 
   .status-strip,
+  .journey-card-grid,
   .admin-grid,
   .dashboard-panels,
   .tracking-summary,

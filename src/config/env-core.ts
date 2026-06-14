@@ -25,6 +25,7 @@ const envSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
+    DEMO_MODE: z.enum(["true", "false"]).default("false"),
     NEXT_PUBLIC_APP_URL: z.url().default("http://localhost:3000"),
     NEXT_PUBLIC_MAIN_SITE_URL: z.url().default("https://suncontainer.de"),
     APP_DEFAULT_LOCALE: z.enum(["de", "en"]).default("de"),
@@ -49,7 +50,7 @@ const envSchema = z
     SENTRY_AUTH_TOKEN: optionalString
   })
   .superRefine((env, ctx) => {
-    if (env.VERCEL_ENV !== "production") {
+    if (env.VERCEL_ENV !== "production" || env.DEMO_MODE === "true") {
       return;
     }
 
