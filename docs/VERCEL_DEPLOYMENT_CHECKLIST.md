@@ -26,7 +26,7 @@ Temporary hardcoded admin login and demo admin data are currently enabled for li
 
 ## Vercel Project
 
-1. Import `paksoft3-ship-it/TrackingSuncontainer`.
+1. Import `Suncontainer/TrackingSystom`.
 2. Set framework preset to Next.js.
 3. Confirm install command uses the package manager from `packageManager`: `pnpm install`.
 4. Confirm build command: `npm run build` or `pnpm build`.
