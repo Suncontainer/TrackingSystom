@@ -2,7 +2,8 @@ import { pgEnum } from "drizzle-orm/pg-core";
 
 export const appRoleValues = ["SUPER_ADMIN", "ADMIN", "SALES", "READ_ONLY"] as const;
 export const orderStatusValues = [
-  "ORDER_RECEIVED",
+  "ORDER_CONFIRMED",
+  "PROCUREMENT",
   "IN_PRODUCTION",
   "IN_TRANSIT",
   "DELIVERED"
@@ -26,6 +27,7 @@ export const emailCategoryValues = [
 ] as const;
 export const emailTypeValues = [
   "ORDER_RECEIVED",
+  "PROCUREMENT_STARTED",
   "PRODUCTION_STARTED",
   "IN_TRANSIT",
   "DELIVERED",

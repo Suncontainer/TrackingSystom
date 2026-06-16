@@ -11,7 +11,7 @@ import { formatCustomerName, normalizeCustomerEmail } from "@/features/customers
 import type { OrderListFilters } from "@/features/orders/filters";
 import { formatOrderNumber, formatTrackingNumber, generateTrackingNumber, validateManualOrderNumber } from "@/features/orders/identifiers";
 import { toPublicOrderSnapshot } from "@/features/orders/public-dto";
-import { getDeliveredFields, getPermittedStandardNextStatus, isOverrideStatusTransition } from "@/features/orders/workflow";
+import { getDeliveredFields, getPermittedStandardNextStatus, getStatusEmailType, isOverrideStatusTransition } from "@/features/orders/workflow";
 import type { OptionalEmailType } from "@/features/email/optional-rules";
 import { NotFoundError, ValidationError } from "@/lib/errors/app-error";
 
@@ -357,7 +357,8 @@ export async function getDemoDashboardData(period: string) {
       failedMandatoryEmails: failedEmails.length,
       inProduction: activeOrders.filter((order) => order.status === "IN_PRODUCTION").length,
       inTransit: activeOrders.filter((order) => order.status === "IN_TRANSIT").length,
-      orderReceived: activeOrders.filter((order) => order.status === "ORDER_RECEIVED").length,
+      orderConfirmed: activeOrders.filter((order) => order.status === "ORDER_CONFIRMED").length,
+      procurement: activeOrders.filter((order) => order.status === "PROCUREMENT").length,
       overdueActive: overdueOrders.length
     },
     overdueOrders: overdueOrders.map(toListRow),
@@ -537,13 +538,13 @@ export async function createDemoOrder(data: {
     orderNumber,
     preferredLanguage: data.preferredLanguage ?? "de",
     productDescription: data.productDescription || null,
-    status: "ORDER_RECEIVED",
+    status: "ORDER_CONFIRMED",
     statusHistory: [{
       changeType: "CREATED",
       createdAt: now,
       estimatedDeliveryDateSnapshot: data.initialEstimatedDeliveryDate,
       id: randomUUID(),
-      newStatus: "ORDER_RECEIVED",
+      newStatus: "ORDER_CONFIRMED",
       previousStatus: null,
       reason: "Demo order created."
     }],
@@ -661,7 +662,7 @@ export async function changeDemoOrderStatus(data: {
   });
   order.emailHistory.unshift(makeEmail({
     category: "TRANSACTIONAL",
-    emailType: data.newStatus === "IN_PRODUCTION" ? "PRODUCTION_STARTED" : data.newStatus,
+    emailType: getStatusEmailType(data.newStatus),
     recipientEmail: order.customerEmail,
     subject: `${data.newStatus} - Sun Container`
   }));

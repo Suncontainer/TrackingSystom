@@ -69,7 +69,8 @@ export async function getDashboardData(profile: Pick<Profile, "id" | "role">, pe
       )::int`,
       inProduction: sql<number>`count(*) filter (where ${activeOrderCondition("IN_PRODUCTION")})::int`,
       inTransit: sql<number>`count(*) filter (where ${activeOrderCondition("IN_TRANSIT")})::int`,
-      orderReceived: sql<number>`count(*) filter (where ${activeOrderCondition("ORDER_RECEIVED")})::int`,
+      orderConfirmed: sql<number>`count(*) filter (where ${activeOrderCondition("ORDER_CONFIRMED")})::int`,
+      procurement: sql<number>`count(*) filter (where ${activeOrderCondition("PROCUREMENT")})::int`,
       overdueActive: sql<number>`count(*) filter (
         where ${activeOrderCondition()}
           and ${orders.currentEstimatedDeliveryDate} < current_date
@@ -185,7 +186,8 @@ export async function getDashboardData(profile: Pick<Profile, "id" | "role">, pe
       failedMandatoryEmails: failedEmailResult?.value ?? 0,
       inProduction: toNumber(metricsResult?.inProduction),
       inTransit: toNumber(metricsResult?.inTransit),
-      orderReceived: toNumber(metricsResult?.orderReceived),
+      orderConfirmed: toNumber(metricsResult?.orderConfirmed),
+      procurement: toNumber(metricsResult?.procurement),
       overdueActive: toNumber(metricsResult?.overdueActive)
     },
     overdueOrders: overdueOrders.map((order) => ({

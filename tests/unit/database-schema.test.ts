@@ -44,7 +44,9 @@ const tableObjects = [
 
 function readInitialMigration() {
   const migrationsDir = join(process.cwd(), "src/db/migrations");
-  const migrationFile = readdirSync(migrationsDir).find((file) => file.endsWith(".sql"));
+  const migrationFile = readdirSync(migrationsDir)
+    .filter((file) => file.endsWith(".sql"))
+    .sort()[0];
 
   if (!migrationFile) {
     throw new Error("No SQL migration file found.");
@@ -57,7 +59,8 @@ describe("database schema foundation", () => {
   it("defines the approved enum values", () => {
     expect(appRoleValues).toEqual(["SUPER_ADMIN", "ADMIN", "SALES", "READ_ONLY"]);
     expect(orderStatusValues).toEqual([
-      "ORDER_RECEIVED",
+      "ORDER_CONFIRMED",
+      "PROCUREMENT",
       "IN_PRODUCTION",
       "IN_TRANSIT",
       "DELIVERED"

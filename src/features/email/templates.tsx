@@ -136,9 +136,20 @@ function renderStatus(locale: AppLocale, variables: EmailTemplateVariables, stat
     PRODUCTION_STARTED: {
       de: ["Die Produktion Ihres Auftrags hat begonnen", "Die Produktion hat begonnen"],
       en: ["Production Started", "Production has started"]
+    },
+    PROCUREMENT_STARTED: {
+      de: ["Die Beschaffung für Ihren Auftrag läuft", "Die Beschaffung läuft"],
+      en: ["Procurement in Progress", "Procurement for your order is in progress"]
     }
   } as const;
-  const selected = status === "DELIVERED" ? copy.DELIVERED : status === "IN_TRANSIT" ? copy.IN_TRANSIT : copy.PRODUCTION_STARTED;
+  const selected =
+    status === "DELIVERED"
+      ? copy.DELIVERED
+      : status === "IN_TRANSIT"
+        ? copy.IN_TRANSIT
+        : status === "PROCUREMENT_STARTED"
+          ? copy.PROCUREMENT_STARTED
+          : copy.PRODUCTION_STARTED;
   const [subject, title] = selected[locale];
   const text = [title, variables.customerName ?? "", variables.orderNumber ?? "", formatDate(variables.currentEstimatedDeliveryDate, locale), variables.secureTrackingUrl ?? ""]
     .filter(Boolean)
@@ -268,6 +279,7 @@ export async function renderEmailTemplate(input: {
   switch (input.emailType) {
     case "ORDER_RECEIVED":
       return renderOrderReceived(input.locale, input.templateVariables);
+    case "PROCUREMENT_STARTED":
     case "PRODUCTION_STARTED":
     case "IN_TRANSIT":
     case "DELIVERED":

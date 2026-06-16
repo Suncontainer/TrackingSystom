@@ -10,7 +10,8 @@ import {
 describe("order status foundation", () => {
   it("keeps the MVP statuses in the approved order", () => {
     expect(orderStatuses).toEqual([
-      "ORDER_RECEIVED",
+      "ORDER_CONFIRMED",
+      "PROCUREMENT",
       "IN_PRODUCTION",
       "IN_TRANSIT",
       "DELIVERED"
@@ -18,13 +19,14 @@ describe("order status foundation", () => {
   });
 
   it("returns the next standard status", () => {
-    expect(getNextOrderStatus("ORDER_RECEIVED")).toBe("IN_PRODUCTION");
+    expect(getNextOrderStatus("ORDER_CONFIRMED")).toBe("PROCUREMENT");
+    expect(getNextOrderStatus("PROCUREMENT")).toBe("IN_PRODUCTION");
     expect(getNextOrderStatus("DELIVERED")).toBeNull();
   });
 
   it("allows only one-step standard forward transitions", () => {
-    expect(isStandardForwardTransition("ORDER_RECEIVED", "IN_PRODUCTION")).toBe(true);
-    expect(isStandardForwardTransition("ORDER_RECEIVED", "IN_TRANSIT")).toBe(false);
+    expect(isStandardForwardTransition("ORDER_CONFIRMED", "PROCUREMENT")).toBe(true);
+    expect(isStandardForwardTransition("ORDER_CONFIRMED", "IN_TRANSIT")).toBe(false);
     expect(isStandardForwardTransition("IN_TRANSIT", "IN_PRODUCTION")).toBe(false);
   });
 

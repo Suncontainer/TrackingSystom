@@ -1,7 +1,5 @@
-import { ArrowUpRight, Search } from "lucide-react";
-import Link from "next/link";
+import { Search } from "lucide-react";
 
-import { siteConfig } from "@/config/site";
 import type { PublicDictionary } from "@/i18n/types";
 import { lookupTrackingAction } from "@/features/tracking/actions";
 import { genericLookupFailure } from "@/features/tracking/lookup";
@@ -52,15 +50,6 @@ export function TrackingLookupForm({ dictionary, failed = false, siteKey }: Trac
           {dictionary.lookup.submit}
         </Button>
       </form>
-
-      <div className="quick-links">
-        <Link href="/privacy">{dictionary.lookup.privacy}</Link>
-        <span>{dictionary.lookup.fallback}</span>
-        <Link href={siteConfig.mainSiteUrl}>
-          {dictionary.lookup.mainSite}
-          <ArrowUpRight size={14} aria-hidden="true" />
-        </Link>
-      </div>
     </section>
   );
 }

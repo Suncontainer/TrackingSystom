@@ -10,20 +10,22 @@ import {
 
 describe("order workflow rules", () => {
   it("allows normal users to move forward one status at a time", () => {
-    expect(getPermittedStandardNextStatus("ORDER_RECEIVED")).toBe("IN_PRODUCTION");
+    expect(getPermittedStandardNextStatus("ORDER_CONFIRMED")).toBe("PROCUREMENT");
+    expect(getPermittedStandardNextStatus("PROCUREMENT")).toBe("IN_PRODUCTION");
     expect(getPermittedStandardNextStatus("IN_PRODUCTION")).toBe("IN_TRANSIT");
     expect(getPermittedStandardNextStatus("IN_TRANSIT")).toBe("DELIVERED");
     expect(getPermittedStandardNextStatus("DELIVERED")).toBeNull();
   });
 
   it("detects skipped or backward status changes as overrides", () => {
-    expect(isOverrideStatusTransition("ORDER_RECEIVED", "IN_PRODUCTION")).toBe(false);
-    expect(isOverrideStatusTransition("ORDER_RECEIVED", "IN_TRANSIT")).toBe(true);
+    expect(isOverrideStatusTransition("ORDER_CONFIRMED", "PROCUREMENT")).toBe(false);
+    expect(isOverrideStatusTransition("ORDER_CONFIRMED", "IN_TRANSIT")).toBe(true);
     expect(isOverrideStatusTransition("IN_TRANSIT", "IN_PRODUCTION")).toBe(true);
   });
 
   it("maps statuses to mandatory email types", () => {
-    expect(getStatusEmailType("ORDER_RECEIVED")).toBe("ORDER_RECEIVED");
+    expect(getStatusEmailType("ORDER_CONFIRMED")).toBe("ORDER_RECEIVED");
+    expect(getStatusEmailType("PROCUREMENT")).toBe("PROCUREMENT_STARTED");
     expect(getStatusEmailType("IN_PRODUCTION")).toBe("PRODUCTION_STARTED");
     expect(getStatusEmailType("IN_TRANSIT")).toBe("IN_TRANSIT");
     expect(getStatusEmailType("DELIVERED")).toBe("DELIVERED");
@@ -32,9 +34,9 @@ describe("order workflow rules", () => {
   it("never disables standard forward-transition customer emails", () => {
     expect(
       shouldQueueStatusCustomerEmail({
-        currentStatus: "ORDER_RECEIVED",
+        currentStatus: "ORDER_CONFIRMED",
         decision: "skip",
-        nextStatus: "IN_PRODUCTION"
+        nextStatus: "PROCUREMENT"
       })
     ).toBe(true);
   });

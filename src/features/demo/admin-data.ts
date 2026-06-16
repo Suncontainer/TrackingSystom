@@ -43,7 +43,7 @@ export const demoOrders: DemoOrder[] = [
     id: "20000000-0000-4000-8000-000000000001",
     orderNumber: "SC-2026-000001",
     productDescription: "20-Fuss Lagercontainer",
-    status: "ORDER_RECEIVED",
+    status: "ORDER_CONFIRMED",
     trackingNumber: "SC7K9M4XPQ82DH",
     updatedAt: new Date(today.getTime() - 1000 * 60 * 60 * 3),
     version: 1

@@ -55,9 +55,10 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const canCreateOrders = hasPermission(profile.role, "orders:create");
   const metrics: Array<{ label: string; value: number; tone: string; icon: ReactNode }> = [
     { label: "Aktive Aufträge", value: dashboard.metrics.activeOrders, tone: "neutral", icon: <Boxes size={22} aria-hidden="true" /> },
-    { label: "Auftrag eingegangen", value: dashboard.metrics.orderReceived, tone: "neutral", icon: statusVideoIcon(orderStatusIcon.ORDER_RECEIVED) },
+    { label: "Auftrag bestätigt", value: dashboard.metrics.orderConfirmed, tone: "neutral", icon: statusVideoIcon(orderStatusIcon.ORDER_CONFIRMED) },
+    { label: "Beschaffung läuft", value: dashboard.metrics.procurement, tone: "neutral", icon: statusVideoIcon(orderStatusIcon.PROCUREMENT) },
     { label: "In Produktion", value: dashboard.metrics.inProduction, tone: "neutral", icon: statusVideoIcon(orderStatusIcon.IN_PRODUCTION) },
-    { label: "Unterwegs", value: dashboard.metrics.inTransit, tone: "neutral", icon: statusVideoIcon(orderStatusIcon.IN_TRANSIT) },
+    { label: "Im Transport", value: dashboard.metrics.inTransit, tone: "neutral", icon: statusVideoIcon(orderStatusIcon.IN_TRANSIT) },
     { label: `Geliefert (${period} Tage)`, value: dashboard.metrics.deliveredInPeriod, tone: "neutral", icon: statusVideoIcon(orderStatusIcon.DELIVERED) },
     { label: "Überfällig aktiv", value: dashboard.metrics.overdueActive, tone: dashboard.metrics.overdueActive > 0 ? "warning" : "neutral", icon: <AlertTriangle size={22} aria-hidden="true" /> },
     { label: "Fällig in 7 Tagen", value: dashboard.metrics.dueSoon, tone: "neutral", icon: <CalendarClock size={22} aria-hidden="true" /> },

@@ -1,5 +1,6 @@
 export const orderStatuses = [
-  "ORDER_RECEIVED",
+  "ORDER_CONFIRMED",
+  "PROCUREMENT",
   "IN_PRODUCTION",
   "IN_TRANSIT",
   "DELIVERED"
@@ -9,14 +10,24 @@ export type OrderStatus = (typeof orderStatuses)[number];
 export type Locale = "de" | "en";
 
 export const orderStatusContent = {
-  ORDER_RECEIVED: {
+  ORDER_CONFIRMED: {
     de: {
-      label: "Auftrag eingegangen",
-      message: "Ihr Auftrag wurde erfolgreich aufgenommen."
+      label: "Auftrag bestätigt",
+      message: "Ihr Auftrag wurde erfolgreich bestätigt."
     },
     en: {
-      label: "Order received",
-      message: "Your order has been received."
+      label: "Order Confirmed",
+      message: "Your order has been confirmed."
+    }
+  },
+  PROCUREMENT: {
+    de: {
+      label: "Beschaffung läuft",
+      message: "Die Beschaffung für Ihren Auftrag läuft."
+    },
+    en: {
+      label: "Procurement in Progress",
+      message: "Procurement for your order is in progress."
     }
   },
   IN_PRODUCTION: {
@@ -25,17 +36,17 @@ export const orderStatusContent = {
       message: "Ihr Auftrag befindet sich derzeit in Produktion."
     },
     en: {
-      label: "In production",
+      label: "In Production",
       message: "Your order is currently in production."
     }
   },
   IN_TRANSIT: {
     de: {
-      label: "Unterwegs",
+      label: "Im Transport",
       message: "Ihr Auftrag wurde versandt und befindet sich auf dem Weg zu Ihnen."
     },
     en: {
-      label: "In transit",
+      label: "In Transit",
       message: "Your order is currently in transit."
     }
   },
@@ -52,7 +63,8 @@ export const orderStatusContent = {
 } satisfies Record<OrderStatus, Record<Locale, { label: string; message: string }>>;
 
 export const orderStatusIcon = {
-  ORDER_RECEIVED: "/icons/order-received.mp4",
+  ORDER_CONFIRMED: "/icons/order-confirmed.mp4",
+  PROCUREMENT: "/icons/procurement.mp4",
   IN_PRODUCTION: "/icons/in-production.mp4",
   IN_TRANSIT: "/icons/in-transit.mp4",
   DELIVERED: "/icons/delivered.mp4"

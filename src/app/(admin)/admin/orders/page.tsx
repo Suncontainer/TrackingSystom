@@ -89,9 +89,10 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             <label htmlFor="orders-status">Status</label>
             <select defaultValue={filters.status} id="orders-status" name="status">
               <option value="">Alle</option>
-              <option value="ORDER_RECEIVED">Auftrag eingegangen</option>
+              <option value="ORDER_CONFIRMED">Auftrag bestätigt</option>
+              <option value="PROCUREMENT">Beschaffung läuft</option>
               <option value="IN_PRODUCTION">In Produktion</option>
-              <option value="IN_TRANSIT">Unterwegs</option>
+              <option value="IN_TRANSIT">Im Transport</option>
               <option value="DELIVERED">Geliefert</option>
             </select>
           </div>

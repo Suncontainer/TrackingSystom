@@ -79,7 +79,7 @@ export const orders = pgTable(
       .references(() => customers.id, { onDelete: "restrict", onUpdate: "cascade" }),
     orderNumber: text("order_number").notNull().unique("orders_order_number_unique"),
     trackingNumber: text("tracking_number").notNull().unique("orders_tracking_number_unique"),
-    status: orderStatusEnum("status").notNull().default("ORDER_RECEIVED"),
+    status: orderStatusEnum("status").notNull().default("ORDER_CONFIRMED"),
     productDescription: text("product_description"),
     initialEstimatedDeliveryDate: date("initial_estimated_delivery_date").notNull(),
     currentEstimatedDeliveryDate: date("current_estimated_delivery_date").notNull(),

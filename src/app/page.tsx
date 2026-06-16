@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import { SunContainerLogo } from "@/components/brand/logo";
 import { TrackingLookupForm } from "@/components/tracking/tracking-lookup-form";
-import { siteConfig } from "@/config/site";
 import { getPublicDictionary } from "@/i18n/get-locale";
 import type { AppLocale } from "@/i18n/types";
 
@@ -72,17 +71,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
         <TrackingLookupForm dictionary={dictionary} failed={failed} siteKey={siteKey} />
       </main>
-
-      <footer className="public-footer">
-        <div className="public-footer__inner">
-          <SunContainerLogo variant="horizontal-light" className="footer-logo" decorative />
-          <div className="footer-links">
-            <Link href="/privacy">Datenschutz</Link>
-            <Link href="/admin/login">Admin</Link>
-            <Link href={siteConfig.mainSiteUrl}>suncontainer.de</Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

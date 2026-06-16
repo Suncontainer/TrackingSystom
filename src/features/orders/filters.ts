@@ -1,4 +1,4 @@
-export const orderListStatuses = ["ORDER_RECEIVED", "IN_PRODUCTION", "IN_TRANSIT", "DELIVERED"] as const;
+export const orderListStatuses = ["ORDER_CONFIRMED", "PROCUREMENT", "IN_PRODUCTION", "IN_TRANSIT", "DELIVERED"] as const;
 export const archivedFilterValues = ["active", "archived", "all"] as const;
 export const sortValues = ["updated_desc", "created_desc", "eta_asc", "eta_desc"] as const;
 

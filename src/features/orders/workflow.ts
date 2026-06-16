@@ -7,8 +7,10 @@ export type CustomerEmailDecision = (typeof customerEmailDecisionValues)[number]
 
 export function getStatusEmailType(status: DbOrderStatus): EmailType {
   switch (status) {
-    case "ORDER_RECEIVED":
+    case "ORDER_CONFIRMED":
       return "ORDER_RECEIVED";
+    case "PROCUREMENT":
+      return "PROCUREMENT_STARTED";
     case "IN_PRODUCTION":
       return "PRODUCTION_STARTED";
     case "IN_TRANSIT":

@@ -166,7 +166,7 @@ export async function seedDevelopmentData(env: NodeJS.ProcessEnv = process.env) 
         customerId: "10000000-0000-4000-8000-000000000001",
         orderNumber: "SC-2026-000001",
         trackingNumber: "SC7K9M4XPQ82DH",
-        status: "ORDER_RECEIVED",
+        status: "ORDER_CONFIRMED",
         productDescription: "20-Fuß Lagercontainer",
         dueOffsetDays: 21
       },

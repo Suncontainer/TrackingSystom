@@ -15,6 +15,7 @@ import {
   internalNotes,
   orderStatusHistory,
   orders,
+  orderStatusValues,
   profiles,
   type DbOrderStatus
 } from "@/db/schema";
@@ -216,7 +217,7 @@ const addInternalNoteInputSchema = z.object({
 const statusChangeInputSchema = z.object({
   actualDeliveryDate: z.string().trim().optional(),
   customerEmailDecision: z.enum(customerEmailDecisionValues).optional(),
-  newStatus: z.enum(["ORDER_RECEIVED", "IN_PRODUCTION", "IN_TRANSIT", "DELIVERED"]),
+  newStatus: z.enum(orderStatusValues),
   orderId: z.string().uuid(),
   reason: z.string().trim().optional(),
   version: z.coerce.number().int().positive()
@@ -387,14 +388,16 @@ function buildStatusSubject(status: DbOrderStatus, locale: AppLocale) {
     ? {
         DELIVERED: "Geliefert",
         IN_PRODUCTION: "In Produktion",
-        IN_TRANSIT: "Unterwegs",
-        ORDER_RECEIVED: "Auftrag eingegangen"
+        IN_TRANSIT: "Im Transport",
+        PROCUREMENT: "Beschaffung läuft",
+        ORDER_CONFIRMED: "Auftrag bestätigt"
       }[status]
     : {
         DELIVERED: "Delivered",
-        IN_PRODUCTION: "In production",
-        IN_TRANSIT: "In transit",
-        ORDER_RECEIVED: "Order received"
+        IN_PRODUCTION: "In Production",
+        IN_TRANSIT: "In Transit",
+        PROCUREMENT: "Procurement in Progress",
+        ORDER_CONFIRMED: "Order Confirmed"
       }[status];
 
   return locale === "de" ? `${label} - Sun Container` : `${label} - Sun Container`;
@@ -411,7 +414,8 @@ function getStatusTemplateKey(status: DbOrderStatus) {
     DELIVERED: "delivered",
     IN_PRODUCTION: "production-started",
     IN_TRANSIT: "in-transit",
-    ORDER_RECEIVED: "order-received"
+    PROCUREMENT: "procurement-started",
+    ORDER_CONFIRMED: "order-received"
   } satisfies Record<DbOrderStatus, string>;
 
   return templateKeys[status];
@@ -965,7 +969,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
           initialEstimatedDeliveryDate: estimatedDate,
           orderNumber,
           productDescription: normalizeOptionalString(data.productDescription),
-          status: "ORDER_RECEIVED",
+          status: "ORDER_CONFIRMED",
           trackingNumber,
           updatedBy: actor.id
         })
@@ -987,7 +991,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
           changeType: "CREATED",
           changedBy: actor.id,
           estimatedDeliveryDateSnapshot: estimatedDate,
-          newStatus: "ORDER_RECEIVED",
+          newStatus: "ORDER_CONFIRMED",
           orderId: createdOrder.id,
           previousStatus: null,
           reason: "Initial order creation."
@@ -1072,7 +1076,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
           currentEstimatedDeliveryDate: createdOrder.currentEstimatedDeliveryDate,
           orderNumber: createdOrder.orderNumber,
           productDescription: createdOrder.productDescription,
-          status: "ORDER_RECEIVED",
+          status: "ORDER_CONFIRMED",
           trackingNumber: createdOrder.trackingNumber
         },
         entityId: createdOrder.id,
