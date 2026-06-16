@@ -1,4 +1,5 @@
-import { AlertTriangle, CalendarClock, MailWarning, PackagePlus } from "lucide-react";
+import { AlertTriangle, Boxes, CalendarClock, MailWarning, PackagePlus } from "lucide-react";
+import type { ReactNode } from "react";
 import { AdminPageShell } from "@/components/admin/admin-page-shell";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { routes } from "@/config/routes";
@@ -6,8 +7,14 @@ import { requirePermission } from "@/features/auth/guards";
 import { hasPermission } from "@/features/auth/permissions";
 import { parseDashboardPeriod, type DashboardPeriod } from "@/features/dashboard/helpers";
 import { getDashboardData } from "@/features/dashboard/service";
-import { orderStatusContent } from "@/features/orders/status";
+import { orderStatusContent, orderStatusIcon } from "@/features/orders/status";
 import Link from "next/link";
+
+function statusVideoIcon(src: string): ReactNode {
+  return (
+    <video className="metric-icon__video" src={src} autoPlay loop muted playsInline aria-hidden="true" />
+  );
+}
 
 export const metadata = {
   title: "Admin Dashboard"
@@ -46,18 +53,19 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const period = parseDashboardPeriod(params.period);
   const dashboard = await getDashboardData(profile, period);
   const canCreateOrders = hasPermission(profile.role, "orders:create");
-  const metrics = [
-    { label: "Aktive Aufträge", value: dashboard.metrics.activeOrders, tone: "neutral" },
-    { label: "Auftrag eingegangen", value: dashboard.metrics.orderReceived, tone: "neutral" },
-    { label: "In Produktion", value: dashboard.metrics.inProduction, tone: "neutral" },
-    { label: "Unterwegs", value: dashboard.metrics.inTransit, tone: "neutral" },
-    { label: `Geliefert (${period} Tage)`, value: dashboard.metrics.deliveredInPeriod, tone: "neutral" },
-    { label: "Überfällig aktiv", value: dashboard.metrics.overdueActive, tone: dashboard.metrics.overdueActive > 0 ? "warning" : "neutral" },
-    { label: "Fällig in 7 Tagen", value: dashboard.metrics.dueSoon, tone: "neutral" },
+  const metrics: Array<{ label: string; value: number; tone: string; icon: ReactNode }> = [
+    { label: "Aktive Aufträge", value: dashboard.metrics.activeOrders, tone: "neutral", icon: <Boxes size={22} aria-hidden="true" /> },
+    { label: "Auftrag eingegangen", value: dashboard.metrics.orderReceived, tone: "neutral", icon: statusVideoIcon(orderStatusIcon.ORDER_RECEIVED) },
+    { label: "In Produktion", value: dashboard.metrics.inProduction, tone: "neutral", icon: statusVideoIcon(orderStatusIcon.IN_PRODUCTION) },
+    { label: "Unterwegs", value: dashboard.metrics.inTransit, tone: "neutral", icon: statusVideoIcon(orderStatusIcon.IN_TRANSIT) },
+    { label: `Geliefert (${period} Tage)`, value: dashboard.metrics.deliveredInPeriod, tone: "neutral", icon: statusVideoIcon(orderStatusIcon.DELIVERED) },
+    { label: "Überfällig aktiv", value: dashboard.metrics.overdueActive, tone: dashboard.metrics.overdueActive > 0 ? "warning" : "neutral", icon: <AlertTriangle size={22} aria-hidden="true" /> },
+    { label: "Fällig in 7 Tagen", value: dashboard.metrics.dueSoon, tone: "neutral", icon: <CalendarClock size={22} aria-hidden="true" /> },
     {
       label: "E-Mail Warnungen",
       value: dashboard.metrics.failedMandatoryEmails,
-      tone: dashboard.metrics.failedMandatoryEmails > 0 ? "danger" : "neutral"
+      tone: dashboard.metrics.failedMandatoryEmails > 0 ? "danger" : "neutral",
+      icon: <MailWarning size={22} aria-hidden="true" />
     }
   ];
 
@@ -92,6 +100,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
       <section className="admin-grid dashboard-metrics" aria-label="Kennzahlen">
         {metrics.map((metric) => (
           <article className={`admin-card metric-card metric-card--${metric.tone}`} key={metric.label}>
+            <span className={`metric-icon metric-icon--${metric.tone}`}>{metric.icon}</span>
             <span className="metric-label">{metric.label}</span>
             <p className="metric-value">{metric.value}</p>
           </article>

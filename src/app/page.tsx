@@ -1,10 +1,9 @@
-import { ClipboardCheck, LockKeyhole, MailCheck, PackageCheck, Route } from "lucide-react";
+import { PackageCheck } from "lucide-react";
 import Link from "next/link";
 
 import { SunContainerLogo } from "@/components/brand/logo";
 import { TrackingLookupForm } from "@/components/tracking/tracking-lookup-form";
 import { siteConfig } from "@/config/site";
-import { orderStatuses, orderStatusContent } from "@/features/orders/status";
 import { getPublicDictionary } from "@/i18n/get-locale";
 import type { AppLocale } from "@/i18n/types";
 
@@ -32,24 +31,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const failed = getQueryValue(params, "lookup") === "failed";
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const demoMode = process.env.DEMO_MODE === "true" || !process.env.DATABASE_URL;
-  const journeyCards = [
-    {
-      icon: ClipboardCheck,
-      label: locale === "de" ? "Auftrag erfasst" : "Order received"
-    },
-    {
-      icon: MailCheck,
-      label: locale === "de" ? "E-Mail simuliert" : "Email simulated"
-    },
-    {
-      icon: Route,
-      label: locale === "de" ? "Status live" : "Live status"
-    },
-    {
-      icon: LockKeyhole,
-      label: locale === "de" ? "Geschützter Zugriff" : "Protected access"
-    }
-  ];
 
   return (
     <div className="public-shell">
@@ -79,27 +60,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             Sun Container <span>{dictionary.lookup.title}</span>
           </h1>
           <p className="hero-intro">{dictionary.lookup.intro}</p>
-
-          <div className="journey-card-grid" aria-label="Tracking Journey">
-            {journeyCards.map((card) => {
-              const Icon = card.icon;
-
-              return (
-                <div className="journey-card" key={card.label}>
-                  <Icon size={20} aria-hidden="true" />
-                  <span>{card.label}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="status-strip" aria-label="Statusschritte">
-            {orderStatuses.map((status) => (
-              <div className="status-chip" key={status}>
-                {orderStatusContent[status][locale].label}
-              </div>
-            ))}
-          </div>
 
           {demoMode ? (
             <div className="demo-lookup-panel">

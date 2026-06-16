@@ -51,6 +51,13 @@ export const orderStatusContent = {
   }
 } satisfies Record<OrderStatus, Record<Locale, { label: string; message: string }>>;
 
+export const orderStatusIcon = {
+  ORDER_RECEIVED: "/icons/order-received.mp4",
+  IN_PRODUCTION: "/icons/in-production.mp4",
+  IN_TRANSIT: "/icons/in-transit.mp4",
+  DELIVERED: "/icons/delivered.mp4"
+} satisfies Record<OrderStatus, string>;
+
 export function getOrderStatusIndex(status: OrderStatus) {
   return orderStatuses.indexOf(status);
 }

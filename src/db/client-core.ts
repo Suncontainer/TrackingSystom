@@ -21,21 +21,28 @@ export function getDatabaseUrl() {
   return env.DATABASE_URL;
 }
 
+// On Vercel serverless each function instance should hold very few connections so
+// the shared Supabase/pgBouncer pooler is not exhausted on the free tier. Locally a
+// slightly larger pool keeps dev throughput healthy.
+const isServerless = Boolean(process.env.VERCEL);
+
+const poolOptions = {
+  max: isServerless ? 1 : 10,
+  idle_timeout: 20,
+  connect_timeout: 10,
+  // pgBouncer transaction pooling does not support prepared statements.
+  prepare: false
+} as const;
+
 export function createDatabaseClient(databaseUrl: string) {
-  const client = postgres(databaseUrl, {
-    max: 10,
-    prepare: false
-  });
+  const client = postgres(databaseUrl, poolOptions);
 
   return drizzle(client, { schema });
 }
 
 export function getDb() {
   if (!database) {
-    sqlClient = postgres(getDatabaseUrl(), {
-      max: 10,
-      prepare: false
-    });
+    sqlClient = postgres(getDatabaseUrl(), poolOptions);
     database = drizzle(sqlClient, { schema });
   }
 
