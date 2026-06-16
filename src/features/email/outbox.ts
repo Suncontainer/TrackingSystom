@@ -1,7 +1,7 @@
 import "server-only";
 
 import { Resend } from "resend";
-import { desc, eq, isNull, sql } from "drizzle-orm";
+import { desc, eq, isNull, lt, sql } from "drizzle-orm";
 
 import { getServerEnv } from "@/config/env";
 import { siteConfig } from "@/config/site";
@@ -135,7 +135,7 @@ async function claimEligibleEmails(limit: number, workerId: string) {
       where (
         (${emailOutbox.status} = 'QUEUED' and ${emailOutbox.nextAttemptAt} <= now())
         or (${emailOutbox.status} = 'FAILED' and ${emailOutbox.nextAttemptAt} <= now() and ${emailOutbox.attemptCount} < ${emailOutbox.maxAttempts})
-        or (${emailOutbox.status} = 'PROCESSING' and ${emailOutbox.lockedAt} < ${staleCutoff})
+        or (${emailOutbox.status} = 'PROCESSING' and ${lt(emailOutbox.lockedAt, staleCutoff)})
       )
       order by ${emailOutbox.createdAt}
       for update skip locked

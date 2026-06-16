@@ -61,7 +61,7 @@ export async function getDashboardData(profile: Pick<Profile, "id" | "role">, pe
   const [metricsResult] = await db
     .select({
       activeOrders: sql<number>`count(*) filter (where ${activeOrderCondition()})::int`,
-      deliveredInPeriod: sql<number>`count(*) filter (where ${orders.deliveredAt} >= ${periodStart})::int`,
+      deliveredInPeriod: sql<number>`count(*) filter (where ${gte(orders.deliveredAt, periodStart)})::int`,
       dueSoon: sql<number>`count(*) filter (
         where ${activeOrderCondition()}
           and ${orders.currentEstimatedDeliveryDate} >= current_date
