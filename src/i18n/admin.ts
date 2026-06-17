@@ -149,7 +149,180 @@ export type AdminDictionary = {
     loginFallback: string;
     messages: Record<string, string>;
   };
+  forms: {
+    fields: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      language: string;
+      assignedSalesperson: string;
+      notAssigned: string;
+      fallbackSalesEmail: string;
+      productDescription: string;
+    };
+    saving: string;
+    create: {
+      customerModeHeading: string;
+      customerModeIntro: string;
+      newCustomer: string;
+      existingCustomer: string;
+      existingMatches: string;
+      searchTerm: string;
+      noFilter: string;
+      archivedSuffix: string;
+      noMatches: string;
+      orderDataHeading: string;
+      orderDataIntro: string;
+      orderNumberAuto: string;
+      orderNumberManual: string;
+      manualOrderNumber: string;
+      estimatedDelivery: string;
+      initialNote: string;
+      notesHeading: string;
+      notesIntro: string;
+      creating: string;
+      submit: string;
+    };
+    update: {
+      saveChanges: string;
+    };
+    statusChange: {
+      newStatus: string;
+      noFurtherStandard: string;
+      actualDelivery: string;
+      overrideReason: string;
+      sendCustomerEmail: string;
+      skipCustomerEmail: string;
+      current: string;
+      eta: string;
+      mandatoryEmailNote: string;
+      changing: string;
+      submit: string;
+    };
+    deliveryDate: {
+      newDate: string;
+      notifyCustomer: string;
+      reason: string;
+      saving: string;
+      submit: string;
+    };
+    internalNote: {
+      newNote: string;
+      adding: string;
+      submit: string;
+    };
+    archive: {
+      restoreReason: string;
+      archiveReason: string;
+      restoreSubmit: string;
+      archiveSubmit: string;
+    };
+    customerPreview: {
+      heading: string;
+      order: string;
+      tracking: string;
+      deliveryForecast: string;
+    };
+    newOrderPage: {
+      eyebrow: string;
+      title: string;
+      searchHeading: string;
+      searchIntro: string;
+      toOrderList: string;
+      searchPlaceholder: string;
+      search: string;
+    };
+    orderDetail: {
+      eyebrow: string;
+      flashCreated: string;
+      flashUpdated: string;
+      flashNoted: string;
+      flashStatusChanged: string;
+      flashDateChanged: string;
+      flashArchived: string;
+      flashRestored: string;
+      tracking: string;
+      customer: string;
+      email: string;
+      deliveryPlanned: string;
+      sales: string;
+      version: string;
+      trackingLinkVersion: string;
+      archive: string;
+      archivedOn: string;
+      active: string;
+      statusChangeHeading: string;
+      statusChangeIntro: string;
+      noStatusPermission: string;
+      deliveryDateHeading: string;
+      deliveryDateIntro: string;
+      noDatePermission: string;
+      customerPreviewHeading: string;
+      customerOrderHeading: string;
+      customerOrderIntro: string;
+      statusHistoryHeading: string;
+      deliveryHistoryHeading: string;
+      customerNotification: string;
+      yes: string;
+      no: string;
+      noDeliveryChanges: string;
+      mandatoryEmailsHeading: string;
+      colType: string;
+      colRecipient: string;
+      colStatus: string;
+      colAttempts: string;
+      colCreated: string;
+      noEmailHistory: string;
+      internalNotesHeading: string;
+      internalNoteLabel: string;
+      auditHeading: string;
+      archiveHeading: string;
+      restoreHeading: string;
+      archiveIntro: string;
+      productDescription: string;
+      phone: string;
+      language: string;
+    };
+    customerDetail: {
+      eyebrow: string;
+      email: string;
+      phone: string;
+      language: string;
+      updated: string;
+      optionalHeading: string;
+      optionalIntro: string;
+      reviewRequestAllowed: string;
+      satisfactionSurveyAllowed: string;
+      maintenanceRecommendationAllowed: string;
+      warrantyReminderAllowed: string;
+      promotionDisabled: string;
+      savePreferences: string;
+      colTemplate: string;
+      colStatus: string;
+      colSoFar: string;
+      colPreview: string;
+      colAction: string;
+      ready: string;
+      blocked: string;
+      confirmed: string;
+      send: string;
+      notAvailable: string;
+      ordersHeading: string;
+      colOrderNumber: string;
+      colTracking: string;
+      colDelivery: string;
+      colUpdated: string;
+    };
+  };
 };
+
+export type OrderFormFieldsDict = AdminDictionary["forms"]["fields"];
+export type CreateFormDict = AdminDictionary["forms"]["create"];
+export type StatusChangeDict = AdminDictionary["forms"]["statusChange"];
+export type DeliveryDateDict = AdminDictionary["forms"]["deliveryDate"];
+export type InternalNoteDict = AdminDictionary["forms"]["internalNote"];
+export type ArchiveDict = AdminDictionary["forms"]["archive"];
 
 const de: AdminDictionary = {
   localeName: "Deutsch",
@@ -303,6 +476,172 @@ const de: AdminDictionary = {
       invalid_credentials: "E-Mail-Adresse oder Passwort ist ungültig.",
       not_authorized: "Dieses Benutzerkonto hat keinen Zugriff auf diesen Bereich.",
       profile_missing: "Für diesen Login ist noch kein internes Benutzerprofil angelegt."
+    }
+  },
+  forms: {
+    fields: {
+      firstName: "Vorname",
+      lastName: "Nachname",
+      email: "E-Mail",
+      phone: "Telefon",
+      language: "Sprache",
+      assignedSalesperson: "Zugewiesener Vertrieb",
+      notAssigned: "Nicht direkt zugewiesen",
+      fallbackSalesEmail: "Fallback Vertriebs-E-Mail",
+      productDescription: "Produktbeschreibung"
+    },
+    saving: "Speichert...",
+    create: {
+      customerModeHeading: "Kundenmodus",
+      customerModeIntro: "Bestehenden Kunden bewusst wiederverwenden oder neuen Kunden anlegen.",
+      newCustomer: "Neuer Kunde",
+      existingCustomer: "Bestehender Kunde",
+      existingMatches: "Bestehende Treffer",
+      searchTerm: "Suchbegriff",
+      noFilter: "kein Filter",
+      archivedSuffix: " · archiviert",
+      noMatches: "Keine passenden Bestandskunden gefunden.",
+      orderDataHeading: "Auftragsdaten",
+      orderDataIntro: "Tracking-Nummer wird bei der Erstellung automatisch und zufällig erzeugt.",
+      orderNumberAuto: "Auftragsnummer automatisch",
+      orderNumberManual: "Auftragsnummer manuell",
+      manualOrderNumber: "Manuelle Auftragsnummer",
+      estimatedDelivery: "Voraussichtliche Lieferung",
+      initialNote: "Initiale interne Notiz",
+      notesHeading: "Hinweise",
+      notesIntro: "Kundenbestätigung und Vertriebsbenachrichtigung werden als Pflicht-E-Mails in die Outbox gestellt.",
+      creating: "Auftrag wird erstellt...",
+      submit: "Auftrag anlegen"
+    },
+    update: {
+      saveChanges: "Änderungen speichern"
+    },
+    statusChange: {
+      newStatus: "Neuer Status",
+      noFurtherStandard: "Kein weiterer Standardstatus",
+      actualDelivery: "Tatsächliche Lieferung",
+      overrideReason: "Override-Grund",
+      sendCustomerEmail: "Kunden-E-Mail senden",
+      skipCustomerEmail: "Kunden-E-Mail nicht senden",
+      current: "Aktuell",
+      eta: "ETA",
+      mandatoryEmailNote: "Pflicht-E-Mail wird bei Standardwechsel eingereiht.",
+      changing: "Status wird geändert...",
+      submit: "Status ändern"
+    },
+    deliveryDate: {
+      newDate: "Neue Lieferprognose",
+      notifyCustomer: "Kundenbenachrichtigung einreihen",
+      reason: "Grund",
+      saving: "Datum wird gespeichert...",
+      submit: "Lieferdatum aktualisieren"
+    },
+    internalNote: {
+      newNote: "Neue interne Notiz",
+      adding: "Speichert...",
+      submit: "Notiz hinzufügen"
+    },
+    archive: {
+      restoreReason: "Restore-Grund",
+      archiveReason: "Archivierungsgrund",
+      restoreSubmit: "Auftrag wiederherstellen",
+      archiveSubmit: "Auftrag archivieren"
+    },
+    customerPreview: {
+      heading: "Kundenansicht",
+      order: "Auftrag",
+      tracking: "Tracking",
+      deliveryForecast: "Lieferprognose"
+    },
+    newOrderPage: {
+      eyebrow: "Auftrag",
+      title: "Neuen Auftrag anlegen",
+      searchHeading: "Bestandskunden durchsuchen",
+      searchIntro: "Erst suchen, dann bei Bedarf denselben Kunden explizit wiederverwenden.",
+      toOrderList: "Zur Auftragsliste",
+      searchPlaceholder: "Kunde oder E-Mail suchen",
+      search: "Suchen"
+    },
+    orderDetail: {
+      eyebrow: "Auftrag",
+      flashCreated: "Auftrag erstellt. Pflicht-E-Mails wurden in die Outbox eingereiht.",
+      flashUpdated: "Auftrag aktualisiert.",
+      flashNoted: "Interne Notiz hinzugefügt.",
+      flashStatusChanged: "Status aktualisiert. Die passende Historie und E-Mail-Outbox wurden geschrieben.",
+      flashDateChanged: "Lieferdatum aktualisiert.",
+      flashArchived: "Auftrag archiviert und Tracking-Link-Version erhöht.",
+      flashRestored: "Auftrag wiederhergestellt.",
+      tracking: "Tracking",
+      customer: "Kunde",
+      email: "E-Mail",
+      deliveryPlanned: "Lieferung geplant",
+      sales: "Vertrieb",
+      version: "Version",
+      trackingLinkVersion: "Tracking-Link Version",
+      archive: "Archiv",
+      archivedOn: "Archiviert am",
+      active: "Aktiv",
+      statusChangeHeading: "Status ändern",
+      statusChangeIntro: "Standardwechsel gehen nur einen Schritt nach vorn. Overrides sind Super-Admins vorbehalten.",
+      noStatusPermission: "Keine Berechtigung für Statusänderungen.",
+      deliveryDateHeading: "Lieferdatum",
+      deliveryDateIntro: "Änderungen schreiben eine eigene Historie und können optional eine Kunden-E-Mail einreihen.",
+      noDatePermission: "Keine Berechtigung für Lieferdatumänderungen.",
+      customerPreviewHeading: "Kundenvorschau",
+      customerOrderHeading: "Kunde und Auftrag",
+      customerOrderIntro: "Felder in dieser Phase werden über die Auftragsversion gegen parallele Änderungen geschützt.",
+      statusHistoryHeading: "Statusverlauf",
+      deliveryHistoryHeading: "Lieferdatum-Historie",
+      customerNotification: "Kundenbenachrichtigung",
+      yes: "ja",
+      no: "nein",
+      noDeliveryChanges: "Noch keine Lieferdatum-Änderungen vorhanden.",
+      mandatoryEmailsHeading: "Pflicht-E-Mails",
+      colType: "Typ",
+      colRecipient: "Empfänger",
+      colStatus: "Status",
+      colAttempts: "Versuche",
+      colCreated: "Erstellt",
+      noEmailHistory: "Noch keine E-Mail-Historie vorhanden.",
+      internalNotesHeading: "Interne Notizen",
+      internalNoteLabel: "Interne Notiz",
+      auditHeading: "Audit",
+      archiveHeading: "Auftrag archivieren",
+      restoreHeading: "Auftrag wiederherstellen",
+      archiveIntro: "Archivieren sperrt den öffentlichen Zugriff und erhöht die Tracking-Link-Version.",
+      productDescription: "Produktbeschreibung",
+      phone: "Telefon",
+      language: "Sprache"
+    },
+    customerDetail: {
+      eyebrow: "Kundenverwaltung",
+      email: "E-Mail",
+      phone: "Telefon",
+      language: "Sprache",
+      updated: "Aktualisiert",
+      optionalHeading: "Optionale E-Mails",
+      optionalIntro: "Alle Kategorien sind standardmäßig deaktiviert und senden erst nach bestätigter Aktion.",
+      reviewRequestAllowed: "Bewertungsanfrage erlaubt",
+      satisfactionSurveyAllowed: "Zufriedenheitsumfrage erlaubt",
+      maintenanceRecommendationAllowed: "Wartungsempfehlung erlaubt",
+      warrantyReminderAllowed: "Garantie-Erinnerung erlaubt",
+      promotionDisabled: "Promotion deaktiviert",
+      savePreferences: "Präferenzen speichern",
+      colTemplate: "Vorlage",
+      colStatus: "Status",
+      colSoFar: "Bisher",
+      colPreview: "Vorschau",
+      colAction: "Aktion",
+      ready: "Bereit",
+      blocked: "Gesperrt",
+      confirmed: "Bestätigt",
+      send: "Senden",
+      notAvailable: "Nicht verfügbar",
+      ordersHeading: "Aufträge des Kunden",
+      colOrderNumber: "Auftragsnummer",
+      colTracking: "Tracking",
+      colDelivery: "Lieferung",
+      colUpdated: "Aktualisiert"
     }
   }
 };
@@ -459,6 +798,172 @@ const en: AdminDictionary = {
       invalid_credentials: "Email address or password is invalid.",
       not_authorized: "This user account has no access to this area.",
       profile_missing: "No internal user profile exists for this login yet."
+    }
+  },
+  forms: {
+    fields: {
+      firstName: "First name",
+      lastName: "Last name",
+      email: "Email",
+      phone: "Phone",
+      language: "Language",
+      assignedSalesperson: "Assigned sales",
+      notAssigned: "Not directly assigned",
+      fallbackSalesEmail: "Fallback sales email",
+      productDescription: "Product description"
+    },
+    saving: "Saving...",
+    create: {
+      customerModeHeading: "Customer mode",
+      customerModeIntro: "Deliberately reuse an existing customer or create a new one.",
+      newCustomer: "New customer",
+      existingCustomer: "Existing customer",
+      existingMatches: "Existing matches",
+      searchTerm: "Search term",
+      noFilter: "no filter",
+      archivedSuffix: " · archived",
+      noMatches: "No matching existing customers found.",
+      orderDataHeading: "Order data",
+      orderDataIntro: "The tracking number is generated automatically and randomly on creation.",
+      orderNumberAuto: "Order number automatic",
+      orderNumberManual: "Order number manual",
+      manualOrderNumber: "Manual order number",
+      estimatedDelivery: "Estimated delivery",
+      initialNote: "Initial internal note",
+      notesHeading: "Notes",
+      notesIntro: "The customer confirmation and sales notification are queued as mandatory emails in the outbox.",
+      creating: "Creating order...",
+      submit: "Create order"
+    },
+    update: {
+      saveChanges: "Save changes"
+    },
+    statusChange: {
+      newStatus: "New status",
+      noFurtherStandard: "No further standard status",
+      actualDelivery: "Actual delivery",
+      overrideReason: "Override reason",
+      sendCustomerEmail: "Send customer email",
+      skipCustomerEmail: "Do not send customer email",
+      current: "Current",
+      eta: "ETA",
+      mandatoryEmailNote: "A mandatory email is queued on a standard transition.",
+      changing: "Changing status...",
+      submit: "Change status"
+    },
+    deliveryDate: {
+      newDate: "New delivery forecast",
+      notifyCustomer: "Queue customer notification",
+      reason: "Reason",
+      saving: "Saving date...",
+      submit: "Update delivery date"
+    },
+    internalNote: {
+      newNote: "New internal note",
+      adding: "Saving...",
+      submit: "Add note"
+    },
+    archive: {
+      restoreReason: "Restore reason",
+      archiveReason: "Archive reason",
+      restoreSubmit: "Restore order",
+      archiveSubmit: "Archive order"
+    },
+    customerPreview: {
+      heading: "Customer view",
+      order: "Order",
+      tracking: "Tracking",
+      deliveryForecast: "Delivery forecast"
+    },
+    newOrderPage: {
+      eyebrow: "Order",
+      title: "Create a new order",
+      searchHeading: "Search existing customers",
+      searchIntro: "Search first, then explicitly reuse the same customer if needed.",
+      toOrderList: "To order list",
+      searchPlaceholder: "Search customer or email",
+      search: "Search"
+    },
+    orderDetail: {
+      eyebrow: "Order",
+      flashCreated: "Order created. Mandatory emails were queued in the outbox.",
+      flashUpdated: "Order updated.",
+      flashNoted: "Internal note added.",
+      flashStatusChanged: "Status updated. The matching history and email outbox were written.",
+      flashDateChanged: "Delivery date updated.",
+      flashArchived: "Order archived and tracking link version increased.",
+      flashRestored: "Order restored.",
+      tracking: "Tracking",
+      customer: "Customer",
+      email: "Email",
+      deliveryPlanned: "Delivery planned",
+      sales: "Sales",
+      version: "Version",
+      trackingLinkVersion: "Tracking link version",
+      archive: "Archive",
+      archivedOn: "Archived on",
+      active: "Active",
+      statusChangeHeading: "Change status",
+      statusChangeIntro: "Standard transitions move forward one step only. Overrides are reserved for super admins.",
+      noStatusPermission: "No permission for status changes.",
+      deliveryDateHeading: "Delivery date",
+      deliveryDateIntro: "Changes write their own history and can optionally queue a customer email.",
+      noDatePermission: "No permission for delivery date changes.",
+      customerPreviewHeading: "Customer preview",
+      customerOrderHeading: "Customer and order",
+      customerOrderIntro: "Fields in this phase are protected against concurrent changes via the order version.",
+      statusHistoryHeading: "Status history",
+      deliveryHistoryHeading: "Delivery date history",
+      customerNotification: "Customer notification",
+      yes: "yes",
+      no: "no",
+      noDeliveryChanges: "No delivery date changes yet.",
+      mandatoryEmailsHeading: "Mandatory emails",
+      colType: "Type",
+      colRecipient: "Recipient",
+      colStatus: "Status",
+      colAttempts: "Attempts",
+      colCreated: "Created",
+      noEmailHistory: "No email history yet.",
+      internalNotesHeading: "Internal notes",
+      internalNoteLabel: "Internal note",
+      auditHeading: "Audit",
+      archiveHeading: "Archive order",
+      restoreHeading: "Restore order",
+      archiveIntro: "Archiving blocks public access and increases the tracking link version.",
+      productDescription: "Product description",
+      phone: "Phone",
+      language: "Language"
+    },
+    customerDetail: {
+      eyebrow: "Customer management",
+      email: "Email",
+      phone: "Phone",
+      language: "Language",
+      updated: "Updated",
+      optionalHeading: "Optional emails",
+      optionalIntro: "All categories are disabled by default and only send after a confirmed action.",
+      reviewRequestAllowed: "Review request allowed",
+      satisfactionSurveyAllowed: "Satisfaction survey allowed",
+      maintenanceRecommendationAllowed: "Maintenance recommendation allowed",
+      warrantyReminderAllowed: "Warranty reminder allowed",
+      promotionDisabled: "Promotion disabled",
+      savePreferences: "Save preferences",
+      colTemplate: "Template",
+      colStatus: "Status",
+      colSoFar: "So far",
+      colPreview: "Preview",
+      colAction: "Action",
+      ready: "Ready",
+      blocked: "Blocked",
+      confirmed: "Confirmed",
+      send: "Send",
+      notAvailable: "Not available",
+      ordersHeading: "Customer orders",
+      colOrderNumber: "Order number",
+      colTracking: "Tracking",
+      colDelivery: "Delivery",
+      colUpdated: "Updated"
     }
   }
 };

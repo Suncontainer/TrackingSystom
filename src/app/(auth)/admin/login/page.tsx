@@ -9,6 +9,8 @@ import { signInAction } from "@/features/auth/actions";
 import { devAdminCredentials, isDevAdminLoginEnabled } from "@/features/auth/dev-login";
 import { getAdminContext } from "@/i18n/get-admin-locale";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Admin Login"
 };

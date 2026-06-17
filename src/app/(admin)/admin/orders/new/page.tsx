@@ -5,6 +5,7 @@ import { OrderCreateForm } from "@/components/orders/order-create-form";
 import { routes } from "@/config/routes";
 import { requirePermission } from "@/features/auth/guards";
 import { listAssignableSalespeople, searchCustomersForReuse } from "@/features/orders/service";
+import { getAdminContext } from "@/i18n/get-admin-locale";
 
 export const metadata = {
   title: "Neuer Auftrag"
@@ -20,6 +21,8 @@ function getSearchValue(value: string | string[] | undefined) {
 
 export default async function NewOrderPage({ searchParams }: NewOrderPageProps) {
   await requirePermission("orders:create");
+  const { t } = await getAdminContext();
+  const p = t.forms.newOrderPage;
   const params = (searchParams ? await searchParams : {}) ?? {};
   const customerQuery = getSearchValue(params.customerQuery).trim();
   const [salespeople, customerMatches] = await Promise.all([
@@ -28,26 +31,26 @@ export default async function NewOrderPage({ searchParams }: NewOrderPageProps) 
   ]);
 
   return (
-    <AdminPageShell eyebrow="Auftrag" title="Neuen Auftrag anlegen">
+    <AdminPageShell eyebrow={p.eyebrow} title={p.title}>
       <section className="admin-card admin-section">
         <div className="section-heading section-heading--inline">
           <div>
-            <h2 className="font-heading">Bestandskunden durchsuchen</h2>
-            <p>Erst suchen, dann bei Bedarf denselben Kunden explizit wiederverwenden.</p>
+            <h2 className="font-heading">{p.searchHeading}</h2>
+            <p>{p.searchIntro}</p>
           </div>
           <Link className="button-base button-secondary" href={routes.admin.orders}>
-            Zur Auftragsliste
+            {p.toOrderList}
           </Link>
         </div>
         <form action={routes.admin.newOrder} className="admin-inline-form">
           <input
             defaultValue={customerQuery}
             name="customerQuery"
-            placeholder="Kunde oder E-Mail suchen"
+            placeholder={p.searchPlaceholder}
             type="search"
           />
           <button className="button-base button-secondary" type="submit">
-            Suchen
+            {p.search}
           </button>
         </form>
       </section>
@@ -56,6 +59,8 @@ export default async function NewOrderPage({ searchParams }: NewOrderPageProps) 
         customerMatches={customerMatches}
         customerSearchQuery={customerQuery}
         salespeople={salespeople}
+        fields={t.forms.fields}
+        dict={t.forms.create}
       />
     </AdminPageShell>
   );

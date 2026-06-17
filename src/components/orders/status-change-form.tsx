@@ -6,6 +6,8 @@ import { changeOrderStatusAction } from "@/features/orders/actions";
 import { initialOrderFormState } from "@/features/orders/form-state";
 import { getPermittedStandardNextStatus } from "@/features/orders/workflow";
 import { orderStatusContent, orderStatuses, type OrderStatus } from "@/features/orders/status";
+import type { StatusChangeDict } from "@/i18n/admin";
+import type { AppLocale } from "@/i18n/types";
 
 type StatusChangeFormProps = {
   canOverride: boolean;
@@ -13,6 +15,8 @@ type StatusChangeFormProps = {
   currentStatus: OrderStatus;
   orderId: string;
   version: number;
+  locale: AppLocale;
+  dict: StatusChangeDict;
 };
 
 function getFieldError(errors: Record<string, string[]>, field: string) {
@@ -24,7 +28,9 @@ export function StatusChangeForm({
   currentEstimatedDeliveryDate,
   currentStatus,
   orderId,
-  version
+  version,
+  locale,
+  dict
 }: StatusChangeFormProps) {
   const [state, formAction, pending] = useActionState(changeOrderStatusAction, initialOrderFormState);
   const nextStandardStatus = getPermittedStandardNextStatus(currentStatus);
@@ -45,16 +51,16 @@ export function StatusChangeForm({
       ) : null}
       <div className="form-grid">
         <div className="form-field">
-          <label htmlFor="status-new-status">Neuer Status</label>
+          <label htmlFor="status-new-status">{dict.newStatus}</label>
           <select id="status-new-status" name="newStatus" required>
             {selectableStatuses.length > 0 ? (
               selectableStatuses.map((status) => (
                 <option key={status} value={status}>
-                  {orderStatusContent[status].de.label}
+                  {orderStatusContent[status][locale].label}
                 </option>
               ))
             ) : (
-              <option value="">Kein weiterer Standardstatus</option>
+              <option value="">{dict.noFurtherStandard}</option>
             )}
           </select>
           {getFieldError(state.fieldErrors, "newStatus") ? (
@@ -62,7 +68,7 @@ export function StatusChangeForm({
           ) : null}
         </div>
         <div className="form-field">
-          <label htmlFor="status-actual-delivery-date">Tatsaechliche Lieferung</label>
+          <label htmlFor="status-actual-delivery-date">{dict.actualDelivery}</label>
           <input id="status-actual-delivery-date" name="actualDeliveryDate" type="date" />
           {getFieldError(state.fieldErrors, "actualDeliveryDate") ? (
             <p className="field-error">{getFieldError(state.fieldErrors, "actualDeliveryDate")}</p>
@@ -73,7 +79,7 @@ export function StatusChangeForm({
       {canOverride ? (
         <>
           <div className="form-field">
-            <label htmlFor="status-reason">Override-Grund</label>
+            <label htmlFor="status-reason">{dict.overrideReason}</label>
             <textarea id="status-reason" name="reason" rows={3} />
             {getFieldError(state.fieldErrors, "reason") ? (
               <p className="field-error">{getFieldError(state.fieldErrors, "reason")}</p>
@@ -82,24 +88,24 @@ export function StatusChangeForm({
           <div className="form-segmented">
             <label>
               <input name="customerEmailDecision" type="radio" value="send" />
-              <span>Kunden-E-Mail senden</span>
+              <span>{dict.sendCustomerEmail}</span>
             </label>
             <label>
               <input name="customerEmailDecision" type="radio" value="skip" />
-              <span>Kunden-E-Mail nicht senden</span>
+              <span>{dict.skipCustomerEmail}</span>
             </label>
           </div>
         </>
       ) : null}
 
       <div className="preview-strip">
-        <span>Aktuell: {orderStatusContent[currentStatus].de.label}</span>
-        <span>ETA: {currentEstimatedDeliveryDate}</span>
-        <span>Pflicht-E-Mail wird bei Standardwechsel eingereiht.</span>
+        <span>{dict.current}: {orderStatusContent[currentStatus][locale].label}</span>
+        <span>{dict.eta}: {currentEstimatedDeliveryDate}</span>
+        <span>{dict.mandatoryEmailNote}</span>
       </div>
 
       <button className="button-base button-primary" disabled={pending || selectableStatuses.length === 0} type="submit">
-        {pending ? "Status wird geaendert..." : "Status aendern"}
+        {pending ? dict.changing : dict.submit}
       </button>
     </form>
   );

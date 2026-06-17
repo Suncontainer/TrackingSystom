@@ -8,6 +8,8 @@ import { routes } from "@/config/routes";
 import { forgotPasswordAction } from "@/features/auth/actions";
 import { getAdminContext } from "@/i18n/get-admin-locale";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Passwort Zuruecksetzen"
 };

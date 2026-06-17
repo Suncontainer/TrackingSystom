@@ -18,6 +18,8 @@ import {
   optionalEmailTypes
 } from "@/features/email/optional";
 import { getCustomerDetail } from "@/features/orders/service";
+import { getAdminContext } from "@/i18n/get-admin-locale";
+import type { AppLocale } from "@/i18n/types";
 import { NotFoundError } from "@/lib/errors/app-error";
 
 export const metadata = {
@@ -28,37 +30,39 @@ type CustomerDetailPageProps = {
   params: Promise<{ customerId: string }>;
 };
 
-function formatDate(value: string | Date | null) {
+function formatDate(value: string | Date | null, locale: AppLocale) {
   if (!value) {
     return "—";
   }
 
-  return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" }).format(new Date(value));
+  return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", { dateStyle: "medium" }).format(new Date(value));
 }
 
 export default async function CustomerDetailPage({ params }: CustomerDetailPageProps) {
   const { customerId } = await params;
+  const { locale, t } = await getAdminContext();
+  const c = t.forms.customerDetail;
   const detail = await loadCustomerPageData(customerId);
 
   return (
-    <AdminPageShell eyebrow="Kundenverwaltung" title={detail.customerName}>
+    <AdminPageShell eyebrow={c.eyebrow} title={detail.customerName}>
       <section className="admin-card admin-section">
         <div className="detail-grid">
           <div>
-            <p className="detail-label">E-Mail</p>
+            <p className="detail-label">{c.email}</p>
             <p>{detail.customer.email}</p>
           </div>
           <div>
-            <p className="detail-label">Telefon</p>
+            <p className="detail-label">{c.phone}</p>
             <p>{detail.customer.phone || "—"}</p>
           </div>
           <div>
-            <p className="detail-label">Sprache</p>
+            <p className="detail-label">{c.language}</p>
             <p>{detail.customer.preferredLanguage.toUpperCase()}</p>
           </div>
           <div>
-            <p className="detail-label">Aktualisiert</p>
-            <p>{formatDate(detail.customer.updatedAt)}</p>
+            <p className="detail-label">{c.updated}</p>
+            <p>{formatDate(detail.customer.updatedAt, locale)}</p>
           </div>
         </div>
       </section>
@@ -66,8 +70,8 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
       {detail.canManageOptionalEmail ? (
         <section className="admin-card admin-section">
           <div className="section-heading">
-            <h2 className="font-heading">Optionale E-Mails</h2>
-            <p>Alle Kategorien sind standardmaessig deaktiviert und senden erst nach bestaetigter Aktion.</p>
+            <h2 className="font-heading">{c.optionalHeading}</h2>
+            <p>{c.optionalIntro}</p>
           </div>
 
           <form action={updateCustomerCommunicationPreferencesAction} className="form-grid">
@@ -78,7 +82,7 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                 name="reviewRequestAllowed"
                 defaultChecked={detail.optionalEmailState.preferences.reviewRequestAllowed}
               />
-              Bewertungsanfrage erlaubt
+              {c.reviewRequestAllowed}
             </label>
             <label className="checkbox-row">
               <input
@@ -86,7 +90,7 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                 name="satisfactionSurveyAllowed"
                 defaultChecked={detail.optionalEmailState.preferences.satisfactionSurveyAllowed}
               />
-              Zufriedenheitsumfrage erlaubt
+              {c.satisfactionSurveyAllowed}
             </label>
             <label className="checkbox-row">
               <input
@@ -94,7 +98,7 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                 name="maintenanceRecommendationAllowed"
                 defaultChecked={detail.optionalEmailState.preferences.maintenanceRecommendationAllowed}
               />
-              Wartungsempfehlung erlaubt
+              {c.maintenanceRecommendationAllowed}
             </label>
             <label className="checkbox-row">
               <input
@@ -102,24 +106,24 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                 name="warrantyReminderAllowed"
                 defaultChecked={detail.optionalEmailState.preferences.warrantyReminderAllowed}
               />
-              Garantie-Erinnerung erlaubt
+              {c.warrantyReminderAllowed}
             </label>
             <label className="checkbox-row checkbox-row--muted">
               <input type="checkbox" disabled />
-              Promotion deaktiviert
+              {c.promotionDisabled}
             </label>
-            <button type="submit" className="button-base button-primary">Praeferenzen speichern</button>
+            <button type="submit" className="button-base button-primary">{c.savePreferences}</button>
           </form>
 
           <div className="admin-table-wrap">
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Vorlage</th>
-                  <th>Status</th>
-                  <th>Bisher</th>
-                  <th>Vorschau</th>
-                  <th>Aktion</th>
+                  <th>{c.colTemplate}</th>
+                  <th>{c.colStatus}</th>
+                  <th>{c.colSoFar}</th>
+                  <th>{c.colPreview}</th>
+                  <th>{c.colAction}</th>
                 </tr>
               </thead>
               <tbody>
@@ -139,7 +143,7 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                         <div className="table-primary">{definition.label}</div>
                         <div className="table-secondary">{definition.subject}</div>
                       </td>
-                      <td>{eligible ? "Bereit" : "Gesperrt"}</td>
+                      <td>{eligible ? c.ready : c.blocked}</td>
                       <td>{detail.optionalEmailState.sentCounts[emailType]}</td>
                       <td>{definition.preview}</td>
                       <td>
@@ -150,12 +154,12 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                             <input type="hidden" name="previewed" value="yes" />
                             <label className="checkbox-row">
                               <input type="checkbox" name="confirmed" value="yes" required />
-                              Bestaetigt
+                              {c.confirmed}
                             </label>
-                            <button type="submit" className="auth-link">Senden</button>
+                            <button type="submit" className="auth-link">{c.send}</button>
                           </form>
                         ) : (
-                          "Nicht verfuegbar"
+                          c.notAvailable
                         )}
                       </td>
                     </tr>
@@ -169,17 +173,17 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
 
       <section className="admin-card admin-section">
         <div className="section-heading">
-          <h2 className="font-heading">Auftraege des Kunden</h2>
+          <h2 className="font-heading">{c.ordersHeading}</h2>
         </div>
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Auftragsnummer</th>
-                <th>Tracking</th>
-                <th>Status</th>
-                <th>Lieferung</th>
-                <th>Aktualisiert</th>
+                <th>{c.colOrderNumber}</th>
+                <th>{c.colTracking}</th>
+                <th>{c.colStatus}</th>
+                <th>{c.colDelivery}</th>
+                <th>{c.colUpdated}</th>
               </tr>
             </thead>
             <tbody>
@@ -190,10 +194,10 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                   </td>
                   <td>{order.trackingNumberDisplay}</td>
                   <td>
-                    <OrderStatusBadge status={order.status} />
+                    <OrderStatusBadge status={order.status} locale={locale} />
                   </td>
-                  <td>{formatDate(order.currentEstimatedDeliveryDate)}</td>
-                  <td>{formatDate(order.updatedAt)}</td>
+                  <td>{formatDate(order.currentEstimatedDeliveryDate, locale)}</td>
+                  <td>{formatDate(order.updatedAt, locale)}</td>
                 </tr>
               ))}
             </tbody>

@@ -13,6 +13,8 @@ import { routes } from "@/config/routes";
 import { AuthorizationError } from "@/features/auth/errors";
 import { requireOrderAccess } from "@/features/auth/guards";
 import { listAssignableSalespeople, getOrderDetail } from "@/features/orders/service";
+import { getAdminContext } from "@/i18n/get-admin-locale";
+import type { AppLocale } from "@/i18n/types";
 import { NotFoundError } from "@/lib/errors/app-error";
 
 export const metadata = {
@@ -24,12 +26,12 @@ type OrderDetailsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function formatDate(value: string | Date | null) {
+function formatDate(value: string | Date | null, locale: AppLocale) {
   if (!value) {
     return "—";
   }
 
-  return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" }).format(new Date(value));
+  return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", { dateStyle: "medium" }).format(new Date(value));
 }
 
 function getSearchValue(value: string | string[] | undefined) {
@@ -38,93 +40,81 @@ function getSearchValue(value: string | string[] | undefined) {
 
 export default async function OrderDetailsPage({ params, searchParams }: OrderDetailsPageProps) {
   const { orderId } = await params;
+  const { locale, t } = await getAdminContext();
+  const dt = t.forms.orderDetail;
   const query = (searchParams ? await searchParams : {}) ?? {};
   const { detail, salespeople } = await loadOrderPageData(orderId);
 
   return (
-    <AdminPageShell eyebrow="Auftrag" title={detail.order.orderNumber}>
+    <AdminPageShell eyebrow={dt.eyebrow} title={detail.order.orderNumber}>
       {getSearchValue(query.created) === "1" ? (
-        <p className="form-feedback" role="status">
-          Auftrag erstellt. Pflicht-E-Mails wurden in die Outbox eingereiht.
-        </p>
+        <p className="form-feedback" role="status">{dt.flashCreated}</p>
       ) : null}
       {getSearchValue(query.updated) === "1" ? (
-        <p className="form-feedback" role="status">
-          Auftrag aktualisiert.
-        </p>
+        <p className="form-feedback" role="status">{dt.flashUpdated}</p>
       ) : null}
       {getSearchValue(query.noted) === "1" ? (
-        <p className="form-feedback" role="status">
-          Interne Notiz hinzugefuegt.
-        </p>
+        <p className="form-feedback" role="status">{dt.flashNoted}</p>
       ) : null}
       {getSearchValue(query.statusChanged) === "1" ? (
-        <p className="form-feedback" role="status">
-          Status aktualisiert. Die passende Historie und E-Mail-Outbox wurden geschrieben.
-        </p>
+        <p className="form-feedback" role="status">{dt.flashStatusChanged}</p>
       ) : null}
       {getSearchValue(query.dateChanged) === "1" ? (
-        <p className="form-feedback" role="status">
-          Lieferdatum aktualisiert.
-        </p>
+        <p className="form-feedback" role="status">{dt.flashDateChanged}</p>
       ) : null}
       {getSearchValue(query.archived) === "1" ? (
-        <p className="form-feedback" role="status">
-          Auftrag archiviert und Tracking-Link-Version erhoeht.
-        </p>
+        <p className="form-feedback" role="status">{dt.flashArchived}</p>
       ) : null}
       {getSearchValue(query.restored) === "1" ? (
-        <p className="form-feedback" role="status">
-          Auftrag wiederhergestellt.
-        </p>
+        <p className="form-feedback" role="status">{dt.flashRestored}</p>
       ) : null}
 
       <section className="admin-card admin-section">
         <div className="detail-header">
           <div>
-            <p className="detail-label">Tracking</p>
+            <p className="detail-label">{dt.tracking}</p>
             <h2 className="font-heading">{detail.order.trackingNumberDisplay}</h2>
           </div>
-          <OrderStatusBadge status={detail.order.status} />
+          <OrderStatusBadge status={detail.order.status} locale={locale} />
         </div>
         <div className="detail-grid">
           <div>
-            <p className="detail-label">Kunde</p>
+            <p className="detail-label">{dt.customer}</p>
             <p>
               <Link href={routes.admin.customerDetails(detail.order.customerId)}>{detail.customerName}</Link>
             </p>
           </div>
           <div>
-            <p className="detail-label">E-Mail</p>
+            <p className="detail-label">{dt.email}</p>
             <p>{detail.order.customerEmail}</p>
           </div>
           <div>
-            <p className="detail-label">Lieferung geplant</p>
-            <p>{formatDate(detail.order.currentEstimatedDeliveryDate)}</p>
+            <p className="detail-label">{dt.deliveryPlanned}</p>
+            <p>{formatDate(detail.order.currentEstimatedDeliveryDate, locale)}</p>
           </div>
           <div>
-            <p className="detail-label">Vertrieb</p>
+            <p className="detail-label">{dt.sales}</p>
             <p>{detail.order.assignedSalespersonLabel || detail.order.assignedSalespersonEmail || "—"}</p>
           </div>
           <div>
-            <p className="detail-label">Version</p>
+            <p className="detail-label">{dt.version}</p>
             <p>{detail.order.version}</p>
           </div>
           <div>
-            <p className="detail-label">Tracking-Link Version</p>
+            <p className="detail-label">{dt.trackingLinkVersion}</p>
             <p>{detail.order.trackingLinkVersion}</p>
           </div>
           <div>
-            <p className="detail-label">Archiv</p>
-            <p>{detail.order.archivedAt ? `Archiviert am ${formatDate(detail.order.archivedAt)}` : "Aktiv"}</p>
+            <p className="detail-label">{dt.archive}</p>
+            <p>{detail.order.archivedAt ? `${dt.archivedOn} ${formatDate(detail.order.archivedAt, locale)}` : dt.active}</p>
           </div>
         </div>
       </section>
 
       <section className="admin-card admin-section">
         <div className="section-heading">
-          <h2 className="font-heading">Status aendern</h2>
-          <p>Standardwechsel gehen nur einen Schritt nach vorn. Overrides sind Super-Admins vorbehalten.</p>
+          <h2 className="font-heading">{dt.statusChangeHeading}</h2>
+          <p>{dt.statusChangeIntro}</p>
         </div>
         {detail.canUpdateWorkflow ? (
           <StatusChangeForm
@@ -133,39 +123,42 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
             currentStatus={detail.order.status}
             orderId={detail.order.id}
             version={detail.order.version}
+            locale={locale}
+            dict={t.forms.statusChange}
           />
         ) : (
-          <p className="panel-empty">Keine Berechtigung fuer Statusaenderungen.</p>
+          <p className="panel-empty">{dt.noStatusPermission}</p>
         )}
       </section>
 
       <section className="admin-card admin-section">
         <div className="section-heading">
-          <h2 className="font-heading">Lieferdatum</h2>
-          <p>Aenderungen schreiben eine eigene Historie und koennen optional eine Kunden-E-Mail einreihen.</p>
+          <h2 className="font-heading">{dt.deliveryDateHeading}</h2>
+          <p>{dt.deliveryDateIntro}</p>
         </div>
         {detail.canUpdateWorkflow ? (
           <DeliveryDateForm
             currentDate={detail.order.currentEstimatedDeliveryDate}
             orderId={detail.order.id}
             version={detail.order.version}
+            dict={t.forms.deliveryDate}
           />
         ) : (
-          <p className="panel-empty">Keine Berechtigung fuer Lieferdatumaenderungen.</p>
+          <p className="panel-empty">{dt.noDatePermission}</p>
         )}
       </section>
 
       <section className="admin-card admin-section">
         <div className="section-heading">
-          <h2 className="font-heading">Kundenvorschau</h2>
+          <h2 className="font-heading">{dt.customerPreviewHeading}</h2>
         </div>
-        <CustomerPreview snapshot={detail.customerPreview} />
+        <CustomerPreview snapshot={detail.customerPreview} dict={t.forms.customerPreview} />
       </section>
 
       <section className="admin-card admin-section">
         <div className="section-heading">
-          <h2 className="font-heading">Kunde und Auftrag</h2>
-          <p>Felder in dieser Phase werden ueber `orders.version` gegen parallele Aenderungen geschuetzt.</p>
+          <h2 className="font-heading">{dt.customerOrderHeading}</h2>
+          <p>{dt.customerOrderIntro}</p>
         </div>
         {detail.canEdit ? (
           <OrderUpdateForm
@@ -182,19 +175,22 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
               version: detail.order.version
             }}
             salespeople={salespeople}
+            fields={t.forms.fields}
+            saving={t.forms.saving}
+            saveChanges={t.forms.update.saveChanges}
           />
         ) : (
           <div className="detail-grid">
             <div>
-              <p className="detail-label">Produktbeschreibung</p>
+              <p className="detail-label">{dt.productDescription}</p>
               <p>{detail.order.productDescription || "—"}</p>
             </div>
             <div>
-              <p className="detail-label">Telefon</p>
+              <p className="detail-label">{dt.phone}</p>
               <p>{detail.order.customerPhone || "—"}</p>
             </div>
             <div>
-              <p className="detail-label">Sprache</p>
+              <p className="detail-label">{dt.language}</p>
               <p>{detail.order.preferredLanguage.toUpperCase()}</p>
             </div>
           </div>
@@ -203,17 +199,17 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
 
       <section className="admin-card admin-section">
         <div className="section-heading">
-          <h2 className="font-heading">Statusverlauf</h2>
+          <h2 className="font-heading">{dt.statusHistoryHeading}</h2>
         </div>
         <div className="stack-list">
           {detail.statusHistory.map((entry) => (
             <article className="stack-list__item" key={entry.id}>
               <div className="stack-list__heading">
-                <OrderStatusBadge status={entry.newStatus} />
-                <span>{formatDate(entry.createdAt)}</span>
+                <OrderStatusBadge status={entry.newStatus} locale={locale} />
+                <span>{formatDate(entry.createdAt, locale)}</span>
               </div>
               <p className="table-secondary">
-                {entry.changeType} · ETA {formatDate(entry.estimatedDeliveryDateSnapshot)}
+                {entry.changeType} · ETA {formatDate(entry.estimatedDeliveryDateSnapshot, locale)}
               </p>
               {entry.reason ? <p>{entry.reason}</p> : null}
             </article>
@@ -223,7 +219,7 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
 
       <section className="admin-card admin-section">
         <div className="section-heading">
-          <h2 className="font-heading">Lieferdatum-Historie</h2>
+          <h2 className="font-heading">{dt.deliveryHistoryHeading}</h2>
         </div>
         {detail.dateHistory.length > 0 ? (
           <div className="stack-list">
@@ -231,36 +227,36 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
               <article className="stack-list__item" key={entry.id}>
                 <div className="stack-list__heading">
                   <strong>
-                    {formatDate(entry.previousDate)} &gt; {formatDate(entry.newDate)}
+                    {formatDate(entry.previousDate, locale)} &gt; {formatDate(entry.newDate, locale)}
                   </strong>
-                  <span>{formatDate(entry.createdAt)}</span>
+                  <span>{formatDate(entry.createdAt, locale)}</span>
                 </div>
                 <p className="table-secondary">
-                  Kundenbenachrichtigung: {entry.customerNotificationRequested ? "ja" : "nein"}
+                  {dt.customerNotification}: {entry.customerNotificationRequested ? dt.yes : dt.no}
                 </p>
                 {entry.reason ? <p>{entry.reason}</p> : null}
               </article>
             ))}
           </div>
         ) : (
-          <p className="panel-empty">Noch keine Lieferdatum-Aenderungen vorhanden.</p>
+          <p className="panel-empty">{dt.noDeliveryChanges}</p>
         )}
       </section>
 
       <section className="admin-card admin-section">
         <div className="section-heading">
-          <h2 className="font-heading">Pflicht-E-Mails</h2>
+          <h2 className="font-heading">{dt.mandatoryEmailsHeading}</h2>
         </div>
         {detail.emailHistory.length > 0 ? (
           <div className="admin-table-wrap">
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Typ</th>
-                  <th>Empfaenger</th>
-                  <th>Status</th>
-                  <th>Versuche</th>
-                  <th>Erstellt</th>
+                  <th>{dt.colType}</th>
+                  <th>{dt.colRecipient}</th>
+                  <th>{dt.colStatus}</th>
+                  <th>{dt.colAttempts}</th>
+                  <th>{dt.colCreated}</th>
                 </tr>
               </thead>
               <tbody>
@@ -273,30 +269,30 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
                     <td>{entry.recipientEmail}</td>
                     <td>{entry.status}</td>
                     <td>{entry.attemptCount}</td>
-                    <td>{formatDate(entry.createdAt)}</td>
+                    <td>{formatDate(entry.createdAt, locale)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="panel-empty">Noch keine E-Mail-Historie vorhanden.</p>
+          <p className="panel-empty">{dt.noEmailHistory}</p>
         )}
       </section>
 
       {detail.notes.length > 0 || detail.canCreateNotes ? (
         <section className="admin-card admin-section">
           <div className="section-heading">
-            <h2 className="font-heading">Interne Notizen</h2>
+            <h2 className="font-heading">{dt.internalNotesHeading}</h2>
           </div>
-          {detail.canCreateNotes ? <InternalNoteForm orderId={detail.order.id} /> : null}
+          {detail.canCreateNotes ? <InternalNoteForm orderId={detail.order.id} dict={t.forms.internalNote} /> : null}
           {detail.notes.length > 0 ? (
             <div className="stack-list">
               {detail.notes.map((note) => (
                 <article className="stack-list__item" key={note.id}>
                   <div className="stack-list__heading">
-                    <strong>Interne Notiz</strong>
-                    <span>{formatDate(note.createdAt)}</span>
+                    <strong>{dt.internalNoteLabel}</strong>
+                    <span>{formatDate(note.createdAt, locale)}</span>
                   </div>
                   <p>{note.body}</p>
                 </article>
@@ -309,14 +305,14 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
       {detail.auditHistory.length > 0 ? (
         <section className="admin-card admin-section">
           <div className="section-heading">
-            <h2 className="font-heading">Audit</h2>
+            <h2 className="font-heading">{dt.auditHeading}</h2>
           </div>
           <div className="stack-list">
             {detail.auditHistory.map((entry) => (
               <article className="stack-list__item" key={entry.id}>
                 <div className="stack-list__heading">
                   <strong>{entry.action}</strong>
-                  <span>{formatDate(entry.createdAt)}</span>
+                  <span>{formatDate(entry.createdAt, locale)}</span>
                 </div>
               </article>
             ))}
@@ -327,13 +323,15 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
       {detail.canArchive ? (
         <section className="admin-card admin-section">
           <div className="section-heading">
-            <h2 className="font-heading">{detail.order.archivedAt ? "Auftrag wiederherstellen" : "Auftrag archivieren"}</h2>
-            <p>Archivieren sperrt public access und erhoeht die Tracking-Link-Version.</p>
+            <h2 className="font-heading">{detail.order.archivedAt ? dt.restoreHeading : dt.archiveHeading}</h2>
+            <p>{dt.archiveIntro}</p>
           </div>
           <ArchiveOrderForm
             archived={Boolean(detail.order.archivedAt)}
             orderId={detail.order.id}
             version={detail.order.version}
+            dict={t.forms.archive}
+            saving={t.forms.saving}
           />
         </section>
       ) : null}
