@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 import { ADMIN_LOCALE_COOKIE, getAdminDictionary } from "@/i18n/admin";
 import type { AppLocale } from "@/i18n/types";
@@ -18,14 +18,20 @@ function readLocaleFromCookie(): AppLocale {
   return match?.[1] === "en" ? "en" : "de";
 }
 
+// The cookie is client-only, so the value differs between server and client.
+// useSyncExternalStore reads it hydration-safely (server snapshot "de", then the
+// client snapshot from the cookie) without a setState-in-effect cascade.
+const subscribeToNothing = () => () => {};
+
 export default function AdminErrorPage({ error, reset }: AdminErrorPageProps) {
-  // Default to German on the server render, then sync to the saved locale on the client
-  // to avoid a hydration mismatch.
-  const [locale, setLocale] = useState<AppLocale>("de");
+  const locale = useSyncExternalStore<AppLocale>(
+    subscribeToNothing,
+    readLocaleFromCookie,
+    () => "de"
+  );
 
   useEffect(() => {
     console.error(error);
-    setLocale(readLocaleFromCookie());
   }, [error]);
 
   const t = getAdminDictionary(locale).errorBoundary;
