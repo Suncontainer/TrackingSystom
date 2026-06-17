@@ -10,6 +10,7 @@ import { customers, emailOutbox, emailSuppressions, orders, type EmailStatus, ty
 import type { AppLocale } from "@/i18n/types";
 import { formatCustomerName } from "@/features/customers/normalization";
 import { isDemoMode, listDemoEmailHistory } from "@/features/demo/store";
+import { getAppSettings } from "@/features/settings/service";
 import { createTrackingToken } from "@/features/tracking/tokens";
 
 import { getNextAttemptAt, getStaleProcessingCutoff } from "./backoff";
@@ -216,9 +217,14 @@ async function sendEmail(row: ClaimedEmail, html: string, text: string, subject:
     throw new Error("RESEND_API_KEY is required for production email delivery.");
   }
 
+  const settings = await getAppSettings();
+  const from = settings.emailFromAddress
+    ? `${settings.emailFromName} <${settings.emailFromAddress}>`
+    : env.EMAIL_FROM;
+
   const resend = new Resend(env.RESEND_API_KEY);
   const response = await resend.emails.send({
-    from: env.EMAIL_FROM,
+    from,
     headers: {
       "Idempotency-Key": row.idempotencyKey
     },

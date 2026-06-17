@@ -44,6 +44,7 @@ import {
   updateDemoOrderDetails
 } from "@/features/demo/store";
 import { triggerImmediateEmailDispatch } from "@/features/email/outbox";
+import { getAppSettings } from "@/features/settings/service";
 
 import {
   type OrderListFilters
@@ -846,6 +847,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
   }
 
   const db = getDb();
+  const settings = await getAppSettings();
   const assignedSalespersonProfile = await resolveAssignedSalesperson(normalizeOptionalString(data.assignedSalespersonId));
   const fallbackSalesEmail =
     assignedSalespersonProfile?.email ?? normalizeSalespersonEmail(data.assignedSalespersonEmail);
@@ -886,7 +888,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
       let customerFirstName = customer?.firstName ?? data.customerFirstName ?? "";
       let customerLastName = customer?.lastName ?? data.customerLastName ?? "";
       let customerLocale: AppLocale = normalizeLocale(
-        customer?.preferredLanguage ?? data.preferredLanguage ?? "de"
+        customer?.preferredLanguage ?? data.preferredLanguage ?? settings.defaultCustomerLanguage
       );
 
       if (!customerId) {
@@ -898,7 +900,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
             firstName: data.customerFirstName ?? "",
             lastName: data.customerLastName ?? "",
             phone: normalizeOptionalString(data.customerPhone),
-            preferredLanguage: data.preferredLanguage ?? "de"
+            preferredLanguage: data.preferredLanguage ?? settings.defaultCustomerLanguage
           })
           .returning({
             email: customers.email,
@@ -935,7 +937,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
       const orderNumber =
         data.orderNumberMode === "manual"
           ? validateManualOrderNumber(data.manualOrderNumber ?? "")
-          : await issueNextOrderNumber(tx);
+          : await issueNextOrderNumber(tx, undefined, settings.orderNumberPrefix);
 
       let trackingNumber: string | null = null;
 

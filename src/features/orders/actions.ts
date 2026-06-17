@@ -23,25 +23,48 @@ function formDataToObject(formData: FormData) {
   return Object.fromEntries(formData.entries());
 }
 
-function getActionErrorState(error: unknown): OrderActionState {
+function getActionErrorState(error: unknown, values?: Record<string, string>): OrderActionState {
+  const submitted = values ? { values } : {};
+
   if (error instanceof ValidationError) {
     return {
       fieldErrors: error.fieldErrors,
-      formError: error.message
+      formError: error.message,
+      ...submitted
     };
   }
 
   if (error instanceof ConflictError || error instanceof NotFoundError) {
     return {
       fieldErrors: {},
-      formError: error.message
+      formError: error.message,
+      ...submitted
     };
   }
 
+  // Unexpected (e.g. database) failure: log the real cause so it stops being an
+  // opaque "request could not be completed", then return the generic message.
+  console.error("[order-action] unexpected error", error);
+
   return {
     fieldErrors: {},
-    formError: "The request could not be completed."
+    formError: "The request could not be completed.",
+    ...submitted
   };
+}
+
+// Capture the submitted text fields so the form can repopulate them after an
+// error (React 19 resets uncontrolled inputs once the action returns).
+function formValues(formData: FormData): Record<string, string> {
+  const values: Record<string, string> = {};
+
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === "string") {
+      values[key] = value;
+    }
+  }
+
+  return values;
 }
 
 export async function createOrderAction(
@@ -55,7 +78,7 @@ export async function createOrderAction(
     const order = await createOrder(formDataToObject(formData), profile);
     orderId = order.id;
   } catch (error) {
-    return getActionErrorState(error);
+    return getActionErrorState(error, formValues(formData));
   }
 
   redirect(`${routes.admin.orderDetails(orderId)}?created=1`);

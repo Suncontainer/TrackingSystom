@@ -396,6 +396,19 @@ export const orderNumberCounters = pgTable(
   ]
 ).enableRLS();
 
+export const appSettings = pgTable(
+  "app_settings",
+  {
+    id: text("id").primaryKey().default("global"),
+    defaultCustomerLanguage: text("default_customer_language").notNull().default("de"),
+    orderNumberPrefix: text("order_number_prefix").notNull().default("SC"),
+    emailFromName: text("email_from_name").notNull().default("Sun Container"),
+    emailFromAddress: text("email_from_address").notNull().default(""),
+    ...timestampColumns()
+  },
+  (table) => [check("app_settings_single_row", sql`${table.id} = 'global'`)]
+).enableRLS();
+
 export const businessTables = [
   "profiles",
   "customers",

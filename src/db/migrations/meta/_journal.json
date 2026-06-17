@@ -15,6 +15,13 @@
       "when": 1781649297348,
       "tag": "0001_thin_nextwave",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781684950371,
+      "tag": "0002_warm_runaways",
+      "breakpoints": true
     }
   ]
 }

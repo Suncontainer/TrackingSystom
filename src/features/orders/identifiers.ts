@@ -41,10 +41,14 @@ export function validateManualOrderNumber(orderNumber: string) {
   return normalized;
 }
 
-export async function issueNextOrderNumber(tx: DatabaseLike, year = new Date().getUTCFullYear()) {
+export async function issueNextOrderNumber(
+  tx: DatabaseLike,
+  year = new Date().getUTCFullYear(),
+  prefix = ORDER_NUMBER_PREFIX
+) {
   const result = await tx.execute(sql<{ issued_value: number; prefix: string; year: number }>`
     insert into ${orderNumberCounters} ("year", "prefix", "next_value", "created_at", "updated_at")
-    values (${year}, ${ORDER_NUMBER_PREFIX}, 2, now(), now())
+    values (${year}, ${prefix}, 2, now(), now())
     on conflict ("year")
     do update
       set "next_value" = ${orderNumberCounters.nextValue} + 1,

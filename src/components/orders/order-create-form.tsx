@@ -35,6 +35,20 @@ function getFieldError(errors: Record<string, string[]>, field: string) {
   return errors[field]?.[0] ?? null;
 }
 
+function fieldValue(values: Record<string, string> | undefined, field: string) {
+  return values?.[field] ?? "";
+}
+
+function isOptionChecked(
+  values: Record<string, string> | undefined,
+  field: string,
+  optionValue: string,
+  fallbackChecked: boolean
+) {
+  const submitted = values?.[field];
+  return submitted ? submitted === optionValue : fallbackChecked;
+}
+
 export function OrderCreateForm({
   customerMatches,
   customerSearchQuery,
@@ -43,6 +57,7 @@ export function OrderCreateForm({
   dict
 }: OrderCreateFormProps) {
   const [state, formAction, pending] = useActionState(createOrderAction, initialOrderFormState);
+  const values = state.values;
 
   return (
     <form action={formAction} className="admin-form admin-form--stacked">
@@ -59,11 +74,21 @@ export function OrderCreateForm({
         </div>
         <div className="form-segmented">
           <label>
-            <input defaultChecked name="customerMode" type="radio" value="new" />
+            <input
+              defaultChecked={isOptionChecked(values, "customerMode", "new", true)}
+              name="customerMode"
+              type="radio"
+              value="new"
+            />
             <span>{dict.newCustomer}</span>
           </label>
           <label>
-            <input name="customerMode" type="radio" value="existing" />
+            <input
+              defaultChecked={isOptionChecked(values, "customerMode", "existing", false)}
+              name="customerMode"
+              type="radio"
+              value="existing"
+            />
             <span>{dict.existingCustomer}</span>
           </label>
         </div>
@@ -71,32 +96,59 @@ export function OrderCreateForm({
         <div className="form-grid">
           <div className="form-field">
             <label htmlFor="customer-first-name">{fields.firstName}</label>
-            <input id="customer-first-name" name="customerFirstName" required type="text" />
+            <input
+              defaultValue={fieldValue(values, "customerFirstName")}
+              id="customer-first-name"
+              name="customerFirstName"
+              required
+              type="text"
+            />
             {getFieldError(state.fieldErrors, "customerFirstName") ? (
               <p className="field-error">{getFieldError(state.fieldErrors, "customerFirstName")}</p>
             ) : null}
           </div>
           <div className="form-field">
             <label htmlFor="customer-last-name">{fields.lastName}</label>
-            <input id="customer-last-name" name="customerLastName" required type="text" />
+            <input
+              defaultValue={fieldValue(values, "customerLastName")}
+              id="customer-last-name"
+              name="customerLastName"
+              required
+              type="text"
+            />
             {getFieldError(state.fieldErrors, "customerLastName") ? (
               <p className="field-error">{getFieldError(state.fieldErrors, "customerLastName")}</p>
             ) : null}
           </div>
           <div className="form-field">
             <label htmlFor="customer-email">{fields.email}</label>
-            <input id="customer-email" name="customerEmail" required type="email" />
+            <input
+              defaultValue={fieldValue(values, "customerEmail")}
+              id="customer-email"
+              name="customerEmail"
+              required
+              type="email"
+            />
             {getFieldError(state.fieldErrors, "customerEmail") ? (
               <p className="field-error">{getFieldError(state.fieldErrors, "customerEmail")}</p>
             ) : null}
           </div>
           <div className="form-field">
             <label htmlFor="customer-phone">{fields.phone}</label>
-            <input id="customer-phone" name="customerPhone" type="text" />
+            <input
+              defaultValue={fieldValue(values, "customerPhone")}
+              id="customer-phone"
+              name="customerPhone"
+              type="text"
+            />
           </div>
           <div className="form-field">
             <label htmlFor="preferred-language">{fields.language}</label>
-            <select defaultValue="de" id="preferred-language" name="preferredLanguage">
+            <select
+              defaultValue={values?.preferredLanguage ?? "de"}
+              id="preferred-language"
+              name="preferredLanguage"
+            >
               <option value="de">Deutsch</option>
               <option value="en">English</option>
             </select>
@@ -114,7 +166,12 @@ export function OrderCreateForm({
             {customerMatches.length > 0 ? (
               customerMatches.map((customer) => (
                 <label className="existing-customer-item" key={customer.id}>
-                  <input name="existingCustomerId" type="radio" value={customer.id} />
+                  <input
+                    defaultChecked={values?.existingCustomerId === customer.id}
+                    name="existingCustomerId"
+                    type="radio"
+                    value={customer.id}
+                  />
                   <span>
                     <strong>
                       {customer.firstName} {customer.lastName}
@@ -143,25 +200,47 @@ export function OrderCreateForm({
         </div>
         <div className="form-segmented">
           <label>
-            <input defaultChecked name="orderNumberMode" type="radio" value="auto" />
+            <input
+              defaultChecked={isOptionChecked(values, "orderNumberMode", "auto", true)}
+              name="orderNumberMode"
+              type="radio"
+              value="auto"
+            />
             <span>{dict.orderNumberAuto}</span>
           </label>
           <label>
-            <input name="orderNumberMode" type="radio" value="manual" />
+            <input
+              defaultChecked={isOptionChecked(values, "orderNumberMode", "manual", false)}
+              name="orderNumberMode"
+              type="radio"
+              value="manual"
+            />
             <span>{dict.orderNumberManual}</span>
           </label>
         </div>
         <div className="form-grid">
           <div className="form-field">
             <label htmlFor="manual-order-number">{dict.manualOrderNumber}</label>
-            <input id="manual-order-number" name="manualOrderNumber" placeholder="SC-2026-000001" type="text" />
+            <input
+              defaultValue={fieldValue(values, "manualOrderNumber")}
+              id="manual-order-number"
+              name="manualOrderNumber"
+              placeholder="SC-2026-000001"
+              type="text"
+            />
             {getFieldError(state.fieldErrors, "manualOrderNumber") ? (
               <p className="field-error">{getFieldError(state.fieldErrors, "manualOrderNumber")}</p>
             ) : null}
           </div>
           <div className="form-field">
             <label htmlFor="estimated-delivery-date">{dict.estimatedDelivery}</label>
-            <input id="estimated-delivery-date" name="initialEstimatedDeliveryDate" required type="date" />
+            <input
+              defaultValue={fieldValue(values, "initialEstimatedDeliveryDate")}
+              id="estimated-delivery-date"
+              name="initialEstimatedDeliveryDate"
+              required
+              type="date"
+            />
             {getFieldError(state.fieldErrors, "initialEstimatedDeliveryDate") ? (
               <p className="field-error">
                 {getFieldError(state.fieldErrors, "initialEstimatedDeliveryDate")}
@@ -170,7 +249,11 @@ export function OrderCreateForm({
           </div>
           <div className="form-field">
             <label htmlFor="assigned-salesperson-id">{fields.assignedSalesperson}</label>
-            <select defaultValue="" id="assigned-salesperson-id" name="assignedSalespersonId">
+            <select
+              defaultValue={fieldValue(values, "assignedSalespersonId")}
+              id="assigned-salesperson-id"
+              name="assignedSalespersonId"
+            >
               <option value="">{fields.notAssigned}</option>
               {salespeople.map((salesperson) => (
                 <option key={salesperson.id} value={salesperson.id}>
@@ -184,7 +267,12 @@ export function OrderCreateForm({
           </div>
           <div className="form-field">
             <label htmlFor="assigned-salesperson-email">{fields.fallbackSalesEmail}</label>
-            <input id="assigned-salesperson-email" name="assignedSalespersonEmail" type="email" />
+            <input
+              defaultValue={fieldValue(values, "assignedSalespersonEmail")}
+              id="assigned-salesperson-email"
+              name="assignedSalespersonEmail"
+              type="email"
+            />
             {getFieldError(state.fieldErrors, "assignedSalespersonEmail") ? (
               <p className="field-error">{getFieldError(state.fieldErrors, "assignedSalespersonEmail")}</p>
             ) : null}
@@ -192,11 +280,21 @@ export function OrderCreateForm({
         </div>
         <div className="form-field">
           <label htmlFor="product-description">{fields.productDescription}</label>
-          <textarea id="product-description" name="productDescription" rows={4} />
+          <textarea
+            defaultValue={fieldValue(values, "productDescription")}
+            id="product-description"
+            name="productDescription"
+            rows={4}
+          />
         </div>
         <div className="form-field">
           <label htmlFor="initial-note">{dict.initialNote}</label>
-          <textarea id="initial-note" name="initialInternalNote" rows={4} />
+          <textarea
+            defaultValue={fieldValue(values, "initialInternalNote")}
+            id="initial-note"
+            name="initialInternalNote"
+            rows={4}
+          />
         </div>
       </section>
 

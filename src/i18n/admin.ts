@@ -121,11 +121,66 @@ export type AdminDictionary = {
     eyebrow: string;
     title: string;
     placeholder: string;
+    heading: string;
+    intro: string;
+    colName: string;
+    colEmail: string;
+    colRole: string;
+    colStatus: string;
+    colLastLogin: string;
+    colActions: string;
+    roleLabels: { SUPER_ADMIN: string; ADMIN: string; SALES: string; READ_ONLY: string };
+    save: string;
+    active: string;
+    inactive: string;
+    activate: string;
+    deactivate: string;
+    resetPassword: string;
+    youBadge: string;
+    neverLoggedIn: string;
+    empty: string;
+    okRole: string;
+    okActivated: string;
+    okDeactivated: string;
+    okReset: string;
+    errorGeneric: string;
   };
   settings: {
     eyebrow: string;
     title: string;
     placeholder: string;
+    account: {
+      heading: string;
+      intro: string;
+      firstName: string;
+      lastName: string;
+      saveProfile: string;
+      passwordHeading: string;
+      passwordIntro: string;
+      newPassword: string;
+      confirmPassword: string;
+      changePassword: string;
+      okProfile: string;
+      okPassword: string;
+    };
+    defaults: {
+      heading: string;
+      intro: string;
+      language: string;
+      orderPrefix: string;
+      orderPrefixHint: string;
+      save: string;
+      ok: string;
+    };
+    sender: {
+      heading: string;
+      intro: string;
+      fromName: string;
+      fromEmail: string;
+      save: string;
+      ok: string;
+    };
+    errorGeneric: string;
   };
   auth: {
     intern: string;
@@ -441,12 +496,72 @@ const de: AdminDictionary = {
   users: {
     eyebrow: "Berechtigungen",
     title: "Benutzerverwaltung",
-    placeholder: "Noch keine Benutzerliste verfügbar."
+    placeholder: "Noch keine Benutzerliste verfügbar.",
+    heading: "Team und Zugriff",
+    intro: "Rollen verwalten, Konten aktivieren und Passwort-Resets auslösen.",
+    colName: "Name",
+    colEmail: "E-Mail",
+    colRole: "Rolle",
+    colStatus: "Status",
+    colLastLogin: "Letzter Login",
+    colActions: "Aktionen",
+    roleLabels: {
+      SUPER_ADMIN: "Super-Admin",
+      ADMIN: "Admin",
+      SALES: "Vertrieb",
+      READ_ONLY: "Nur Lesen"
+    },
+    save: "Speichern",
+    active: "Aktiv",
+    inactive: "Inaktiv",
+    activate: "Aktivieren",
+    deactivate: "Deaktivieren",
+    resetPassword: "Passwort zurücksetzen",
+    youBadge: "Sie",
+    neverLoggedIn: "Noch nie",
+    empty: "Noch keine Benutzer vorhanden.",
+    okRole: "Rolle aktualisiert.",
+    okActivated: "Konto aktiviert.",
+    okDeactivated: "Konto deaktiviert.",
+    okReset: "Passwort-Reset-E-Mail gesendet.",
+    errorGeneric: "Die Anfrage konnte nicht abgeschlossen werden."
   },
   settings: {
     eyebrow: "System",
     title: "Einstellungen",
-    placeholder: "Noch keine Systemeinstellungen verfügbar."
+    placeholder: "Noch keine Systemeinstellungen verfügbar.",
+    account: {
+      heading: "Mein Konto",
+      intro: "Aktualisieren Sie Ihren Namen und Ihr Passwort.",
+      firstName: "Vorname",
+      lastName: "Nachname",
+      saveProfile: "Profil speichern",
+      passwordHeading: "Passwort ändern",
+      passwordIntro: "Mindestens 10 Zeichen.",
+      newPassword: "Neues Passwort",
+      confirmPassword: "Passwort bestätigen",
+      changePassword: "Passwort ändern",
+      okProfile: "Profil aktualisiert.",
+      okPassword: "Passwort aktualisiert."
+    },
+    defaults: {
+      heading: "Standardwerte",
+      intro: "Voreinstellungen für neue Aufträge und Kunden.",
+      language: "Standardsprache Kunde",
+      orderPrefix: "Auftragsnummer-Präfix",
+      orderPrefixHint: "Wird für automatisch erzeugte Auftragsnummern verwendet.",
+      save: "Standardwerte speichern",
+      ok: "Standardwerte gespeichert."
+    },
+    sender: {
+      heading: "E-Mail-Absender",
+      intro: "Absendername und -adresse für ausgehende E-Mails.",
+      fromName: "Absendername",
+      fromEmail: "Absenderadresse",
+      save: "Absender speichern",
+      ok: "Absenderdaten gespeichert."
+    },
+    errorGeneric: "Die Anfrage konnte nicht abgeschlossen werden."
   },
   auth: {
     intern: "Intern",
@@ -763,12 +878,72 @@ const en: AdminDictionary = {
   users: {
     eyebrow: "Permissions",
     title: "User management",
-    placeholder: "No user list available yet."
+    placeholder: "No user list available yet.",
+    heading: "Team and access",
+    intro: "Manage roles, activate accounts and trigger password resets.",
+    colName: "Name",
+    colEmail: "Email",
+    colRole: "Role",
+    colStatus: "Status",
+    colLastLogin: "Last login",
+    colActions: "Actions",
+    roleLabels: {
+      SUPER_ADMIN: "Super admin",
+      ADMIN: "Admin",
+      SALES: "Sales",
+      READ_ONLY: "Read only"
+    },
+    save: "Save",
+    active: "Active",
+    inactive: "Inactive",
+    activate: "Activate",
+    deactivate: "Deactivate",
+    resetPassword: "Reset password",
+    youBadge: "You",
+    neverLoggedIn: "Never",
+    empty: "No users yet.",
+    okRole: "Role updated.",
+    okActivated: "Account activated.",
+    okDeactivated: "Account deactivated.",
+    okReset: "Password reset email sent.",
+    errorGeneric: "The request could not be completed."
   },
   settings: {
     eyebrow: "System",
     title: "Settings",
-    placeholder: "No system settings available yet."
+    placeholder: "No system settings available yet.",
+    account: {
+      heading: "My account",
+      intro: "Update your name and password.",
+      firstName: "First name",
+      lastName: "Last name",
+      saveProfile: "Save profile",
+      passwordHeading: "Change password",
+      passwordIntro: "At least 10 characters.",
+      newPassword: "New password",
+      confirmPassword: "Confirm password",
+      changePassword: "Change password",
+      okProfile: "Profile updated.",
+      okPassword: "Password updated."
+    },
+    defaults: {
+      heading: "Defaults",
+      intro: "Preset values for new orders and customers.",
+      language: "Default customer language",
+      orderPrefix: "Order number prefix",
+      orderPrefixHint: "Used for automatically generated order numbers.",
+      save: "Save defaults",
+      ok: "Defaults saved."
+    },
+    sender: {
+      heading: "Email sender",
+      intro: "Sender name and address for outgoing emails.",
+      fromName: "Sender name",
+      fromEmail: "Sender address",
+      save: "Save sender",
+      ok: "Sender details saved."
+    },
+    errorGeneric: "The request could not be completed."
   },
   auth: {
     intern: "Internal",
