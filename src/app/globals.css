@@ -627,11 +627,19 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-sidebar__top img {
+  width: 140px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .admin-locale-toggle {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 6px;
   padding: 6px 12px;
   border-radius: 999px;

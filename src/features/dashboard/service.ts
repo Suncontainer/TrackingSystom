@@ -58,119 +58,132 @@ export async function getDashboardData(profile: Pick<Profile, "id" | "role">, pe
   const orderScope = scopedWhere(profile);
   const scopedOrderWhere = (condition: SQL) => scopedWhere(profile, condition);
 
-  const [metricsResult] = await db
-    .select({
-      activeOrders: sql<number>`count(*) filter (where ${activeOrderCondition()})::int`,
-      deliveredInPeriod: sql<number>`count(*) filter (where ${gte(orders.deliveredAt, periodStart)})::int`,
-      dueSoon: sql<number>`count(*) filter (
-        where ${activeOrderCondition()}
-          and ${orders.currentEstimatedDeliveryDate} >= current_date
-          and ${orders.currentEstimatedDeliveryDate} <= current_date + interval '7 days'
-      )::int`,
-      inProduction: sql<number>`count(*) filter (where ${activeOrderCondition("IN_PRODUCTION")})::int`,
-      inTransit: sql<number>`count(*) filter (where ${activeOrderCondition("IN_TRANSIT")})::int`,
-      orderConfirmed: sql<number>`count(*) filter (where ${activeOrderCondition("ORDER_CONFIRMED")})::int`,
-      procurement: sql<number>`count(*) filter (where ${activeOrderCondition("PROCUREMENT")})::int`,
-      overdueActive: sql<number>`count(*) filter (
-        where ${activeOrderCondition()}
-          and ${orders.currentEstimatedDeliveryDate} < current_date
-      )::int`
-    })
-    .from(orders)
-    .where(orderScope);
+  // These six queries are independent of one another, so run them in parallel.
+  // Running them sequentially piled up round-trips on the (slow) hosted DB and
+  // could push the heavy metrics aggregate past Postgres' statement_timeout,
+  // which is what made admin refreshes appear to "freeze".
+  const [
+    [metricsResult],
+    [failedEmailResult],
+    overdueOrders,
+    dueSoonOrders,
+    failedEmails,
+    recentStatusChanges
+  ] = await Promise.all([
+    db
+      .select({
+        activeOrders: sql<number>`count(*) filter (where ${activeOrderCondition()})::int`,
+        deliveredInPeriod: sql<number>`count(*) filter (where ${gte(orders.deliveredAt, periodStart)})::int`,
+        dueSoon: sql<number>`count(*) filter (
+          where ${activeOrderCondition()}
+            and ${orders.currentEstimatedDeliveryDate} >= current_date
+            and ${orders.currentEstimatedDeliveryDate} <= current_date + interval '7 days'
+        )::int`,
+        inProduction: sql<number>`count(*) filter (where ${activeOrderCondition("IN_PRODUCTION")})::int`,
+        inTransit: sql<number>`count(*) filter (where ${activeOrderCondition("IN_TRANSIT")})::int`,
+        orderConfirmed: sql<number>`count(*) filter (where ${activeOrderCondition("ORDER_CONFIRMED")})::int`,
+        procurement: sql<number>`count(*) filter (where ${activeOrderCondition("PROCUREMENT")})::int`,
+        overdueActive: sql<number>`count(*) filter (
+          where ${activeOrderCondition()}
+            and ${orders.currentEstimatedDeliveryDate} < current_date
+        )::int`
+      })
+      .from(orders)
+      .where(orderScope),
 
-  const [failedEmailResult] = await db
-    .select({ value: count() })
-    .from(emailOutbox)
-    .innerJoin(orders, eq(emailOutbox.orderId, orders.id))
-    .where(
-      scopedWhere(
-        profile,
-        eq(emailOutbox.category, "TRANSACTIONAL"),
-        inArray(emailOutbox.status, failedEmailStatuses)
+    db
+      .select({ value: count() })
+      .from(emailOutbox)
+      .innerJoin(orders, eq(emailOutbox.orderId, orders.id))
+      .where(
+        scopedWhere(
+          profile,
+          eq(emailOutbox.category, "TRANSACTIONAL"),
+          inArray(emailOutbox.status, failedEmailStatuses)
+        )
+      ),
+
+    db
+      .select({
+        currentEstimatedDeliveryDate: orders.currentEstimatedDeliveryDate,
+        customerFirstName: customers.firstName,
+        customerLastName: customers.lastName,
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        status: orders.status,
+        trackingNumber: orders.trackingNumber
+      })
+      .from(orders)
+      .innerJoin(customers, eq(orders.customerId, customers.id))
+      .where(scopedOrderWhere(and(activeOrderCondition(), sql`${orders.currentEstimatedDeliveryDate} < current_date`)!))
+      .orderBy(orders.currentEstimatedDeliveryDate, desc(orders.updatedAt))
+      .limit(6),
+
+    db
+      .select({
+        currentEstimatedDeliveryDate: orders.currentEstimatedDeliveryDate,
+        customerFirstName: customers.firstName,
+        customerLastName: customers.lastName,
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        status: orders.status,
+        trackingNumber: orders.trackingNumber
+      })
+      .from(orders)
+      .innerJoin(customers, eq(orders.customerId, customers.id))
+      .where(
+        scopedOrderWhere(
+          and(
+            activeOrderCondition(),
+            gte(orders.currentEstimatedDeliveryDate, sql`current_date`),
+            lte(orders.currentEstimatedDeliveryDate, sql`current_date + interval '7 days'`)
+          )!
+        )
       )
-    );
+      .orderBy(orders.currentEstimatedDeliveryDate, desc(orders.updatedAt))
+      .limit(6),
 
-  const overdueOrders = await db
-    .select({
-      currentEstimatedDeliveryDate: orders.currentEstimatedDeliveryDate,
-      customerFirstName: customers.firstName,
-      customerLastName: customers.lastName,
-      id: orders.id,
-      orderNumber: orders.orderNumber,
-      status: orders.status,
-      trackingNumber: orders.trackingNumber
-    })
-    .from(orders)
-    .innerJoin(customers, eq(orders.customerId, customers.id))
-    .where(scopedOrderWhere(and(activeOrderCondition(), sql`${orders.currentEstimatedDeliveryDate} < current_date`)!))
-    .orderBy(orders.currentEstimatedDeliveryDate, desc(orders.updatedAt))
-    .limit(6);
-
-  const dueSoonOrders = await db
-    .select({
-      currentEstimatedDeliveryDate: orders.currentEstimatedDeliveryDate,
-      customerFirstName: customers.firstName,
-      customerLastName: customers.lastName,
-      id: orders.id,
-      orderNumber: orders.orderNumber,
-      status: orders.status,
-      trackingNumber: orders.trackingNumber
-    })
-    .from(orders)
-    .innerJoin(customers, eq(orders.customerId, customers.id))
-    .where(
-      scopedOrderWhere(
-        and(
-          activeOrderCondition(),
-          gte(orders.currentEstimatedDeliveryDate, sql`current_date`),
-          lte(orders.currentEstimatedDeliveryDate, sql`current_date + interval '7 days'`)
-        )!
+    db
+      .select({
+        createdAt: emailOutbox.createdAt,
+        emailType: emailOutbox.emailType,
+        id: emailOutbox.id,
+        lastErrorCode: emailOutbox.lastErrorCode,
+        orderId: orders.id,
+        orderNumber: orders.orderNumber,
+        recipientEmail: emailOutbox.recipientEmail,
+        status: emailOutbox.status
+      })
+      .from(emailOutbox)
+      .innerJoin(orders, eq(emailOutbox.orderId, orders.id))
+      .where(
+        scopedWhere(
+          profile,
+          eq(emailOutbox.category, "TRANSACTIONAL"),
+          inArray(emailOutbox.status, failedEmailStatuses)
+        )
       )
-    )
-    .orderBy(orders.currentEstimatedDeliveryDate, desc(orders.updatedAt))
-    .limit(6);
+      .orderBy(desc(emailOutbox.createdAt))
+      .limit(6),
 
-  const failedEmails = await db
-    .select({
-      createdAt: emailOutbox.createdAt,
-      emailType: emailOutbox.emailType,
-      id: emailOutbox.id,
-      lastErrorCode: emailOutbox.lastErrorCode,
-      orderId: orders.id,
-      orderNumber: orders.orderNumber,
-      recipientEmail: emailOutbox.recipientEmail,
-      status: emailOutbox.status
-    })
-    .from(emailOutbox)
-    .innerJoin(orders, eq(emailOutbox.orderId, orders.id))
-    .where(
-      scopedWhere(
-        profile,
-        eq(emailOutbox.category, "TRANSACTIONAL"),
-        inArray(emailOutbox.status, failedEmailStatuses)
-      )
-    )
-    .orderBy(desc(emailOutbox.createdAt))
-    .limit(6);
-
-  const recentStatusChanges = await db
-    .select({
-      changeType: orderStatusHistory.changeType,
-      createdAt: orderStatusHistory.createdAt,
-      customerFirstName: customers.firstName,
-      customerLastName: customers.lastName,
-      newStatus: orderStatusHistory.newStatus,
-      orderId: orders.id,
-      orderNumber: orders.orderNumber,
-      previousStatus: orderStatusHistory.previousStatus
-    })
-    .from(orderStatusHistory)
-    .innerJoin(orders, eq(orderStatusHistory.orderId, orders.id))
-    .innerJoin(customers, eq(orders.customerId, customers.id))
-    .where(scopedWhere(profile))
-    .orderBy(desc(orderStatusHistory.createdAt))
-    .limit(8);
+    db
+      .select({
+        changeType: orderStatusHistory.changeType,
+        createdAt: orderStatusHistory.createdAt,
+        customerFirstName: customers.firstName,
+        customerLastName: customers.lastName,
+        newStatus: orderStatusHistory.newStatus,
+        orderId: orders.id,
+        orderNumber: orders.orderNumber,
+        previousStatus: orderStatusHistory.previousStatus
+      })
+      .from(orderStatusHistory)
+      .innerJoin(orders, eq(orderStatusHistory.orderId, orders.id))
+      .innerJoin(customers, eq(orders.customerId, customers.id))
+      .where(scopedWhere(profile))
+      .orderBy(desc(orderStatusHistory.createdAt))
+      .limit(8)
+  ]);
 
   return {
     dueSoonOrders: dueSoonOrders.map((order) => ({
