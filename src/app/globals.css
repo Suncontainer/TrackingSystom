@@ -622,6 +622,53 @@ textarea {
   height: auto;
 }
 
+.admin-sidebar__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-locale-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-inverse);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.admin-locale-toggle:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.admin-locale-toggle:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.auth-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.auth-toolbar .admin-locale-toggle {
+  color: var(--brand-black);
+  border-color: var(--border-strong);
+  background: var(--surface-muted);
+}
+
+.auth-toolbar .admin-locale-toggle:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
 .admin-nav {
   display: grid;
   gap: 8px;

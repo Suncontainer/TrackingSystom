@@ -1,15 +1,18 @@
 import { AdminPageShell } from "@/components/admin/admin-page-shell";
 import { AdminPlaceholder } from "@/components/admin/admin-placeholder";
+import { getAdminContext } from "@/i18n/get-admin-locale";
 
 export const metadata = {
   title: "Einstellungen"
 };
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const { t } = await getAdminContext();
+
   return (
-    <AdminPageShell eyebrow="System" title="Einstellungen">
+    <AdminPageShell eyebrow={t.settings.eyebrow} title={t.settings.title}>
       <AdminPlaceholder>
-        <p>Noch keine Systemeinstellungen verfügbar.</p>
+        <p>{t.settings.placeholder}</p>
       </AdminPlaceholder>
     </AdminPageShell>
   );

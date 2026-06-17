@@ -1,15 +1,18 @@
 import { AdminPageShell } from "@/components/admin/admin-page-shell";
 import { AdminPlaceholder } from "@/components/admin/admin-placeholder";
+import { getAdminContext } from "@/i18n/get-admin-locale";
 
 export const metadata = {
   title: "Benutzer"
 };
 
-export default function UsersPage() {
+export default async function UsersPage() {
+  const { t } = await getAdminContext();
+
   return (
-    <AdminPageShell eyebrow="Berechtigungen" title="Benutzerverwaltung">
+    <AdminPageShell eyebrow={t.users.eyebrow} title={t.users.title}>
       <AdminPlaceholder>
-        <p>Noch keine Benutzerliste verfügbar.</p>
+        <p>{t.users.placeholder}</p>
       </AdminPlaceholder>
     </AdminPageShell>
   );

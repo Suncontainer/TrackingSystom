@@ -1,4 +1,8 @@
-export default function AdminLoading() {
+import { getAdminContext } from "@/i18n/get-admin-locale";
+
+export default async function AdminLoading() {
+  const { t } = await getAdminContext();
+
   return (
     <main className="admin-shell">
       <div className="admin-layout">
@@ -8,7 +12,7 @@ export default function AdminLoading() {
           <div className="skeleton skeleton-nav" />
           <div className="skeleton skeleton-nav" />
         </aside>
-        <section className="admin-content" aria-label="Admin wird geladen">
+        <section className="admin-content" aria-label={t.common.loadingAria}>
           <div className="skeleton skeleton-eyebrow" />
           <div className="skeleton skeleton-title" />
           <div className="admin-grid">

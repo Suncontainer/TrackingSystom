@@ -7,6 +7,9 @@ import { requirePermission } from "@/features/auth/guards";
 import { hasPermission } from "@/features/auth/permissions";
 import { parseOrderListFilters } from "@/features/orders/filters";
 import { listAssignableSalespeople, listOrders } from "@/features/orders/service";
+import { orderStatusContent, orderStatuses } from "@/features/orders/status";
+import { getAdminContext } from "@/i18n/get-admin-locale";
+import type { AppLocale } from "@/i18n/types";
 
 export const metadata = {
   title: "Aufträge"
@@ -16,12 +19,12 @@ type OrdersPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function formatDate(value: string | Date | null) {
+function formatDate(value: string | Date | null, locale: AppLocale) {
   if (!value) {
     return "—";
   }
 
-  return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" }).format(new Date(value));
+  return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", { dateStyle: "medium" }).format(new Date(value));
 }
 
 function buildPageHref(
@@ -64,6 +67,8 @@ function buildPageHref(
 
 export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const profile = await requirePermission("orders:read");
+  const { locale, t } = await getAdminContext();
+  const o = t.orders;
   const filters = parseOrderListFilters((searchParams ? await searchParams : {}) ?? {});
   const [orderList, salespeople] = await Promise.all([
     listOrders(filters, profile),
@@ -72,35 +77,35 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const canCreateOrders = hasPermission(profile.role, "orders:create");
 
   return (
-    <AdminPageShell eyebrow="Auftragsverwaltung" title="Aufträge">
+    <AdminPageShell eyebrow={o.eyebrow} title={o.title}>
       <section className="admin-card admin-section">
         <form action={routes.admin.orders} className="admin-filters">
           <div className="form-field">
-            <label htmlFor="orders-query">Suche</label>
+            <label htmlFor="orders-query">{o.search}</label>
             <input
               defaultValue={filters.query}
               id="orders-query"
               name="query"
-              placeholder="Auftragsnummer, Tracking, Kunde, E-Mail"
+              placeholder={o.searchPlaceholder}
               type="search"
             />
           </div>
           <div className="form-field">
-            <label htmlFor="orders-status">Status</label>
+            <label htmlFor="orders-status">{o.status}</label>
             <select defaultValue={filters.status} id="orders-status" name="status">
-              <option value="">Alle</option>
-              <option value="ORDER_CONFIRMED">Auftrag bestätigt</option>
-              <option value="PROCUREMENT">Beschaffung läuft</option>
-              <option value="IN_PRODUCTION">In Produktion</option>
-              <option value="IN_TRANSIT">Im Transport</option>
-              <option value="DELIVERED">Geliefert</option>
+              <option value="">{t.common.all}</option>
+              {orderStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {orderStatusContent[status][locale].label}
+                </option>
+              ))}
             </select>
           </div>
           {profile.role !== "SALES" ? (
             <div className="form-field">
-              <label htmlFor="orders-salesperson">Vertrieb</label>
+              <label htmlFor="orders-salesperson">{o.salesperson}</label>
               <select defaultValue={filters.salespersonId} id="orders-salesperson" name="salespersonId">
-                <option value="">Alle</option>
+                <option value="">{t.common.all}</option>
                 {salespeople.map((salesperson) => (
                   <option key={salesperson.id} value={salesperson.id}>
                     {salesperson.firstName} {salesperson.lastName}
@@ -110,41 +115,41 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             </div>
           ) : null}
           <div className="form-field">
-            <label htmlFor="orders-date-from">Lieferung ab</label>
+            <label htmlFor="orders-date-from">{o.deliveryFrom}</label>
             <input defaultValue={filters.dateFrom} id="orders-date-from" name="dateFrom" type="date" />
           </div>
           <div className="form-field">
-            <label htmlFor="orders-date-to">Lieferung bis</label>
+            <label htmlFor="orders-date-to">{o.deliveryTo}</label>
             <input defaultValue={filters.dateTo} id="orders-date-to" name="dateTo" type="date" />
           </div>
           <div className="form-field">
-            <label htmlFor="orders-archived">Archiv</label>
+            <label htmlFor="orders-archived">{o.archive}</label>
             <select defaultValue={filters.archived} id="orders-archived" name="archived">
-              <option value="active">Aktiv</option>
-              <option value="archived">Archiviert</option>
-              <option value="all">Alle</option>
+              <option value="active">{o.archiveActive}</option>
+              <option value="archived">{o.archiveArchived}</option>
+              <option value="all">{o.archiveAll}</option>
             </select>
           </div>
           <div className="form-field">
-            <label htmlFor="orders-sort">Sortierung</label>
+            <label htmlFor="orders-sort">{o.sort}</label>
             <select defaultValue={filters.sort} id="orders-sort" name="sort">
-              <option value="updated_desc">Zuletzt aktualisiert</option>
-              <option value="created_desc">Zuletzt erstellt</option>
-              <option value="eta_asc">Lieferung aufsteigend</option>
-              <option value="eta_desc">Lieferung absteigend</option>
+              <option value="updated_desc">{o.sortUpdated}</option>
+              <option value="created_desc">{o.sortCreated}</option>
+              <option value="eta_asc">{o.sortEtaAsc}</option>
+              <option value="eta_desc">{o.sortEtaDesc}</option>
             </select>
           </div>
           <label className="filter-checkbox">
             <input defaultChecked={filters.overdue} name="overdue" type="checkbox" value="1" />
-            <span>Nur ueberfaellige Auftraege</span>
+            <span>{o.overdueOnly}</span>
           </label>
           <div className="filters-actions">
             <button className="button-base button-secondary" type="submit">
-              Filter anwenden
+              {t.common.applyFilters}
             </button>
             {canCreateOrders ? (
               <Link className="button-base button-primary" href={routes.admin.newOrder}>
-                Auftrag anlegen
+                {t.common.createOrder}
               </Link>
             ) : null}
           </div>
@@ -153,9 +158,12 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 
       <section className="admin-card admin-section">
         <div className="section-heading section-heading--inline">
-          <h2 className="font-heading">Ergebnisse</h2>
+          <h2 className="font-heading">{o.resultsHeading}</h2>
           <p>
-            {orderList.total} Auftraege · Seite {filters.page} / {orderList.totalPages}
+            {o.ordersCount
+              .replace("{total}", String(orderList.total))
+              .replace("{page}", String(filters.page))
+              .replace("{totalPages}", String(orderList.totalPages))}
           </p>
         </div>
 
@@ -165,14 +173,14 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Auftragsnummer</th>
-                    <th>Tracking</th>
-                    <th>Kunde</th>
-                    <th>Status</th>
-                    <th>Lieferung</th>
-                    <th>Vertrieb</th>
-                    <th>E-Mail</th>
-                    <th>Aktualisiert</th>
+                    <th>{o.colOrderNumber}</th>
+                    <th>{o.colTracking}</th>
+                    <th>{o.colCustomer}</th>
+                    <th>{o.colStatus}</th>
+                    <th>{o.colDelivery}</th>
+                    <th>{o.colSales}</th>
+                    <th>{o.colEmail}</th>
+                    <th>{o.colUpdated}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -187,12 +195,12 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                         <div className="table-secondary">{row.customerEmail}</div>
                       </td>
                       <td>
-                        <OrderStatusBadge status={row.status} />
+                        <OrderStatusBadge status={row.status} locale={locale} />
                       </td>
-                      <td>{formatDate(row.currentEstimatedDeliveryDate)}</td>
+                      <td>{formatDate(row.currentEstimatedDeliveryDate, locale)}</td>
                       <td>{row.assignedSalespersonLabel || "—"}</td>
-                      <td>{row.hasEmailWarning ? "Warnung" : "OK"}</td>
-                      <td>{formatDate(row.updatedAt)}</td>
+                      <td>{row.hasEmailWarning ? t.common.warning : t.common.ok}</td>
+                      <td>{formatDate(row.updatedAt, locale)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -209,11 +217,11 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                       </Link>
                       <p className="table-secondary">{row.trackingNumberDisplay}</p>
                     </div>
-                    <OrderStatusBadge status={row.status} />
+                    <OrderStatusBadge status={row.status} locale={locale} />
                   </div>
                   <div className="order-card__meta">
                     <p>{row.customerName}</p>
-                    <p>{formatDate(row.currentEstimatedDeliveryDate)}</p>
+                    <p>{formatDate(row.currentEstimatedDeliveryDate, locale)}</p>
                     <p>{row.assignedSalespersonLabel || "—"}</p>
                   </div>
                 </article>
@@ -222,17 +230,19 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 
             <div className="pagination-row">
               <span>
-                Seite {filters.page} von {orderList.totalPages}
+                {o.pageInfo
+                  .replace("{page}", String(filters.page))
+                  .replace("{totalPages}", String(orderList.totalPages))}
               </span>
               <div className="pagination-actions">
                 {filters.page > 1 ? (
                   <Link className="button-base button-secondary" href={buildPageHref(filters, filters.page - 1)}>
-                    Zurueck
+                    {t.common.back}
                   </Link>
                 ) : null}
                 {filters.page < orderList.totalPages ? (
                   <Link className="button-base button-secondary" href={buildPageHref(filters, filters.page + 1)}>
-                    Weiter
+                    {t.common.next}
                   </Link>
                 ) : null}
               </div>
@@ -240,10 +250,10 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
           </>
         ) : (
           <div className="empty-state">
-            <p>Keine Auftraege fuer diese Filter gefunden.</p>
+            <p>{o.emptyResults}</p>
             {canCreateOrders ? (
               <Link className="button-base button-primary" href={routes.admin.newOrder}>
-                Auftrag anlegen
+                {t.common.createOrder}
               </Link>
             ) : null}
           </div>

@@ -1,11 +1,13 @@
 import { LogIn } from "lucide-react";
 import Link from "next/link";
 
+import { AdminLocaleToggle } from "@/components/admin/admin-locale-toggle";
 import { SunContainerLogo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { routes } from "@/config/routes";
 import { signInAction } from "@/features/auth/actions";
 import { devAdminCredentials, isDevAdminLoginEnabled } from "@/features/auth/dev-login";
+import { getAdminContext } from "@/i18n/get-admin-locale";
 
 export const metadata = {
   title: "Admin Login"
@@ -15,21 +17,13 @@ type AdminLoginPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const authMessages: Record<string, string> = {
-  auth_required: "Bitte melden Sie sich an, um den Adminbereich zu nutzen.",
-  auth_unconfigured: "Supabase Auth ist noch nicht konfiguriert.",
-  callback_failed: "Der Anmeldelink konnte nicht bestätigt werden.",
-  inactive: "Dieses Benutzerkonto ist deaktiviert.",
-  invalid_credentials: "E-Mail-Adresse oder Passwort ist ungültig.",
-  not_authorized: "Dieses Benutzerkonto hat keinen Zugriff auf diesen Bereich.",
-  profile_missing: "Für diesen Login ist noch kein internes Benutzerprofil angelegt."
-};
-
 function getSearchValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
 export default async function AdminLoginPage({ searchParams }: AdminLoginPageProps) {
+  const { t } = await getAdminContext();
+  const a = t.auth;
   const params = searchParams ? await searchParams : {};
   const error = getSearchValue(params.error);
   const reason = getSearchValue(params.reason);
@@ -40,38 +34,41 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
   return (
     <main className="auth-shell">
       <section className="auth-panel" aria-labelledby="admin-login-title">
+        <div className="auth-toolbar">
+          <AdminLocaleToggle switchTo={t.switchToLocale} switchLabel={t.switchLabel} languageLabel={t.nav.language} />
+        </div>
         <SunContainerLogo variant="stacked-dark" className="auth-logo" priority />
         <div className="auth-card">
-          <p className="eyebrow">Intern</p>
+          <p className="eyebrow">{a.intern}</p>
           <h1 id="admin-login-title" className="font-heading">
-            Admin Login
+            {a.loginTitle}
           </h1>
           {messageKey ? (
             <p className="form-feedback form-feedback--error" role="alert">
-              {authMessages[messageKey] ?? "Die Anmeldung konnte nicht abgeschlossen werden."}
+              {(messageKey && a.messages[messageKey]) ?? a.loginFallback}
             </p>
           ) : null}
           {reset === "success" ? (
             <p className="form-feedback" role="status">
-              Das Passwort wurde aktualisiert. Bitte melden Sie sich erneut an.
+              {a.resetSuccess}
             </p>
           ) : null}
           {showDevCredentials ? (
             <div className="form-feedback" role="note">
-              <strong>Temporärer Login:</strong>
+              <strong>{a.tempLogin}</strong>
               <br />
-              E-Mail: {devAdminCredentials.email}
+              {a.emailLabel}: {devAdminCredentials.email}
               <br />
-              Passwort: {devAdminCredentials.password}
+              {a.passwordLabel}: {devAdminCredentials.password}
             </div>
           ) : null}
           <form action={signInAction}>
             <div className="form-field">
-              <label htmlFor="admin-email">E-Mail-Adresse</label>
+              <label htmlFor="admin-email">{a.emailLabel}</label>
               <input id="admin-email" name="email" type="email" autoComplete="email" required />
             </div>
             <div className="form-field">
-              <label htmlFor="admin-password">Passwort</label>
+              <label htmlFor="admin-password">{a.passwordLabel}</label>
               <input
                 id="admin-password"
                 name="password"
@@ -82,11 +79,11 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
             </div>
             <Button type="submit" className="lookup-submit">
               <LogIn size={18} aria-hidden="true" />
-              Anmelden
+              {a.signIn}
             </Button>
           </form>
           <p className="auth-link">
-            <Link href={routes.admin.forgotPassword}>Passwort vergessen?</Link>
+            <Link href={routes.admin.forgotPassword}>{a.forgotLink}</Link>
           </p>
         </div>
       </section>

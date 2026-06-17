@@ -1,5 +1,7 @@
 import type { AppLocale } from "./types";
 
+export const ADMIN_LOCALE_COOKIE = "admin_locale";
+
 export type AdminDictionary = {
   localeName: string;
   /** Label shown on the toggle for switching to the other language. */
@@ -42,7 +44,8 @@ export type AdminDictionary = {
     periodAria: string;
     days: string;
     metricActiveOrders: string;
-    metricOrderReceived: string;
+    metricOrderConfirmed: string;
+    metricProcurement: string;
     metricInProduction: string;
     metricInTransit: string;
     metricDeliveredInPeriod: string;
@@ -57,6 +60,7 @@ export type AdminDictionary = {
     dueSoonEmpty: string;
     failedEmailsHeading: string;
     failedEmailsIntro: string;
+    failedEmailsEmpty: string;
     historyLink: string;
     recentChangesHeading: string;
     recentChangesIntro: string;
@@ -188,9 +192,10 @@ const de: AdminDictionary = {
     periodAria: "Zeitraum",
     days: "Tage",
     metricActiveOrders: "Aktive Aufträge",
-    metricOrderReceived: "Auftrag eingegangen",
+    metricOrderConfirmed: "Auftrag bestätigt",
+    metricProcurement: "Beschaffung läuft",
     metricInProduction: "In Produktion",
-    metricInTransit: "Unterwegs",
+    metricInTransit: "Im Transport",
     metricDeliveredInPeriod: "Geliefert",
     metricOverdueActive: "Überfällig aktiv",
     metricDueSoon: "Fällig in 7 Tagen",
@@ -203,6 +208,7 @@ const de: AdminDictionary = {
     dueSoonEmpty: "Keine aktiven Aufträge sind in den nächsten sieben Tagen fällig.",
     failedEmailsHeading: "Fehlgeschlagene Pflicht-E-Mails",
     failedEmailsIntro: "Transaktionale E-Mails mit Bounce, Complaint, Failure oder Suppression.",
+    failedEmailsEmpty: "Keine fehlgeschlagenen Pflicht-E-Mails.",
     historyLink: "Verlauf",
     recentChangesHeading: "Letzte Statusänderungen",
     recentChangesIntro: "Neueste Statusereignisse in Ihrem Berechtigungsbereich.",
@@ -342,9 +348,10 @@ const en: AdminDictionary = {
     periodAria: "Period",
     days: "days",
     metricActiveOrders: "Active orders",
-    metricOrderReceived: "Order received",
-    metricInProduction: "In production",
-    metricInTransit: "In transit",
+    metricOrderConfirmed: "Order Confirmed",
+    metricProcurement: "Procurement in Progress",
+    metricInProduction: "In Production",
+    metricInTransit: "In Transit",
     metricDeliveredInPeriod: "Delivered",
     metricOverdueActive: "Overdue active",
     metricDueSoon: "Due in 7 days",
@@ -357,6 +364,7 @@ const en: AdminDictionary = {
     dueSoonEmpty: "No active orders are due within the next seven days.",
     failedEmailsHeading: "Failed mandatory emails",
     failedEmailsIntro: "Transactional emails with bounce, complaint, failure or suppression.",
+    failedEmailsEmpty: "No failed mandatory emails.",
     historyLink: "History",
     recentChangesHeading: "Recent status changes",
     recentChangesIntro: "Latest status events within your permission scope.",
