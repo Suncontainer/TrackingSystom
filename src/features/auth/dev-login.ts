@@ -25,7 +25,12 @@ export const devAdminProfile = {
 } satisfies Profile;
 
 export function isDevAdminLoginEnabled() {
-  return true;
+  // Local-development convenience ONLY. The dev admin's profile id has no row in
+  // `profiles`, so in production any write referencing the actor (orders, audit
+  // logs, ...) fails the foreign-key constraint and the request rolls back.
+  // Leaving these default credentials usable on a live site is also a security
+  // hole, so the backdoor is disabled outside development.
+  return process.env.NODE_ENV !== "production";
 }
 
 export function isDevAdminCredentialMatch(input: { email: string; password: string }) {
