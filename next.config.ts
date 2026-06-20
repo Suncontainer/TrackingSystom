@@ -74,6 +74,18 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // The home page hosts the Turnstile lookup widget whose token is single-use.
+        // no-store keeps the browser from restoring a stale, already-spent token from
+        // the back/forward cache when the user navigates back after a lookup.
+        source: "/",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store"
+          }
+        ]
+      },
+      {
         source: "/track/:path*",
         headers: [
           {
