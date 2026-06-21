@@ -1,10 +1,23 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 
 import { createOrderAction } from "@/features/orders/actions";
 import { initialOrderFormState } from "@/features/orders/form-state";
 import type { CreateFormDict, OrderFormFieldsDict } from "@/i18n/admin";
+
+const DEFAULT_DELIVERY_WINDOW_DAYS = 3;
+
+function addDaysToDateInput(value: string, days: number) {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) {
+    return "";
+  }
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + days);
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
 
 type CustomerMatch = {
   archivedAt: Date | null;
@@ -58,6 +71,20 @@ export function OrderCreateForm({
 }: OrderCreateFormProps) {
   const [state, formAction, pending] = useActionState(createOrderAction, initialOrderFormState);
   const values = state.values;
+
+  const latestDeliveryRef = useRef<HTMLInputElement>(null);
+  const latestDeliveryTouched = useRef(false);
+
+  function handleEarliestDeliveryChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const latest = latestDeliveryRef.current;
+    if (!latest || latestDeliveryTouched.current) {
+      return;
+    }
+    const suggestion = event.target.value
+      ? addDaysToDateInput(event.target.value, DEFAULT_DELIVERY_WINDOW_DAYS)
+      : "";
+    latest.value = suggestion;
+  }
 
   return (
     <form action={formAction} className="admin-form admin-form--stacked">
@@ -238,6 +265,7 @@ export function OrderCreateForm({
               defaultValue={fieldValue(values, "initialEstimatedDeliveryDate")}
               id="estimated-delivery-date"
               name="initialEstimatedDeliveryDate"
+              onChange={handleEarliestDeliveryChange}
               required
               type="date"
             />
@@ -253,6 +281,10 @@ export function OrderCreateForm({
               defaultValue={fieldValue(values, "initialEstimatedDeliveryDateEnd")}
               id="estimated-delivery-date-end"
               name="initialEstimatedDeliveryDateEnd"
+              onChange={() => {
+                latestDeliveryTouched.current = true;
+              }}
+              ref={latestDeliveryRef}
               required
               type="date"
             />
