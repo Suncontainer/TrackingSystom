@@ -6,12 +6,10 @@ import { updateOrderAction } from "@/features/orders/actions";
 import { initialOrderFormState } from "@/features/orders/form-state";
 import type { OrderFormFieldsDict } from "@/i18n/admin";
 
-type SalespersonOption = {
-  email: string;
-  firstName: string;
+type SellerOption = {
   id: string;
-  lastName: string;
-  role: string;
+  name: string;
+  email: string;
 };
 
 type OrderUpdateFormProps = {
@@ -27,7 +25,7 @@ type OrderUpdateFormProps = {
     productDescription: string | null;
     version: number;
   };
-  salespeople: SalespersonOption[];
+  sellers: SellerOption[];
   fields: OrderFormFieldsDict;
   saving: string;
   saveChanges: string;
@@ -37,7 +35,7 @@ function getFieldError(errors: Record<string, string[]>, field: string) {
   return errors[field]?.[0] ?? null;
 }
 
-export function OrderUpdateForm({ order, salespeople, fields, saving, saveChanges }: OrderUpdateFormProps) {
+export function OrderUpdateForm({ order, sellers, fields, saving, saveChanges }: OrderUpdateFormProps) {
   const [state, formAction, pending] = useActionState(updateOrderAction, initialOrderFormState);
 
   return (
@@ -83,12 +81,16 @@ export function OrderUpdateForm({ order, salespeople, fields, saving, saveChange
           </select>
         </div>
         <div className="form-field">
-          <label htmlFor="edit-assigned-salesperson-id">{fields.assignedSalesperson}</label>
-          <select defaultValue={order.assignedSalespersonId ?? ""} id="edit-assigned-salesperson-id" name="assignedSalespersonId">
-            <option value="">{fields.notAssigned}</option>
-            {salespeople.map((salesperson) => (
-              <option key={salesperson.id} value={salesperson.id}>
-                {salesperson.firstName} {salesperson.lastName} · {salesperson.role}
+          <label htmlFor="edit-assigned-seller-email">{fields.seller}</label>
+          <select
+            defaultValue={order.assignedSalespersonEmail ?? ""}
+            id="edit-assigned-seller-email"
+            name="assignedSellerEmail"
+          >
+            <option value="">{fields.noSeller}</option>
+            {sellers.map((seller) => (
+              <option key={seller.id} value={seller.email}>
+                {seller.name} · {seller.email}
               </option>
             ))}
           </select>

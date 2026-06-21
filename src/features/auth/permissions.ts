@@ -17,6 +17,7 @@ export const appPermissions = [
   "orders:read",
   "orders:regenerate-tracking-link",
   "orders:update",
+  "sellers:manage",
   "settings:update",
   "users:manage"
 ] as const;
@@ -32,6 +33,7 @@ export const mutationPermissions = [
   "orders:override-status",
   "orders:regenerate-tracking-link",
   "orders:update",
+  "sellers:manage",
   "settings:update",
   "users:manage"
 ] as const satisfies readonly AppPermission[];
@@ -48,7 +50,8 @@ export const rolePermissionMap = {
     "notes:read",
     "orders:create",
     "orders:read",
-    "orders:update"
+    "orders:update",
+    "sellers:manage"
   ],
   SALES: ["admin:access", "dashboard:read", "notes:create", "notes:read", "orders:read"],
   READ_ONLY: ["admin:access", "dashboard:read", "emails:read", "orders:read"]

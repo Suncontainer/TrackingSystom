@@ -70,6 +70,27 @@ export const customers = pgTable(
   ]
 ).enableRLS();
 
+// Sellers are lightweight customer-care contacts (name + email, no login) that an
+// admin can manage and assign to orders as the sales contact.
+export const sellers = pgTable(
+  "sellers",
+  {
+    id: primaryUuid(),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    emailNormalized: text("email_normalized").notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+    ...timestampColumns()
+  },
+  (table) => [
+    uniqueIndex("sellers_email_normalized_unique").on(table.emailNormalized),
+    index("sellers_is_active_idx").on(table.isActive),
+    check("sellers_name_not_blank", sql`length(trim(${table.name})) > 0`),
+    check("sellers_email_not_blank", sql`length(trim(${table.email})) > 0`),
+    check("sellers_email_normalized_lower", sql`${table.emailNormalized} = lower(${table.emailNormalized})`)
+  ]
+).enableRLS();
+
 export const orders = pgTable(
   "orders",
   {

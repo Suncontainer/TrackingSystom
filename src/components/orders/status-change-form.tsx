@@ -12,6 +12,7 @@ import type { AppLocale } from "@/i18n/types";
 type StatusChangeFormProps = {
   canOverride: boolean;
   currentEstimatedDeliveryDate: string;
+  currentEstimatedDeliveryDateEnd: string;
   currentStatus: OrderStatus;
   orderId: string;
   version: number;
@@ -26,6 +27,7 @@ function getFieldError(errors: Record<string, string[]>, field: string) {
 export function StatusChangeForm({
   canOverride,
   currentEstimatedDeliveryDate,
+  currentEstimatedDeliveryDateEnd,
   currentStatus,
   orderId,
   version,
@@ -68,10 +70,29 @@ export function StatusChangeForm({
           ) : null}
         </div>
         <div className="form-field">
-          <label htmlFor="status-actual-delivery-date">{dict.actualDelivery}</label>
-          <input id="status-actual-delivery-date" name="actualDeliveryDate" type="date" />
-          {getFieldError(state.fieldErrors, "actualDeliveryDate") ? (
-            <p className="field-error">{getFieldError(state.fieldErrors, "actualDeliveryDate")}</p>
+          <label htmlFor="status-estimated-delivery-date">{dict.estimatedDeliveryFrom}</label>
+          <input
+            defaultValue={currentEstimatedDeliveryDate}
+            id="status-estimated-delivery-date"
+            name="estimatedDeliveryDate"
+            required
+            type="date"
+          />
+          {getFieldError(state.fieldErrors, "estimatedDeliveryDate") ? (
+            <p className="field-error">{getFieldError(state.fieldErrors, "estimatedDeliveryDate")}</p>
+          ) : null}
+        </div>
+        <div className="form-field">
+          <label htmlFor="status-estimated-delivery-date-end">{dict.estimatedDeliveryTo}</label>
+          <input
+            defaultValue={currentEstimatedDeliveryDateEnd}
+            id="status-estimated-delivery-date-end"
+            name="estimatedDeliveryDateEnd"
+            required
+            type="date"
+          />
+          {getFieldError(state.fieldErrors, "estimatedDeliveryDateEnd") ? (
+            <p className="field-error">{getFieldError(state.fieldErrors, "estimatedDeliveryDateEnd")}</p>
           ) : null}
         </div>
       </div>

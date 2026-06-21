@@ -17,6 +17,7 @@ export const routes = {
     newOrder: "/admin/orders/new",
     emails: "/admin/emails",
     users: "/admin/users",
+    sellers: "/admin/sellers",
     settings: "/admin/settings"
   },
   api: {

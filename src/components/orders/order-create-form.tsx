@@ -28,18 +28,16 @@ type CustomerMatch = {
   preferredLanguage: string;
 };
 
-type SalespersonOption = {
-  email: string;
-  firstName: string;
+type SellerOption = {
   id: string;
-  lastName: string;
-  role: string;
+  name: string;
+  email: string;
 };
 
 type OrderCreateFormProps = {
   customerMatches: CustomerMatch[];
   customerSearchQuery: string;
-  salespeople: SalespersonOption[];
+  sellers: SellerOption[];
   fields: OrderFormFieldsDict;
   dict: CreateFormDict;
 };
@@ -65,7 +63,7 @@ function isOptionChecked(
 export function OrderCreateForm({
   customerMatches,
   customerSearchQuery,
-  salespeople,
+  sellers,
   fields,
   dict
 }: OrderCreateFormProps) {
@@ -295,22 +293,19 @@ export function OrderCreateForm({
             ) : null}
           </div>
           <div className="form-field">
-            <label htmlFor="assigned-salesperson-id">{fields.assignedSalesperson}</label>
+            <label htmlFor="assigned-seller-email">{fields.seller}</label>
             <select
-              defaultValue={fieldValue(values, "assignedSalespersonId")}
-              id="assigned-salesperson-id"
-              name="assignedSalespersonId"
+              defaultValue={fieldValue(values, "assignedSellerEmail")}
+              id="assigned-seller-email"
+              name="assignedSellerEmail"
             >
-              <option value="">{fields.notAssigned}</option>
-              {salespeople.map((salesperson) => (
-                <option key={salesperson.id} value={salesperson.id}>
-                  {salesperson.firstName} {salesperson.lastName} · {salesperson.role}
+              <option value="">{fields.noSeller}</option>
+              {sellers.map((seller) => (
+                <option key={seller.id} value={seller.email}>
+                  {seller.name} · {seller.email}
                 </option>
               ))}
             </select>
-            {getFieldError(state.fieldErrors, "assignedSalespersonId") ? (
-              <p className="field-error">{getFieldError(state.fieldErrors, "assignedSalespersonId")}</p>
-            ) : null}
           </div>
           <div className="form-field">
             <label htmlFor="assigned-salesperson-email">{fields.fallbackSalesEmail}</label>

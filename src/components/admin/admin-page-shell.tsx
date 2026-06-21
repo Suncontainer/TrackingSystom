@@ -1,4 +1,4 @@
-import { Gauge, LogOut, Mail, Settings, ShoppingBag, Users } from "lucide-react";
+import { Contact, Gauge, LogOut, Mail, Settings, ShoppingBag, Users } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -41,6 +41,10 @@ export async function AdminPageShell({ eyebrow, title, children }: AdminPageShel
             <Link href={routes.admin.users}>
               <Users size={18} aria-hidden="true" />
               {t.nav.users}
+            </Link>
+            <Link href={routes.admin.sellers}>
+              <Contact size={18} aria-hidden="true" />
+              {t.nav.sellers}
             </Link>
             <Link href={routes.admin.settings}>
               <Settings size={18} aria-hidden="true" />

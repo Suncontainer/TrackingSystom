@@ -4,7 +4,8 @@ import { AdminPageShell } from "@/components/admin/admin-page-shell";
 import { OrderCreateForm } from "@/components/orders/order-create-form";
 import { routes } from "@/config/routes";
 import { requirePermission } from "@/features/auth/guards";
-import { listAssignableSalespeople, searchCustomersForReuse } from "@/features/orders/service";
+import { searchCustomersForReuse } from "@/features/orders/service";
+import { listActiveSellers } from "@/features/sellers/service";
 import { getAdminContext } from "@/i18n/get-admin-locale";
 
 export const metadata = {
@@ -25,8 +26,8 @@ export default async function NewOrderPage({ searchParams }: NewOrderPageProps) 
   const p = t.forms.newOrderPage;
   const params = (searchParams ? await searchParams : {}) ?? {};
   const customerQuery = getSearchValue(params.customerQuery).trim();
-  const [salespeople, customerMatches] = await Promise.all([
-    listAssignableSalespeople(),
+  const [sellers, customerMatches] = await Promise.all([
+    listActiveSellers(),
     customerQuery ? searchCustomersForReuse(customerQuery) : Promise.resolve([])
   ]);
 
@@ -58,7 +59,7 @@ export default async function NewOrderPage({ searchParams }: NewOrderPageProps) 
       <OrderCreateForm
         customerMatches={customerMatches}
         customerSearchQuery={customerQuery}
-        salespeople={salespeople}
+        sellers={sellers}
         fields={t.forms.fields}
         dict={t.forms.create}
       />

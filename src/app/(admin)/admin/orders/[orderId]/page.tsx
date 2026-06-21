@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { AdminPageShell } from "@/components/admin/admin-page-shell";
 import { ArchiveOrderForm } from "@/components/orders/archive-order-form";
 import { CustomerPreview } from "@/components/orders/customer-preview";
-import { DeliveryDateForm } from "@/components/orders/delivery-date-form";
 import { InternalNoteForm } from "@/components/orders/internal-note-form";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { OrderUpdateForm } from "@/components/orders/order-update-form";
@@ -12,7 +11,8 @@ import { StatusChangeForm } from "@/components/orders/status-change-form";
 import { routes } from "@/config/routes";
 import { AuthorizationError } from "@/features/auth/errors";
 import { requireOrderAccess } from "@/features/auth/guards";
-import { listAssignableSalespeople, getOrderDetail } from "@/features/orders/service";
+import { getOrderDetail } from "@/features/orders/service";
+import { listActiveSellers } from "@/features/sellers/service";
 import { getAdminContext } from "@/i18n/get-admin-locale";
 import type { AppLocale } from "@/i18n/types";
 import { NotFoundError } from "@/lib/errors/app-error";
@@ -57,7 +57,7 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
   const { locale, t } = await getAdminContext();
   const dt = t.forms.orderDetail;
   const query = (searchParams ? await searchParams : {}) ?? {};
-  const { detail, salespeople } = await loadOrderPageData(orderId);
+  const { detail, sellers } = await loadOrderPageData(orderId);
 
   return (
     <AdminPageShell eyebrow={dt.eyebrow} title={detail.order.orderNumber}>
@@ -128,6 +128,7 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
           <StatusChangeForm
             canOverride={detail.canOverrideStatus}
             currentEstimatedDeliveryDate={detail.order.currentEstimatedDeliveryDate}
+            currentEstimatedDeliveryDateEnd={detail.order.currentEstimatedDeliveryDateEnd}
             currentStatus={detail.order.status}
             orderId={detail.order.id}
             version={detail.order.version}
@@ -136,24 +137,6 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
           />
         ) : (
           <p className="panel-empty">{dt.noStatusPermission}</p>
-        )}
-      </section>
-
-      <section className="admin-card admin-section">
-        <div className="section-heading">
-          <h2 className="font-heading">{dt.deliveryDateHeading}</h2>
-          <p>{dt.deliveryDateIntro}</p>
-        </div>
-        {detail.canUpdateWorkflow ? (
-          <DeliveryDateForm
-            currentDate={detail.order.currentEstimatedDeliveryDate}
-            currentDateEnd={detail.order.currentEstimatedDeliveryDateEnd}
-            orderId={detail.order.id}
-            version={detail.order.version}
-            dict={t.forms.deliveryDate}
-          />
-        ) : (
-          <p className="panel-empty">{dt.noDatePermission}</p>
         )}
       </section>
 
@@ -183,7 +166,7 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
               productDescription: detail.order.productDescription,
               version: detail.order.version
             }}
-            salespeople={salespeople}
+            sellers={sellers}
             fields={t.forms.fields}
             saving={t.forms.saving}
             saveChanges={t.forms.update.saveChanges}
@@ -352,12 +335,12 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
 async function loadOrderPageData(orderId: string) {
   try {
     const profile = await requireOrderAccess(orderId);
-    const [detail, salespeople] = await Promise.all([
+    const [detail, sellers] = await Promise.all([
       getOrderDetail(orderId, profile),
-      listAssignableSalespeople()
+      listActiveSellers()
     ]);
 
-    return { detail, salespeople };
+    return { detail, sellers };
   } catch (error) {
     if (error instanceof AuthorizationError || error instanceof NotFoundError) {
       notFound();

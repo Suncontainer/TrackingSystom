@@ -13,6 +13,7 @@ export type AdminDictionary = {
     orders: string;
     emails: string;
     users: string;
+    sellers: string;
     settings: string;
     logout: string;
     language: string;
@@ -152,6 +153,28 @@ export type AdminDictionary = {
     okReset: string;
     errorGeneric: string;
   };
+  sellers: {
+    eyebrow: string;
+    title: string;
+    heading: string;
+    intro: string;
+    addHeading: string;
+    nameLabel: string;
+    emailLabel: string;
+    addSubmit: string;
+    adding: string;
+    colName: string;
+    colEmail: string;
+    colStatus: string;
+    colActions: string;
+    active: string;
+    inactive: string;
+    remove: string;
+    confirmRemove: string;
+    empty: string;
+    created: string;
+    removed: string;
+  };
   settings: {
     eyebrow: string;
     title: string;
@@ -220,6 +243,8 @@ export type AdminDictionary = {
       language: string;
       assignedSalesperson: string;
       notAssigned: string;
+      seller: string;
+      noSeller: string;
       fallbackSalesEmail: string;
       productDescription: string;
     };
@@ -253,7 +278,8 @@ export type AdminDictionary = {
     statusChange: {
       newStatus: string;
       noFurtherStandard: string;
-      actualDelivery: string;
+      estimatedDeliveryFrom: string;
+      estimatedDeliveryTo: string;
       overrideReason: string;
       sendCustomerEmail: string;
       skipCustomerEmail: string;
@@ -387,6 +413,7 @@ export type StatusChangeDict = AdminDictionary["forms"]["statusChange"];
 export type DeliveryDateDict = AdminDictionary["forms"]["deliveryDate"];
 export type InternalNoteDict = AdminDictionary["forms"]["internalNote"];
 export type ArchiveDict = AdminDictionary["forms"]["archive"];
+export type SellersDict = AdminDictionary["sellers"];
 
 const de: AdminDictionary = {
   localeName: "Deutsch",
@@ -398,6 +425,7 @@ const de: AdminDictionary = {
     orders: "Aufträge",
     emails: "E-Mails",
     users: "Benutzer",
+    sellers: "Verkäufer",
     settings: "Einstellungen",
     logout: "Abmelden",
     language: "Sprache"
@@ -543,6 +571,28 @@ const de: AdminDictionary = {
     okReset: "Passwort-Reset-E-Mail gesendet.",
     errorGeneric: "Die Anfrage konnte nicht abgeschlossen werden."
   },
+  sellers: {
+    eyebrow: "Kontakte",
+    title: "Verkäufer",
+    heading: "Verkäufer",
+    intro: "Kundenbetreuer verwalten, die Aufträgen als Vertriebskontakt zugewiesen werden können.",
+    addHeading: "Verkäufer hinzufügen",
+    nameLabel: "Name",
+    emailLabel: "E-Mail",
+    addSubmit: "Verkäufer hinzufügen",
+    adding: "Wird hinzugefügt …",
+    colName: "Name",
+    colEmail: "E-Mail",
+    colStatus: "Status",
+    colActions: "Aktionen",
+    active: "Aktiv",
+    inactive: "Inaktiv",
+    remove: "Entfernen",
+    confirmRemove: "Diesen Verkäufer entfernen?",
+    empty: "Noch keine Verkäufer angelegt.",
+    created: "Verkäufer hinzugefügt.",
+    removed: "Verkäufer entfernt."
+  },
   settings: {
     eyebrow: "System",
     title: "Einstellungen",
@@ -619,6 +669,8 @@ const de: AdminDictionary = {
       language: "Sprache",
       assignedSalesperson: "Zugewiesener Vertrieb",
       notAssigned: "Nicht direkt zugewiesen",
+      seller: "Verkäufer",
+      noSeller: "Kein Verkäufer",
       fallbackSalesEmail: "Fallback Vertriebs-E-Mail",
       productDescription: "Produktbeschreibung"
     },
@@ -652,7 +704,8 @@ const de: AdminDictionary = {
     statusChange: {
       newStatus: "Neuer Status",
       noFurtherStandard: "Kein weiterer Standardstatus",
-      actualDelivery: "Tatsächliche Lieferung",
+      estimatedDeliveryFrom: "Voraussichtliche Lieferung ab",
+      estimatedDeliveryTo: "Voraussichtliche Lieferung bis",
       overrideReason: "Override-Grund",
       sendCustomerEmail: "Kunden-E-Mail senden",
       skipCustomerEmail: "Kunden-E-Mail nicht senden",
@@ -707,7 +760,7 @@ const de: AdminDictionary = {
       flashRestored: "Auftrag wiederhergestellt.",
       tracking: "Tracking",
       customer: "Kunde",
-      email: "E-Mail",
+      email: "Kunden-E-Mail",
       deliveryPlanned: "Voraussichtliche Lieferung",
       sales: "Vertrieb",
       version: "Version",
@@ -790,6 +843,7 @@ const en: AdminDictionary = {
     orders: "Orders",
     emails: "Emails",
     users: "Users",
+    sellers: "Sellers",
     settings: "Settings",
     logout: "Sign out",
     language: "Language"
@@ -935,6 +989,28 @@ const en: AdminDictionary = {
     okReset: "Password reset email sent.",
     errorGeneric: "The request could not be completed."
   },
+  sellers: {
+    eyebrow: "Contacts",
+    title: "Sellers",
+    heading: "Sellers",
+    intro: "Manage customer-care contacts that can be assigned to orders as the sales contact.",
+    addHeading: "Add seller",
+    nameLabel: "Name",
+    emailLabel: "Email",
+    addSubmit: "Add seller",
+    adding: "Adding …",
+    colName: "Name",
+    colEmail: "Email",
+    colStatus: "Status",
+    colActions: "Actions",
+    active: "Active",
+    inactive: "Inactive",
+    remove: "Remove",
+    confirmRemove: "Remove this seller?",
+    empty: "No sellers added yet.",
+    created: "Seller added.",
+    removed: "Seller removed."
+  },
   settings: {
     eyebrow: "System",
     title: "Settings",
@@ -1011,6 +1087,8 @@ const en: AdminDictionary = {
       language: "Language",
       assignedSalesperson: "Assigned sales",
       notAssigned: "Not directly assigned",
+      seller: "Seller",
+      noSeller: "No seller",
       fallbackSalesEmail: "Fallback sales email",
       productDescription: "Product description"
     },
@@ -1044,7 +1122,8 @@ const en: AdminDictionary = {
     statusChange: {
       newStatus: "New status",
       noFurtherStandard: "No further standard status",
-      actualDelivery: "Actual delivery",
+      estimatedDeliveryFrom: "Estimated delivery from",
+      estimatedDeliveryTo: "Estimated delivery to",
       overrideReason: "Override reason",
       sendCustomerEmail: "Send customer email",
       skipCustomerEmail: "Do not send customer email",
@@ -1099,7 +1178,7 @@ const en: AdminDictionary = {
       flashRestored: "Order restored.",
       tracking: "Tracking",
       customer: "Customer",
-      email: "Email",
+      email: "Customer email",
       deliveryPlanned: "Estimated delivery",
       sales: "Sales",
       version: "Version",

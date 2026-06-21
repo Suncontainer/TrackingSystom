@@ -477,6 +477,7 @@ export async function getDemoCustomerDetail(customerId: string) {
 export async function createDemoOrder(data: {
   assignedSalespersonEmail?: string | undefined;
   assignedSalespersonId?: string | undefined;
+  assignedSellerEmail?: string | undefined;
   customerEmail?: string | undefined;
   customerFirstName?: string | undefined;
   customerLastName?: string | undefined;
@@ -508,7 +509,7 @@ export async function createDemoOrder(data: {
   const order: DemoOrderRecord = {
     actualDeliveryDate: null,
     archivedAt: null,
-    assignedSalespersonEmail: data.assignedSalespersonEmail || demoSalesperson.email,
+    assignedSalespersonEmail: data.assignedSellerEmail || data.assignedSalespersonEmail || demoSalesperson.email,
     assignedSalespersonFirstName: demoSalesperson.firstName,
     assignedSalespersonId: data.assignedSalespersonId || demoSalesperson.id,
     assignedSalespersonLastName: demoSalesperson.lastName,
@@ -532,7 +533,7 @@ export async function createDemoOrder(data: {
       makeEmail({
         category: "INTERNAL",
         emailType: "SALESPERSON_NEW_ORDER",
-        recipientEmail: data.assignedSalespersonEmail || demoSalesperson.email,
+        recipientEmail: data.assignedSellerEmail || data.assignedSalespersonEmail || demoSalesperson.email,
         subject: `New tracked order - ${orderNumber}`
       })
     ],
@@ -587,6 +588,7 @@ function findDemoOrder(store: DemoStore, orderId: string) {
 
 export async function updateDemoOrderDetails(data: {
   assignedSalespersonEmail?: string | undefined;
+  assignedSellerEmail?: string | undefined;
   customerEmail: string;
   customerFirstName: string;
   customerLastName: string;
@@ -598,7 +600,7 @@ export async function updateDemoOrderDetails(data: {
   const store = await readDemoStore();
   const order = findDemoOrder(store, data.orderId);
 
-  order.assignedSalespersonEmail = data.assignedSalespersonEmail || demoSalesperson.email;
+  order.assignedSalespersonEmail = data.assignedSellerEmail || data.assignedSalespersonEmail || demoSalesperson.email;
   order.customerEmail = data.customerEmail;
   order.customerFirstName = data.customerFirstName;
   order.customerLastName = data.customerLastName;
@@ -630,8 +632,9 @@ export async function addDemoInternalNote(data: { body: string; orderId: string 
 }
 
 export async function changeDemoOrderStatus(data: {
-  actualDeliveryDate?: string | undefined;
   customerEmailDecision?: "send" | "skip" | undefined;
+  estimatedDeliveryDate: string;
+  estimatedDeliveryDateEnd: string;
   newStatus: DbOrderStatus;
   orderId: string;
   reason?: string | undefined;
@@ -655,8 +658,14 @@ export async function changeDemoOrderStatus(data: {
 
   const now = new Date().toISOString();
   const previousStatus = order.status;
-  const deliveredFields = getDeliveredFields(data.newStatus, data.actualDeliveryDate || todayDate());
+  const previousDate = order.currentEstimatedDeliveryDate;
+  const previousDateEnd = order.currentEstimatedDeliveryDateEnd;
+  const deliveryDateChanged =
+    previousDate !== data.estimatedDeliveryDate || previousDateEnd !== data.estimatedDeliveryDateEnd;
+  const deliveredFields = getDeliveredFields(data.newStatus, data.newStatus === "DELIVERED" ? todayDate() : null);
   order.status = data.newStatus;
+  order.currentEstimatedDeliveryDate = data.estimatedDeliveryDate;
+  order.currentEstimatedDeliveryDateEnd = data.estimatedDeliveryDateEnd;
   order.actualDeliveryDate = deliveredFields.actualDeliveryDate;
   order.deliveredAt = deliveredFields.deliveredAt?.toISOString() ?? null;
   order.updatedAt = now;
@@ -664,12 +673,24 @@ export async function changeDemoOrderStatus(data: {
   order.statusHistory.unshift({
     changeType: isOverride ? "OVERRIDE" : "STANDARD",
     createdAt: now,
-    estimatedDeliveryDateSnapshot: order.currentEstimatedDeliveryDate,
+    estimatedDeliveryDateSnapshot: data.estimatedDeliveryDate,
     id: randomUUID(),
     newStatus: data.newStatus,
     previousStatus,
     reason: data.reason || null
   });
+  if (deliveryDateChanged) {
+    order.dateHistory.unshift({
+      createdAt: now,
+      customerNotificationRequested: false,
+      id: randomUUID(),
+      newDate: data.estimatedDeliveryDate,
+      newDateEnd: data.estimatedDeliveryDateEnd,
+      previousDate,
+      previousDateEnd,
+      reason: data.reason || null
+    });
+  }
   order.emailHistory.unshift(makeEmail({
     category: "TRANSACTIONAL",
     emailType: getStatusEmailType(data.newStatus),

@@ -76,6 +76,7 @@ const createOrderInputSchema = z
   .object({
     assignedSalespersonEmail: z.string().trim().optional(),
     assignedSalespersonId: z.string().trim().optional(),
+    assignedSellerEmail: z.string().trim().optional(),
     customerEmail: z.string().trim().optional(),
     customerFirstName: z.string().trim().optional(),
     customerLastName: z.string().trim().optional(),
@@ -167,10 +168,10 @@ const createOrderInputSchema = z
       });
     }
 
-    if (!input.assignedSalespersonId && !input.assignedSalespersonEmail) {
+    if (!input.assignedSalespersonId && !input.assignedSellerEmail && !input.assignedSalespersonEmail) {
       ctx.addIssue({
         code: "custom",
-        message: "Select a salesperson or provide a fallback email.",
+        message: "Select a seller or provide a fallback email.",
         path: ["assignedSalespersonEmail"]
       });
     }
@@ -196,6 +197,7 @@ const updateOrderInputSchema = z
   .object({
     assignedSalespersonEmail: z.string().trim().optional(),
     assignedSalespersonId: z.string().trim().optional(),
+    assignedSellerEmail: z.string().trim().optional(),
     customerEmail: z.string().trim(),
     customerFirstName: z.string().trim().min(1),
     customerLastName: z.string().trim().min(1),
@@ -214,10 +216,10 @@ const updateOrderInputSchema = z
       });
     }
 
-    if (!input.assignedSalespersonId && !input.assignedSalespersonEmail) {
+    if (!input.assignedSalespersonId && !input.assignedSellerEmail && !input.assignedSalespersonEmail) {
       ctx.addIssue({
         code: "custom",
-        message: "Select a salesperson or provide a fallback email.",
+        message: "Select a seller or provide a fallback email.",
         path: ["assignedSalespersonEmail"]
       });
     }
@@ -236,14 +238,29 @@ const addInternalNoteInputSchema = z.object({
   orderId: z.string().uuid()
 });
 
-const statusChangeInputSchema = z.object({
-  actualDeliveryDate: z.string().trim().optional(),
-  customerEmailDecision: z.enum(customerEmailDecisionValues).optional(),
-  newStatus: z.enum(orderStatusValues),
-  orderId: z.string().uuid(),
-  reason: z.string().trim().optional(),
-  version: z.coerce.number().int().positive()
-});
+const statusChangeInputSchema = z
+  .object({
+    customerEmailDecision: z.enum(customerEmailDecisionValues).optional(),
+    estimatedDeliveryDate: z.string().trim().min(1, "Earliest delivery date is required."),
+    estimatedDeliveryDateEnd: z.string().trim().min(1, "Latest delivery date is required."),
+    newStatus: z.enum(orderStatusValues),
+    orderId: z.string().uuid(),
+    reason: z.string().trim().optional(),
+    version: z.coerce.number().int().positive()
+  })
+  .superRefine((input, ctx) => {
+    if (
+      input.estimatedDeliveryDate &&
+      input.estimatedDeliveryDateEnd &&
+      input.estimatedDeliveryDateEnd < input.estimatedDeliveryDate
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Latest delivery date must be on or after the earliest date.",
+        path: ["estimatedDeliveryDateEnd"]
+      });
+    }
+  });
 
 const deliveryDateInputSchema = z
   .object({
@@ -887,7 +904,9 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
   const settings = await getAppSettings();
   const assignedSalespersonProfile = await resolveAssignedSalesperson(normalizeOptionalString(data.assignedSalespersonId));
   const fallbackSalesEmail =
-    assignedSalespersonProfile?.email ?? normalizeSalespersonEmail(data.assignedSalespersonEmail);
+    assignedSalespersonProfile?.email ??
+    normalizeSalespersonEmail(data.assignedSellerEmail) ??
+    normalizeSalespersonEmail(data.assignedSalespersonEmail);
 
   if (!fallbackSalesEmail) {
     throw new ValidationError("Salesperson notification email is required.", {
@@ -1197,7 +1216,9 @@ export async function updateOrderDetails(input: unknown, actor: Pick<Profile, "i
   const db = getDb();
   const assignedSalespersonProfile = await resolveAssignedSalesperson(normalizeOptionalString(data.assignedSalespersonId));
   const fallbackSalesEmail =
-    assignedSalespersonProfile?.email ?? normalizeSalespersonEmail(data.assignedSalespersonEmail);
+    assignedSalespersonProfile?.email ??
+    normalizeSalespersonEmail(data.assignedSellerEmail) ??
+    normalizeSalespersonEmail(data.assignedSalespersonEmail);
 
   if (!fallbackSalesEmail) {
     throw new ValidationError("Salesperson notification email is required.", {
@@ -1400,6 +1421,7 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       .select({
         archivedAt: orders.archivedAt,
         currentEstimatedDeliveryDate: orders.currentEstimatedDeliveryDate,
+        currentEstimatedDeliveryDateEnd: orders.currentEstimatedDeliveryDateEnd,
         customerEmail: customers.email,
         customerFirstName: customers.firstName,
         customerId: customers.id,
@@ -1458,16 +1480,23 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       });
     }
 
-    const actualDeliveryDate =
-      data.newStatus === "DELIVERED"
-        ? validateDateForField(data.actualDeliveryDate || getTodayDateString(), "actualDeliveryDate")
-        : null;
-    const deliveredFields = getDeliveredFields(data.newStatus, actualDeliveryDate);
+    const deliveredFields = getDeliveredFields(
+      data.newStatus,
+      data.newStatus === "DELIVERED" ? getTodayDateString() : null
+    );
+
+    const newDate = validateDateForField(data.estimatedDeliveryDate, "estimatedDeliveryDate");
+    const newDateEnd = validateDateForField(data.estimatedDeliveryDateEnd, "estimatedDeliveryDateEnd");
+    const deliveryDateChanged =
+      existingOrder.currentEstimatedDeliveryDate !== newDate ||
+      existingOrder.currentEstimatedDeliveryDateEnd !== newDateEnd;
 
     const [updatedOrder] = await tx
       .update(orders)
       .set({
         actualDeliveryDate: deliveredFields.actualDeliveryDate,
+        currentEstimatedDeliveryDate: newDate,
+        currentEstimatedDeliveryDateEnd: newDateEnd,
         deliveredAt: deliveredFields.deliveredAt,
         status: data.newStatus,
         updatedAt: new Date(),
@@ -1491,7 +1520,7 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       .values({
         changeType: isOverride ? "OVERRIDE" : "STANDARD",
         changedBy: actor.id,
-        estimatedDeliveryDateSnapshot: existingOrder.currentEstimatedDeliveryDate,
+        estimatedDeliveryDateSnapshot: newDate,
         isOverride,
         newStatus: data.newStatus,
         orderId: data.orderId,
@@ -1502,6 +1531,21 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
 
     if (!historyEntry) {
       throw new ConflictError("Status history could not be recorded.");
+    }
+
+    // The estimated-delivery range is edited inline on the status form, so record a
+    // delivery-date history entry whenever it actually changes during a status change.
+    if (deliveryDateChanged) {
+      await tx.insert(deliveryDateHistory).values({
+        changedBy: actor.id,
+        customerNotificationRequested: false,
+        newDate,
+        newDateEnd,
+        orderId: data.orderId,
+        previousDate: existingOrder.currentEstimatedDeliveryDate,
+        previousDateEnd: existingOrder.currentEstimatedDeliveryDateEnd,
+        reason: normalizeOptionalString(data.reason)
+      });
     }
 
     const customerLocale = normalizeLocale(existingOrder.preferredLanguage);
@@ -1525,7 +1569,7 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
         subject: buildStatusSubject(data.newStatus, customerLocale),
         templateKey: getStatusTemplateKey(data.newStatus),
         templateVariables: {
-          currentEstimatedDeliveryDate: existingOrder.currentEstimatedDeliveryDate,
+          currentEstimatedDeliveryDate: newDate,
           newStatus: data.newStatus,
           orderId: data.orderId,
           orderNumber: existingOrder.orderNumber,
@@ -1539,12 +1583,16 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       actorUserId: actor.id,
       afterData: {
         actualDeliveryDate: deliveredFields.actualDeliveryDate,
+        currentEstimatedDeliveryDate: newDate,
+        currentEstimatedDeliveryDateEnd: newDateEnd,
         customerEmailQueued: queueCustomerEmail,
         deliveredAt: deliveredFields.deliveredAt?.toISOString() ?? null,
         status: data.newStatus,
         version: updatedOrder.version
       },
       beforeData: {
+        currentEstimatedDeliveryDate: existingOrder.currentEstimatedDeliveryDate,
+        currentEstimatedDeliveryDateEnd: existingOrder.currentEstimatedDeliveryDateEnd,
         status: existingOrder.status,
         version: existingOrder.version
       },
