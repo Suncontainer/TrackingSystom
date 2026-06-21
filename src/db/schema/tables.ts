@@ -81,8 +81,13 @@ export const orders = pgTable(
     trackingNumber: text("tracking_number").notNull().unique("orders_tracking_number_unique"),
     status: orderStatusEnum("status").notNull().default("ORDER_CONFIRMED"),
     productDescription: text("product_description"),
+    // Estimated delivery is shown to customers as a range. The existing
+    // ...DeliveryDate columns are the EARLIEST (start) of the range; the *End
+    // columns are the LATEST (end).
     initialEstimatedDeliveryDate: date("initial_estimated_delivery_date").notNull(),
+    initialEstimatedDeliveryDateEnd: date("initial_estimated_delivery_date_end").notNull(),
     currentEstimatedDeliveryDate: date("current_estimated_delivery_date").notNull(),
+    currentEstimatedDeliveryDateEnd: date("current_estimated_delivery_date_end").notNull(),
     actualDeliveryDate: date("actual_delivery_date"),
     assignedSalespersonId: uuid("assigned_salesperson_id").references(() => profiles.id, {
       onDelete: "set null",
@@ -148,7 +153,9 @@ export const deliveryDateHistory = pgTable(
       .notNull()
       .references(() => orders.id, { onDelete: "cascade", onUpdate: "cascade" }),
     previousDate: date("previous_date").notNull(),
+    previousDateEnd: date("previous_date_end").notNull(),
     newDate: date("new_date").notNull(),
+    newDateEnd: date("new_date_end").notNull(),
     reason: text("reason"),
     customerNotificationRequested: boolean("customer_notification_requested").notNull().default(false),
     changedBy: uuid("changed_by")
@@ -158,7 +165,10 @@ export const deliveryDateHistory = pgTable(
   },
   (table) => [
     index("delivery_date_history_order_created_at_idx").on(table.orderId, table.createdAt),
-    check("delivery_date_history_date_changed", sql`${table.previousDate} <> ${table.newDate}`)
+    check(
+      "delivery_date_history_date_changed",
+      sql`${table.previousDate} <> ${table.newDate} or ${table.previousDateEnd} <> ${table.newDateEnd}`
+    )
   ]
 ).enableRLS();
 

@@ -8,6 +8,7 @@ import type { DeliveryDateDict } from "@/i18n/admin";
 
 type DeliveryDateFormProps = {
   currentDate: string;
+  currentDateEnd: string;
   orderId: string;
   version: number;
   dict: DeliveryDateDict;
@@ -17,7 +18,7 @@ function getFieldError(errors: Record<string, string[]>, field: string) {
   return errors[field]?.[0] ?? null;
 }
 
-export function DeliveryDateForm({ currentDate, orderId, version, dict }: DeliveryDateFormProps) {
+export function DeliveryDateForm({ currentDate, currentDateEnd, orderId, version, dict }: DeliveryDateFormProps) {
   const [state, formAction, pending] = useActionState(updateEstimatedDeliveryDateAction, initialOrderFormState);
 
   return (
@@ -35,6 +36,19 @@ export function DeliveryDateForm({ currentDate, orderId, version, dict }: Delive
           <input defaultValue={currentDate} id="delivery-new-date" name="newDate" required type="date" />
           {getFieldError(state.fieldErrors, "newDate") ? (
             <p className="field-error">{getFieldError(state.fieldErrors, "newDate")}</p>
+          ) : null}
+        </div>
+        <div className="form-field">
+          <label htmlFor="delivery-new-date-end">{dict.newDateEnd}</label>
+          <input
+            defaultValue={currentDateEnd}
+            id="delivery-new-date-end"
+            name="newDateEnd"
+            required
+            type="date"
+          />
+          {getFieldError(state.fieldErrors, "newDateEnd") ? (
+            <p className="field-error">{getFieldError(state.fieldErrors, "newDateEnd")}</p>
           ) : null}
         </div>
         <label className="filter-checkbox">

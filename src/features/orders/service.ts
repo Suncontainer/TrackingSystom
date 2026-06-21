@@ -83,6 +83,7 @@ const createOrderInputSchema = z
     customerPhone: z.string().trim().optional(),
     existingCustomerId: z.string().trim().optional(),
     initialEstimatedDeliveryDate: z.string().trim(),
+    initialEstimatedDeliveryDateEnd: z.string().trim(),
     initialInternalNote: z.string().trim().optional(),
     manualOrderNumber: z.string().trim().optional(),
     orderNumberMode: orderNumberModeSchema,
@@ -141,8 +142,28 @@ const createOrderInputSchema = z
     if (!input.initialEstimatedDeliveryDate) {
       ctx.addIssue({
         code: "custom",
-        message: "Estimated delivery date is required.",
+        message: "Earliest estimated delivery date is required.",
         path: ["initialEstimatedDeliveryDate"]
+      });
+    }
+
+    if (!input.initialEstimatedDeliveryDateEnd) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Latest estimated delivery date is required.",
+        path: ["initialEstimatedDeliveryDateEnd"]
+      });
+    }
+
+    if (
+      input.initialEstimatedDeliveryDate &&
+      input.initialEstimatedDeliveryDateEnd &&
+      input.initialEstimatedDeliveryDateEnd < input.initialEstimatedDeliveryDate
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Latest delivery date must be on or after the earliest date.",
+        path: ["initialEstimatedDeliveryDateEnd"]
       });
     }
 
@@ -224,13 +245,24 @@ const statusChangeInputSchema = z.object({
   version: z.coerce.number().int().positive()
 });
 
-const deliveryDateInputSchema = z.object({
-  customerNotificationRequested: z.coerce.boolean().default(false),
-  newDate: z.string().trim(),
-  orderId: z.string().uuid(),
-  reason: z.string().trim().optional(),
-  version: z.coerce.number().int().positive()
-});
+const deliveryDateInputSchema = z
+  .object({
+    customerNotificationRequested: z.coerce.boolean().default(false),
+    newDate: z.string().trim(),
+    newDateEnd: z.string().trim(),
+    orderId: z.string().uuid(),
+    reason: z.string().trim().optional(),
+    version: z.coerce.number().int().positive()
+  })
+  .superRefine((input, ctx) => {
+    if (input.newDate && input.newDateEnd && input.newDateEnd < input.newDate) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Latest delivery date must be on or after the earliest date.",
+        path: ["newDateEnd"]
+      });
+    }
+  });
 
 const archiveInputSchema = z.object({
   mode: z.enum(["archive", "restore"]),
@@ -295,7 +327,7 @@ function getOrderListWhere(filters: OrderListFilters, profile: Pick<Profile, "id
       and(
         isNull(orders.archivedAt),
         sql`${orders.status} <> 'DELIVERED'`,
-        sql`${orders.currentEstimatedDeliveryDate} < current_date`
+        sql`${orders.currentEstimatedDeliveryDateEnd} < current_date`
       )
     );
   }
@@ -629,6 +661,7 @@ export async function getOrderDetail(orderId: string, profile: Pick<Profile, "id
       assignedSalespersonLastName: assignedSalesperson.lastName,
       createdAt: orders.createdAt,
       currentEstimatedDeliveryDate: orders.currentEstimatedDeliveryDate,
+      currentEstimatedDeliveryDateEnd: orders.currentEstimatedDeliveryDateEnd,
       customerArchivedAt: customers.archivedAt,
       customerEmail: customers.email,
       customerFirstName: customers.firstName,
@@ -638,6 +671,7 @@ export async function getOrderDetail(orderId: string, profile: Pick<Profile, "id
       deliveredAt: orders.deliveredAt,
       id: orders.id,
       initialEstimatedDeliveryDate: orders.initialEstimatedDeliveryDate,
+      initialEstimatedDeliveryDateEnd: orders.initialEstimatedDeliveryDateEnd,
       orderNumber: orders.orderNumber,
       preferredLanguage: customers.preferredLanguage,
       productDescription: orders.productDescription,
@@ -682,7 +716,9 @@ export async function getOrderDetail(orderId: string, profile: Pick<Profile, "id
         customerNotificationRequested: deliveryDateHistory.customerNotificationRequested,
         id: deliveryDateHistory.id,
         newDate: deliveryDateHistory.newDate,
+        newDateEnd: deliveryDateHistory.newDateEnd,
         previousDate: deliveryDateHistory.previousDate,
+        previousDateEnd: deliveryDateHistory.previousDateEnd,
         reason: deliveryDateHistory.reason
       })
       .from(deliveryDateHistory)
@@ -740,6 +776,7 @@ export async function getOrderDetail(orderId: string, profile: Pick<Profile, "id
     canEdit: hasPermission(profile.role, "orders:update"),
     customerPreview: toPublicOrderSnapshot({
       currentEstimatedDeliveryDate: order.currentEstimatedDeliveryDate,
+      currentEstimatedDeliveryDateEnd: order.currentEstimatedDeliveryDateEnd,
       orderNumber: order.orderNumber,
       preferredLanguage: normalizeLocale(order.preferredLanguage),
       productDescription: order.productDescription,
@@ -861,6 +898,10 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
   try {
     const createdOrder = await db.transaction(async (tx) => {
       const estimatedDate = validateEstimatedDate(data.initialEstimatedDeliveryDate);
+      const estimatedDateEnd = validateDateForField(
+        data.initialEstimatedDeliveryDateEnd,
+        "initialEstimatedDeliveryDateEnd"
+      );
       const customer =
         data.customerMode === "existing"
           ? await tx
@@ -967,8 +1008,10 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
           assignedSalespersonId: assignedSalespersonProfile?.id ?? null,
           createdBy: actor.id,
           currentEstimatedDeliveryDate: estimatedDate,
+          currentEstimatedDeliveryDateEnd: estimatedDateEnd,
           customerId,
           initialEstimatedDeliveryDate: estimatedDate,
+          initialEstimatedDeliveryDateEnd: estimatedDateEnd,
           orderNumber,
           productDescription: normalizeOptionalString(data.productDescription),
           status: "ORDER_CONFIRMED",
@@ -977,6 +1020,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
         })
         .returning({
           currentEstimatedDeliveryDate: orders.currentEstimatedDeliveryDate,
+          currentEstimatedDeliveryDateEnd: orders.currentEstimatedDeliveryDateEnd,
           id: orders.id,
           orderNumber: orders.orderNumber,
           productDescription: orders.productDescription,
@@ -1037,6 +1081,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
             customerName,
             customerEmail,
             estimatedDeliveryDate: createdOrder.currentEstimatedDeliveryDate,
+            estimatedDeliveryDateEnd: createdOrder.currentEstimatedDeliveryDateEnd,
             orderId: createdOrder.id,
             orderNumber: createdOrder.orderNumber,
             trackingNumber: createdOrder.trackingNumber
@@ -1060,6 +1105,7 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
             customerName,
             customerEmail,
             estimatedDeliveryDate: createdOrder.currentEstimatedDeliveryDate,
+            estimatedDeliveryDateEnd: createdOrder.currentEstimatedDeliveryDateEnd,
             orderId: createdOrder.id,
             orderNumber: createdOrder.orderNumber,
             productDescription: createdOrder.productDescription,
@@ -1527,11 +1573,13 @@ export async function updateEstimatedDeliveryDate(input: unknown, actor: Pick<Pr
 
   const data = parsed.data;
   const newDate = validateDateForField(data.newDate, "newDate");
+  const newDateEnd = validateDateForField(data.newDateEnd, "newDateEnd");
 
   if (isDemoMode()) {
     const result = await updateDemoEstimatedDeliveryDate({
       customerNotificationRequested: data.customerNotificationRequested,
       newDate,
+      newDateEnd,
       orderId: data.orderId,
       reason: data.reason
     });
@@ -1550,6 +1598,7 @@ export async function updateEstimatedDeliveryDate(input: unknown, actor: Pick<Pr
       .select({
         archivedAt: orders.archivedAt,
         currentEstimatedDeliveryDate: orders.currentEstimatedDeliveryDate,
+        currentEstimatedDeliveryDateEnd: orders.currentEstimatedDeliveryDateEnd,
         customerEmail: customers.email,
         customerFirstName: customers.firstName,
         customerId: customers.id,
@@ -1574,7 +1623,10 @@ export async function updateEstimatedDeliveryDate(input: unknown, actor: Pick<Pr
       });
     }
 
-    if (existingOrder.currentEstimatedDeliveryDate === newDate) {
+    if (
+      existingOrder.currentEstimatedDeliveryDate === newDate &&
+      existingOrder.currentEstimatedDeliveryDateEnd === newDateEnd
+    ) {
       throw new ValidationError("Delivery date is unchanged.", {
         newDate: ["Choose a different delivery date."]
       });
@@ -1584,6 +1636,7 @@ export async function updateEstimatedDeliveryDate(input: unknown, actor: Pick<Pr
       .update(orders)
       .set({
         currentEstimatedDeliveryDate: newDate,
+        currentEstimatedDeliveryDateEnd: newDateEnd,
         updatedAt: new Date(),
         updatedBy: actor.id,
         version: existingOrder.version + 1
@@ -1605,8 +1658,10 @@ export async function updateEstimatedDeliveryDate(input: unknown, actor: Pick<Pr
         changedBy: actor.id,
         customerNotificationRequested: data.customerNotificationRequested,
         newDate,
+        newDateEnd,
         orderId: data.orderId,
         previousDate: existingOrder.currentEstimatedDeliveryDate,
+        previousDateEnd: existingOrder.currentEstimatedDeliveryDateEnd,
         reason: normalizeOptionalString(data.reason)
       })
       .returning({ id: deliveryDateHistory.id });
@@ -1632,9 +1687,11 @@ export async function updateEstimatedDeliveryDate(input: unknown, actor: Pick<Pr
         templateKey: "delivery-date-updated",
         templateVariables: {
           newDate,
+          newDateEnd,
           orderId: data.orderId,
           orderNumber: existingOrder.orderNumber,
           previousDate: existingOrder.currentEstimatedDeliveryDate,
+          previousDateEnd: existingOrder.currentEstimatedDeliveryDateEnd,
           trackingNumber: existingOrder.trackingNumber
         }
       });
@@ -1645,11 +1702,13 @@ export async function updateEstimatedDeliveryDate(input: unknown, actor: Pick<Pr
       actorUserId: actor.id,
       afterData: {
         currentEstimatedDeliveryDate: newDate,
+        currentEstimatedDeliveryDateEnd: newDateEnd,
         customerNotificationRequested: data.customerNotificationRequested,
         version: updatedOrder.version
       },
       beforeData: {
         currentEstimatedDeliveryDate: existingOrder.currentEstimatedDeliveryDate,
+        currentEstimatedDeliveryDateEnd: existingOrder.currentEstimatedDeliveryDateEnd,
         version: existingOrder.version
       },
       entityId: data.orderId,

@@ -6,6 +6,7 @@ describe("public order dto", () => {
   it("keeps customer-facing fields only and excludes internal notes or audit data", () => {
     const snapshot = toPublicOrderSnapshot({
       currentEstimatedDeliveryDate: "2026-08-12",
+      currentEstimatedDeliveryDateEnd: "2026-08-19",
       orderNumber: "SC-2026-000123",
       preferredLanguage: "de",
       productDescription: "40ft HC container",
@@ -15,6 +16,7 @@ describe("public order dto", () => {
 
     expect(snapshot).toEqual({
       currentEstimatedDeliveryDate: "2026-08-12",
+      currentEstimatedDeliveryDateEnd: "2026-08-19",
       locale: "de",
       orderNumber: "SC-2026-000123",
       productDescription: "40ft HC container",

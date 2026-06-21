@@ -85,7 +85,7 @@ export async function getDashboardData(profile: Pick<Profile, "id" | "role">, pe
         procurement: sql<number>`count(*) filter (where ${activeOrderCondition("PROCUREMENT")})::int`,
         overdueActive: sql<number>`count(*) filter (
           where ${activeOrderCondition()}
-            and ${orders.currentEstimatedDeliveryDate} < current_date
+            and ${orders.currentEstimatedDeliveryDateEnd} < current_date
         )::int`
       })
       .from(orders)
@@ -115,7 +115,7 @@ export async function getDashboardData(profile: Pick<Profile, "id" | "role">, pe
       })
       .from(orders)
       .innerJoin(customers, eq(orders.customerId, customers.id))
-      .where(scopedOrderWhere(and(activeOrderCondition(), sql`${orders.currentEstimatedDeliveryDate} < current_date`)!))
+      .where(scopedOrderWhere(and(activeOrderCondition(), sql`${orders.currentEstimatedDeliveryDateEnd} < current_date`)!))
       .orderBy(orders.currentEstimatedDeliveryDate, desc(orders.updatedAt))
       .limit(6),
 

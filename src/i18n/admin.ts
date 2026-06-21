@@ -232,7 +232,8 @@ export type AdminDictionary = {
       orderNumberAuto: string;
       orderNumberManual: string;
       manualOrderNumber: string;
-      estimatedDelivery: string;
+      estimatedDeliveryFrom: string;
+      estimatedDeliveryTo: string;
       initialNote: string;
       notesHeading: string;
       notesIntro: string;
@@ -257,6 +258,7 @@ export type AdminDictionary = {
     };
     deliveryDate: {
       newDate: string;
+      newDateEnd: string;
       notifyCustomer: string;
       reason: string;
       saving: string;
@@ -621,7 +623,8 @@ const de: AdminDictionary = {
       orderNumberAuto: "Auftragsnummer automatisch",
       orderNumberManual: "Auftragsnummer manuell",
       manualOrderNumber: "Manuelle Auftragsnummer",
-      estimatedDelivery: "Voraussichtliche Lieferung",
+      estimatedDeliveryFrom: "Frühester Liefertermin",
+      estimatedDeliveryTo: "Spätester Liefertermin",
       initialNote: "Initiale interne Notiz",
       notesHeading: "Hinweise",
       notesIntro: "Kundenbestätigung und Vertriebsbenachrichtigung werden als Pflicht-E-Mails in die Outbox gestellt.",
@@ -645,7 +648,8 @@ const de: AdminDictionary = {
       submit: "Status ändern"
     },
     deliveryDate: {
-      newDate: "Neuer voraussichtlicher Liefertermin",
+      newDate: "Frühester Liefertermin",
+      newDateEnd: "Spätester Liefertermin",
       notifyCustomer: "Kundenbenachrichtigung einreihen",
       reason: "Grund",
       saving: "Datum wird gespeichert...",
@@ -1003,7 +1007,8 @@ const en: AdminDictionary = {
       orderNumberAuto: "Order number automatic",
       orderNumberManual: "Order number manual",
       manualOrderNumber: "Manual order number",
-      estimatedDelivery: "Estimated delivery",
+      estimatedDeliveryFrom: "Earliest delivery",
+      estimatedDeliveryTo: "Latest delivery",
       initialNote: "Initial internal note",
       notesHeading: "Notes",
       notesIntro: "The customer confirmation and sales notification are queued as mandatory emails in the outbox.",
@@ -1027,7 +1032,8 @@ const en: AdminDictionary = {
       submit: "Change status"
     },
     deliveryDate: {
-      newDate: "New estimated delivery date",
+      newDate: "Earliest delivery date",
+      newDateEnd: "Latest delivery date",
       notifyCustomer: "Queue customer notification",
       reason: "Reason",
       saving: "Saving date...",

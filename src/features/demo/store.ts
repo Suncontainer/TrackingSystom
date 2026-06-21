@@ -50,6 +50,7 @@ type DemoOrderRecord = {
   assignedSalespersonLastName: string | null;
   createdAt: string;
   currentEstimatedDeliveryDate: string;
+  currentEstimatedDeliveryDateEnd: string;
   customerEmail: string;
   customerFirstName: string;
   customerId: string;
@@ -60,13 +61,16 @@ type DemoOrderRecord = {
     customerNotificationRequested: boolean;
     id: string;
     newDate: string;
+    newDateEnd: string;
     previousDate: string;
+    previousDateEnd: string;
     reason: string | null;
   }>;
   deliveredAt: string | null;
   emailHistory: DemoEmail[];
   id: string;
   initialEstimatedDeliveryDate: string;
+  initialEstimatedDeliveryDateEnd: string;
   notes: Array<{
     body: string;
     createdAt: string;
@@ -153,6 +157,7 @@ function buildInitialStore(): DemoStore {
         assignedSalespersonLastName: order.assignedSalespersonLastName,
         createdAt,
         currentEstimatedDeliveryDate: order.currentEstimatedDeliveryDate,
+        currentEstimatedDeliveryDateEnd: order.currentEstimatedDeliveryDate,
         customerEmail: order.customerEmail,
         customerFirstName: order.customerFirstName,
         customerId: order.customerId,
@@ -170,6 +175,7 @@ function buildInitialStore(): DemoStore {
         ],
         id: order.id,
         initialEstimatedDeliveryDate: order.currentEstimatedDeliveryDate,
+        initialEstimatedDeliveryDateEnd: order.currentEstimatedDeliveryDate,
         notes: [],
         orderNumber: order.orderNumber,
         preferredLanguage: "de",
@@ -290,7 +296,7 @@ export async function toDemoOrderList(filters: OrderListFilters) {
         return false;
       }
 
-      if (filters.overdue && !(order.status !== "DELIVERED" && order.currentEstimatedDeliveryDate < today)) {
+      if (filters.overdue && !(order.status !== "DELIVERED" && order.currentEstimatedDeliveryDateEnd < today)) {
         return false;
       }
 
@@ -326,7 +332,7 @@ export async function getDemoDashboardData(period: string) {
   const today = todayDate();
   const activeOrders = store.orders.filter((order) => !order.archivedAt && order.status !== "DELIVERED");
   const dueSoonOrders = activeOrders.filter((order) => order.currentEstimatedDeliveryDate >= today && order.currentEstimatedDeliveryDate <= dueSoonDateTo);
-  const overdueOrders = activeOrders.filter((order) => order.currentEstimatedDeliveryDate < today);
+  const overdueOrders = activeOrders.filter((order) => order.currentEstimatedDeliveryDateEnd < today);
   const failedEmails = store.orders.flatMap((order) =>
     order.emailHistory
       .filter((email) => email.category === "TRANSACTIONAL" && ["FAILED", "BOUNCED", "COMPLAINED", "SUPPRESSED"].includes(email.status))
@@ -401,6 +407,7 @@ export async function getDemoOrderDetail(orderId: string, profile: Pick<Profile,
     customerName: formatCustomerName(order.customerFirstName, order.customerLastName),
     customerPreview: toPublicOrderSnapshot({
       currentEstimatedDeliveryDate: order.currentEstimatedDeliveryDate,
+      currentEstimatedDeliveryDateEnd: order.currentEstimatedDeliveryDateEnd,
       orderNumber: order.orderNumber,
       preferredLanguage: order.preferredLanguage,
       productDescription: order.productDescription,
@@ -477,6 +484,7 @@ export async function createDemoOrder(data: {
   customerPhone?: string | undefined;
   existingCustomerId?: string | undefined;
   initialEstimatedDeliveryDate: string;
+  initialEstimatedDeliveryDateEnd: string;
   initialInternalNote?: string | undefined;
   manualOrderNumber?: string | undefined;
   orderNumberMode: "auto" | "manual";
@@ -506,6 +514,7 @@ export async function createDemoOrder(data: {
     assignedSalespersonLastName: demoSalesperson.lastName,
     createdAt: now,
     currentEstimatedDeliveryDate: data.initialEstimatedDeliveryDate,
+    currentEstimatedDeliveryDateEnd: data.initialEstimatedDeliveryDateEnd,
     customerEmail,
     customerFirstName,
     customerId,
@@ -529,6 +538,7 @@ export async function createDemoOrder(data: {
     ],
     id,
     initialEstimatedDeliveryDate: data.initialEstimatedDeliveryDate,
+    initialEstimatedDeliveryDateEnd: data.initialEstimatedDeliveryDateEnd,
     notes: data.initialInternalNote ? [{
       body: data.initialInternalNote,
       createdAt: now,
@@ -674,6 +684,7 @@ export async function changeDemoOrderStatus(data: {
 export async function updateDemoEstimatedDeliveryDate(data: {
   customerNotificationRequested: boolean;
   newDate: string;
+  newDateEnd: string;
   orderId: string;
   reason?: string | undefined;
 }) {
@@ -681,8 +692,10 @@ export async function updateDemoEstimatedDeliveryDate(data: {
   const order = findDemoOrder(store, data.orderId);
   const now = new Date().toISOString();
   const previousDate = order.currentEstimatedDeliveryDate;
+  const previousDateEnd = order.currentEstimatedDeliveryDateEnd;
 
   order.currentEstimatedDeliveryDate = data.newDate;
+  order.currentEstimatedDeliveryDateEnd = data.newDateEnd;
   order.updatedAt = now;
   order.version += 1;
   order.dateHistory.unshift({
@@ -690,7 +703,9 @@ export async function updateDemoEstimatedDeliveryDate(data: {
     customerNotificationRequested: data.customerNotificationRequested,
     id: randomUUID(),
     newDate: data.newDate,
+    newDateEnd: data.newDateEnd,
     previousDate,
+    previousDateEnd,
     reason: data.reason || null
   });
 
@@ -825,6 +840,7 @@ export async function queueDemoOptionalEmail(customerId: string, emailType: Excl
 export function toDemoPublicRow(order: DemoOrderRecord) {
   return {
     currentEstimatedDeliveryDate: order.currentEstimatedDeliveryDate,
+    currentEstimatedDeliveryDateEnd: order.currentEstimatedDeliveryDateEnd,
     customerFirstName: order.customerFirstName,
     id: order.id,
     lastUpdatedAt: new Date(order.updatedAt),

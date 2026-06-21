@@ -23,6 +23,7 @@ type ClaimedEmail = {
   customerFirstName: string | null;
   customerLastName: string | null;
   currentEstimatedDeliveryDate: string | null;
+  currentEstimatedDeliveryDateEnd: string | null;
   emailType: EmailType;
   id: string;
   idempotencyKey: string;
@@ -79,6 +80,10 @@ function getTemplateVariables(row: ClaimedEmail, secureTrackingUrl: string | und
     variables.currentEstimatedDeliveryDate = row.currentEstimatedDeliveryDate;
   }
 
+  if (!variables.currentEstimatedDeliveryDateEnd && row.currentEstimatedDeliveryDateEnd) {
+    variables.currentEstimatedDeliveryDateEnd = row.currentEstimatedDeliveryDateEnd;
+  }
+
   if (!variables.customerEmail && row.customerEmail) {
     variables.customerEmail = row.customerEmail;
   }
@@ -89,6 +94,10 @@ function getTemplateVariables(row: ClaimedEmail, secureTrackingUrl: string | und
 
   if (!variables.estimatedDeliveryDate && row.currentEstimatedDeliveryDate) {
     variables.estimatedDeliveryDate = row.currentEstimatedDeliveryDate;
+  }
+
+  if (!variables.estimatedDeliveryDateEnd && row.currentEstimatedDeliveryDateEnd) {
+    variables.estimatedDeliveryDateEnd = row.currentEstimatedDeliveryDateEnd;
   }
 
   if (!variables.orderAdminUrl && row.orderId) {
@@ -168,6 +177,7 @@ async function claimEligibleEmails(limit: number, workerId: string) {
       (select ${orders.trackingNumber} from ${orders} where ${orders.id} = ${emailOutbox.orderId}) as "trackingNumber",
       (select ${orders.trackingLinkVersion} from ${orders} where ${orders.id} = ${emailOutbox.orderId}) as "trackingLinkVersion",
       (select ${orders.currentEstimatedDeliveryDate} from ${orders} where ${orders.id} = ${emailOutbox.orderId}) as "currentEstimatedDeliveryDate",
+      (select ${orders.currentEstimatedDeliveryDateEnd} from ${orders} where ${orders.id} = ${emailOutbox.orderId}) as "currentEstimatedDeliveryDateEnd",
       (select ${orders.productDescription} from ${orders} where ${orders.id} = ${emailOutbox.orderId}) as "productDescription",
       (select ${customers.firstName} from ${customers} where ${customers.id} = ${emailOutbox.customerId}) as "customerFirstName",
       (select ${customers.lastName} from ${customers} where ${customers.id} = ${emailOutbox.customerId}) as "customerLastName",

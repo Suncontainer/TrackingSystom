@@ -8,13 +8,17 @@ import type { AppLocale } from "@/i18n/types";
 
 export type EmailTemplateVariables = {
   currentEstimatedDeliveryDate?: string;
+  currentEstimatedDeliveryDateEnd?: string;
   customerEmail?: string;
   customerName?: string;
   estimatedDeliveryDate?: string;
+  estimatedDeliveryDateEnd?: string;
   newDate?: string;
+  newDateEnd?: string;
   orderAdminUrl?: string;
   orderNumber?: string;
   previousDate?: string;
+  previousDateEnd?: string;
   productDescription?: string | null;
   secureTrackingUrl?: string;
   trackingNumber?: string;
@@ -33,12 +37,18 @@ type TemplateProps = {
   title: string;
 };
 
-function formatDate(value: string | undefined, locale: AppLocale) {
-  if (!value) {
+function formatDateRange(start: string | undefined, end: string | undefined, locale: AppLocale) {
+  if (!start) {
     return locale === "de" ? "Noch nicht festgelegt" : "Not set yet";
   }
 
-  return new Intl.DateTimeFormat(locale === "de" ? "de-DE" : "en-GB", { dateStyle: "medium" }).format(new Date(value));
+  const formatter = new Intl.DateTimeFormat(locale === "de" ? "de-DE" : "en-GB", { dateStyle: "medium" });
+
+  if (!end || start === end) {
+    return formatter.format(new Date(start));
+  }
+
+  return formatter.formatRange(new Date(start), new Date(end));
 }
 
 function Layout({ children, locale, preview, title }: TemplateProps) {
@@ -103,7 +113,7 @@ function renderOrderReceived(locale: AppLocale, variables: EmailTemplateVariable
     `${variables.customerName ?? ""}`,
     `${variables.orderNumber ?? ""}`,
     `${variables.trackingNumber ?? ""}`,
-    `${formatDate(variables.estimatedDeliveryDate ?? variables.currentEstimatedDeliveryDate, locale)}`,
+    `${formatDateRange(variables.estimatedDeliveryDate ?? variables.currentEstimatedDeliveryDate, variables.estimatedDeliveryDateEnd ?? variables.currentEstimatedDeliveryDateEnd, locale)}`,
     variables.secureTrackingUrl ?? ""
   ].filter(Boolean).join("\n");
 
@@ -115,7 +125,7 @@ function renderOrderReceived(locale: AppLocale, variables: EmailTemplateVariable
       {paragraph(locale === "de" ? `Hallo ${variables.customerName ?? ""}, Ihr Auftrag wurde aufgenommen.` : `Hello ${variables.customerName ?? ""}, your order has been created.`)}
       {paragraph(`${locale === "de" ? "Auftrag" : "Order"}: ${variables.orderNumber ?? "-"}`)}
       {paragraph(`${locale === "de" ? "Tracking" : "Tracking"}: ${variables.trackingNumber ?? "-"}`)}
-      {paragraph(`${locale === "de" ? "Voraussichtliche Lieferung" : "Estimated delivery"}: ${formatDate(variables.estimatedDeliveryDate ?? variables.currentEstimatedDeliveryDate, locale)}`)}
+      {paragraph(`${locale === "de" ? "Voraussichtliche Lieferung" : "Estimated delivery"}: ${formatDateRange(variables.estimatedDeliveryDate ?? variables.currentEstimatedDeliveryDate, variables.estimatedDeliveryDateEnd ?? variables.currentEstimatedDeliveryDateEnd, locale)}`)}
       {link(variables.secureTrackingUrl, trackingLabel)}
     </>,
     text,
@@ -151,7 +161,7 @@ function renderStatus(locale: AppLocale, variables: EmailTemplateVariables, stat
           ? copy.PROCUREMENT_STARTED
           : copy.PRODUCTION_STARTED;
   const [subject, title] = selected[locale];
-  const text = [title, variables.customerName ?? "", variables.orderNumber ?? "", formatDate(variables.currentEstimatedDeliveryDate, locale), variables.secureTrackingUrl ?? ""]
+  const text = [title, variables.customerName ?? "", variables.orderNumber ?? "", formatDateRange(variables.currentEstimatedDeliveryDate, variables.currentEstimatedDeliveryDateEnd, locale), variables.secureTrackingUrl ?? ""]
     .filter(Boolean)
     .join("\n");
 
@@ -164,7 +174,7 @@ function renderStatus(locale: AppLocale, variables: EmailTemplateVariables, stat
       {paragraph(title)}
       {paragraph(`${locale === "de" ? "Auftrag" : "Order"}: ${variables.orderNumber ?? "-"}`)}
       {status !== "DELIVERED"
-        ? paragraph(`${locale === "de" ? "Voraussichtliche Lieferung" : "Estimated delivery"}: ${formatDate(variables.currentEstimatedDeliveryDate, locale)}`)
+        ? paragraph(`${locale === "de" ? "Voraussichtliche Lieferung" : "Estimated delivery"}: ${formatDateRange(variables.currentEstimatedDeliveryDate, variables.currentEstimatedDeliveryDateEnd, locale)}`)
         : null}
       {link(variables.secureTrackingUrl, locale === "de" ? "Status ansehen" : "View status")}
     </>,
@@ -205,7 +215,7 @@ function renderSalesperson(locale: AppLocale, variables: EmailTemplateVariables)
 function renderDeliveryDate(locale: AppLocale, variables: EmailTemplateVariables) {
   const subject = locale === "de" ? "Aktualisierte Lieferzeit - Sun Container" : "Updated delivery date - Sun Container";
   const title = locale === "de" ? "Lieferdatum aktualisiert" : "Delivery date updated";
-  const text = [title, variables.orderNumber ?? "", formatDate(variables.previousDate, locale), formatDate(variables.newDate, locale), variables.secureTrackingUrl ?? ""]
+  const text = [title, variables.orderNumber ?? "", formatDateRange(variables.previousDate, variables.previousDateEnd, locale), formatDateRange(variables.newDate, variables.newDateEnd, locale), variables.secureTrackingUrl ?? ""]
     .filter(Boolean)
     .join("\n");
 
@@ -215,8 +225,8 @@ function renderDeliveryDate(locale: AppLocale, variables: EmailTemplateVariables
     locale,
     <>
       {paragraph(`${locale === "de" ? "Auftrag" : "Order"}: ${variables.orderNumber ?? "-"}`)}
-      {paragraph(`${locale === "de" ? "Bisher" : "Previous"}: ${formatDate(variables.previousDate, locale)}`)}
-      {paragraph(`${locale === "de" ? "Neu" : "New"}: ${formatDate(variables.newDate, locale)}`)}
+      {paragraph(`${locale === "de" ? "Bisher" : "Previous"}: ${formatDateRange(variables.previousDate, variables.previousDateEnd, locale)}`)}
+      {paragraph(`${locale === "de" ? "Neu" : "New"}: ${formatDateRange(variables.newDate, variables.newDateEnd, locale)}`)}
       {link(variables.secureTrackingUrl, locale === "de" ? "Status ansehen" : "View status")}
     </>,
     text,

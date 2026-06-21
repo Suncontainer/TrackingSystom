@@ -16,6 +16,18 @@ function formatDate(value: string, locale: string) {
   }).format(new Date(value));
 }
 
+function formatDateRange(start: string, end: string, locale: string) {
+  const formatter = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", {
+    dateStyle: "medium"
+  });
+
+  if (!end || start === end) {
+    return formatter.format(new Date(start));
+  }
+
+  return formatter.formatRange(new Date(start), new Date(end));
+}
+
 export function TrackingResult({ order }: TrackingResultProps) {
   const locale = order.locale;
   const dictionary = getPublicDictionary(locale);
@@ -61,7 +73,9 @@ export function TrackingResult({ order }: TrackingResultProps) {
         <div>
           <CalendarDays size={20} aria-hidden="true" />
           <span>{dictionary.result.estimatedDelivery}</span>
-          <strong>{formatDate(order.currentEstimatedDeliveryDate, locale)}</strong>
+          <strong>
+            {formatDateRange(order.currentEstimatedDeliveryDate, order.currentEstimatedDeliveryDateEnd, locale)}
+          </strong>
         </div>
         <div>
           <CalendarDays size={20} aria-hidden="true" />

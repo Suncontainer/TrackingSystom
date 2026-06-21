@@ -53,6 +53,7 @@ const manualLookupSchema = z.object({
 
 type PublicOrderRow = {
   currentEstimatedDeliveryDate: string;
+  currentEstimatedDeliveryDateEnd: string;
   customerFirstName: string;
   id: string;
   lastUpdatedAt: Date;
@@ -90,6 +91,7 @@ function toPublicTrackingOrder(row: PublicOrderRow): PublicTrackingOrder {
   return {
     ...toPublicOrderSnapshot({
       currentEstimatedDeliveryDate: row.currentEstimatedDeliveryDate,
+      currentEstimatedDeliveryDateEnd: row.currentEstimatedDeliveryDateEnd,
       orderNumber: row.orderNumber,
       preferredLanguage: normalizeLocale(row.preferredLanguage),
       productDescription: row.productDescription,
@@ -133,6 +135,7 @@ async function findPublicOrderByManualLookup(identifier: string, email: string) 
   const rows = await getDb()
     .select({
       currentEstimatedDeliveryDate: orders.currentEstimatedDeliveryDate,
+      currentEstimatedDeliveryDateEnd: orders.currentEstimatedDeliveryDateEnd,
       customerFirstName: customers.firstName,
       id: orders.id,
       lastUpdatedAt: orders.updatedAt,
@@ -162,6 +165,7 @@ async function findPublicOrderById(orderId: string) {
   const rows = await getDb()
     .select({
       currentEstimatedDeliveryDate: orders.currentEstimatedDeliveryDate,
+      currentEstimatedDeliveryDateEnd: orders.currentEstimatedDeliveryDateEnd,
       customerFirstName: customers.firstName,
       id: orders.id,
       lastUpdatedAt: orders.updatedAt,

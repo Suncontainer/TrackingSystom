@@ -34,6 +34,20 @@ function formatDate(value: string | Date | null, locale: AppLocale) {
   return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", { dateStyle: "medium" }).format(new Date(value));
 }
 
+function formatDateRange(start: string | null, end: string | null, locale: AppLocale) {
+  if (!start) {
+    return "—";
+  }
+
+  const formatter = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", { dateStyle: "medium" });
+
+  if (!end || start === end) {
+    return formatter.format(new Date(start));
+  }
+
+  return formatter.formatRange(new Date(start), new Date(end));
+}
+
 function getSearchValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -90,7 +104,13 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
           </div>
           <div>
             <p className="detail-label">{dt.deliveryPlanned}</p>
-            <p>{formatDate(detail.order.currentEstimatedDeliveryDate, locale)}</p>
+            <p>
+              {formatDateRange(
+                detail.order.currentEstimatedDeliveryDate,
+                detail.order.currentEstimatedDeliveryDateEnd,
+                locale
+              )}
+            </p>
           </div>
           <div>
             <p className="detail-label">{dt.sales}</p>
@@ -139,6 +159,7 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
         {detail.canUpdateWorkflow ? (
           <DeliveryDateForm
             currentDate={detail.order.currentEstimatedDeliveryDate}
+            currentDateEnd={detail.order.currentEstimatedDeliveryDateEnd}
             orderId={detail.order.id}
             version={detail.order.version}
             dict={t.forms.deliveryDate}
@@ -227,7 +248,8 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
               <article className="stack-list__item" key={entry.id}>
                 <div className="stack-list__heading">
                   <strong>
-                    {formatDate(entry.previousDate, locale)} &gt; {formatDate(entry.newDate, locale)}
+                    {formatDateRange(entry.previousDate, entry.previousDateEnd, locale)} &gt;{" "}
+                    {formatDateRange(entry.newDate, entry.newDateEnd, locale)}
                   </strong>
                   <span>{formatDate(entry.createdAt, locale)}</span>
                 </div>

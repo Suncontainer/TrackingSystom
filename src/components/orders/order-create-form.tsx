@@ -233,7 +233,7 @@ export function OrderCreateForm({
             ) : null}
           </div>
           <div className="form-field">
-            <label htmlFor="estimated-delivery-date">{dict.estimatedDelivery}</label>
+            <label htmlFor="estimated-delivery-date">{dict.estimatedDeliveryFrom}</label>
             <input
               defaultValue={fieldValue(values, "initialEstimatedDeliveryDate")}
               id="estimated-delivery-date"
@@ -244,6 +244,21 @@ export function OrderCreateForm({
             {getFieldError(state.fieldErrors, "initialEstimatedDeliveryDate") ? (
               <p className="field-error">
                 {getFieldError(state.fieldErrors, "initialEstimatedDeliveryDate")}
+              </p>
+            ) : null}
+          </div>
+          <div className="form-field">
+            <label htmlFor="estimated-delivery-date-end">{dict.estimatedDeliveryTo}</label>
+            <input
+              defaultValue={fieldValue(values, "initialEstimatedDeliveryDateEnd")}
+              id="estimated-delivery-date-end"
+              name="initialEstimatedDeliveryDateEnd"
+              required
+              type="date"
+            />
+            {getFieldError(state.fieldErrors, "initialEstimatedDeliveryDateEnd") ? (
+              <p className="field-error">
+                {getFieldError(state.fieldErrors, "initialEstimatedDeliveryDateEnd")}
               </p>
             ) : null}
           </div>
