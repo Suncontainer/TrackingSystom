@@ -5,9 +5,11 @@ import { siteConfig } from "@/config/site";
 import type { PublicTrackingOrder } from "@/features/tracking/lookup";
 import { getOrderStatusIndex, orderStatusContent, orderStatusIcon, orderStatuses } from "@/features/orders/status";
 import { getPublicDictionary } from "@/i18n/get-locale";
+import type { AppLocale } from "@/i18n/types";
 
 type TrackingResultProps = {
   order: PublicTrackingOrder;
+  locale: AppLocale;
 };
 
 function formatDate(value: string, locale: string) {
@@ -28,8 +30,7 @@ function formatDateRange(start: string, end: string, locale: string) {
   return formatter.formatRange(new Date(start), new Date(end));
 }
 
-export function TrackingResult({ order }: TrackingResultProps) {
-  const locale = order.locale;
+export function TrackingResult({ order, locale }: TrackingResultProps) {
   const dictionary = getPublicDictionary(locale);
   const currentStatusIndex = getOrderStatusIndex(order.status);
   const statusCopy = orderStatusContent[order.status][locale];

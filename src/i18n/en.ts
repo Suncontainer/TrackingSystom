@@ -31,5 +31,11 @@ export const en = {
     summaryAriaLabel: "Order summary",
     timelineAriaLabel: "Progress",
     trackingNumber: "Tracking number"
+  },
+  tokenError: {
+    eyebrow: "Tracking",
+    title: "Tracking link unavailable",
+    body: "Please use the manual order lookup.",
+    cta: "Go to order lookup"
   }
 } satisfies PublicDictionary;

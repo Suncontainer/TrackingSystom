@@ -31,4 +31,10 @@ export type PublicDictionary = {
     timelineAriaLabel: string;
     trackingNumber: string;
   };
+  tokenError: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    cta: string;
+  };
 };

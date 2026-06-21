@@ -31,5 +31,11 @@ export const de = {
     summaryAriaLabel: "Auftragszusammenfassung",
     timelineAriaLabel: "Fortschritt",
     trackingNumber: "Trackingnummer"
+  },
+  tokenError: {
+    eyebrow: "Tracking",
+    title: "Tracking-Link nicht verfügbar",
+    body: "Bitte nutzen Sie die manuelle Auftragssuche.",
+    cta: "Zur Auftragssuche"
   }
 } satisfies PublicDictionary;
