@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminPageShell } from "@/components/admin/admin-page-shell";
+import { OrderRowActions } from "@/components/orders/order-row-actions";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { routes } from "@/config/routes";
 import { requirePermission } from "@/features/auth/guards";
@@ -75,6 +76,15 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     profile.role === "SALES" ? Promise.resolve([]) : listAssignableSalespeople()
   ]);
   const canCreateOrders = hasPermission(profile.role, "orders:create");
+  const canArchiveOrders = hasPermission(profile.role, "orders:archive");
+  const rowActionsDict = {
+    edit: o.edit,
+    remove: o.remove,
+    restore: o.restore,
+    reason: o.removeReason,
+    confirmRemove: o.removeConfirm,
+    confirmRestore: o.restoreConfirm
+  };
 
   return (
     <AdminPageShell eyebrow={o.eyebrow} title={o.title}>
@@ -181,6 +191,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                     <th>{o.colSales}</th>
                     <th>{o.colEmail}</th>
                     <th>{o.colUpdated}</th>
+                    <th>{o.colActions}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -201,6 +212,16 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                       <td>{row.assignedSalespersonLabel || "—"}</td>
                       <td>{row.hasEmailWarning ? t.common.warning : t.common.ok}</td>
                       <td>{formatDate(row.updatedAt, locale)}</td>
+                      <td>
+                        <OrderRowActions
+                          archived={Boolean(row.archivedAt)}
+                          canArchive={canArchiveOrders}
+                          dict={rowActionsDict}
+                          editHref={routes.admin.orderDetails(row.id)}
+                          orderId={row.id}
+                          version={row.version}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -223,6 +244,16 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                     <p>{row.customerName}</p>
                     <p>{formatDate(row.currentEstimatedDeliveryDate, locale)}</p>
                     <p>{row.assignedSalespersonLabel || "—"}</p>
+                  </div>
+                  <div className="order-card__actions">
+                    <OrderRowActions
+                      archived={Boolean(row.archivedAt)}
+                      canArchive={canArchiveOrders}
+                      dict={rowActionsDict}
+                      editHref={routes.admin.orderDetails(row.id)}
+                      orderId={row.id}
+                      version={row.version}
+                    />
                   </div>
                 </article>
               ))}

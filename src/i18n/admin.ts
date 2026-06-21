@@ -95,6 +95,13 @@ export type AdminDictionary = {
     colSales: string;
     colEmail: string;
     colUpdated: string;
+    colActions: string;
+    edit: string;
+    remove: string;
+    restore: string;
+    removeReason: string;
+    removeConfirm: string;
+    restoreConfirm: string;
     pageInfo: string;
     emptyResults: string;
   };
@@ -473,6 +480,14 @@ const de: AdminDictionary = {
     colSales: "Vertrieb",
     colEmail: "E-Mail",
     colUpdated: "Aktualisiert",
+    colActions: "Aktionen",
+    edit: "Bearbeiten",
+    remove: "Entfernen",
+    restore: "Wiederherstellen",
+    removeReason: "Aus der Auftragsliste entfernt",
+    removeConfirm:
+      "Diesen Auftrag entfernen? Der Tracking-Link funktioniert dann nicht mehr. Sie können ihn später wiederherstellen.",
+    restoreConfirm: "Diesen Auftrag wiederherstellen?",
     pageInfo: "Seite {page} von {totalPages}",
     emptyResults: "Keine Aufträge für diese Filter gefunden."
   },
@@ -857,6 +872,14 @@ const en: AdminDictionary = {
     colSales: "Sales",
     colEmail: "Email",
     colUpdated: "Updated",
+    colActions: "Actions",
+    edit: "Edit",
+    remove: "Remove",
+    restore: "Restore",
+    removeReason: "Removed from orders list",
+    removeConfirm:
+      "Remove this order? Its tracking link will stop working. You can restore it later.",
+    restoreConfirm: "Restore this order?",
     pageInfo: "Page {page} of {totalPages}",
     emptyResults: "No orders found for these filters."
   },

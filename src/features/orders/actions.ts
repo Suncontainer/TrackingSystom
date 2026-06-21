@@ -7,7 +7,7 @@ import { assertCan } from "@/features/auth/permissions";
 import { ValidationError, ConflictError, NotFoundError } from "@/lib/errors/app-error";
 import { routes } from "@/config/routes";
 
-import type { OrderFormState } from "./form-state";
+import { initialOrderFormState, type OrderFormState } from "./form-state";
 import {
   addInternalNote,
   changeOrderStatus,
@@ -178,4 +178,23 @@ export async function setOrderArchiveStateAction(
   }
 
   redirect(`${routes.admin.orderDetails(orderId)}?${redirectMode === "restore" ? "restored" : "archived"}=1`);
+}
+
+// Archive/restore triggered from a row on the orders list. Unlike the detail-page
+// form this does not redirect away — the service revalidates the list, so the row
+// simply disappears (or reappears) in place.
+export async function setOrderArchiveStateInlineAction(
+  _previousState: OrderActionState,
+  formData: FormData
+): Promise<OrderActionState> {
+  try {
+    const targetOrderId = String(formData.get("orderId") ?? "");
+    const profile = await requireOrderAccess(targetOrderId);
+    assertCan(profile.role, "orders:archive");
+    await setOrderArchiveState(formDataToObject(formData), profile);
+  } catch (error) {
+    return getActionErrorState(error);
+  }
+
+  return initialOrderFormState;
 }

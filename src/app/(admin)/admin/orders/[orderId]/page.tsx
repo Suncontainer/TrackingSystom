@@ -116,18 +116,6 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
             <p className="detail-label">{dt.sales}</p>
             <p>{detail.order.assignedSalespersonLabel || detail.order.assignedSalespersonEmail || "—"}</p>
           </div>
-          <div>
-            <p className="detail-label">{dt.version}</p>
-            <p>{detail.order.version}</p>
-          </div>
-          <div>
-            <p className="detail-label">{dt.trackingLinkVersion}</p>
-            <p>{detail.order.trackingLinkVersion}</p>
-          </div>
-          <div>
-            <p className="detail-label">{dt.archive}</p>
-            <p>{detail.order.archivedAt ? `${dt.archivedOn} ${formatDate(detail.order.archivedAt, locale)}` : dt.active}</p>
-          </div>
         </div>
       </section>
 
