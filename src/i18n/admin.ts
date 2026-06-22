@@ -302,6 +302,16 @@ export type AdminDictionary = {
       adding: string;
       submit: string;
     };
+    orderImages: {
+      heading: string;
+      intro: string;
+      uploadLabel: string;
+      uploadSubmit: string;
+      uploading: string;
+      empty: string;
+      remove: string;
+      confirmRemove: string;
+    };
     archive: {
       restoreReason: string;
       archiveReason: string;
@@ -728,6 +738,16 @@ const de: AdminDictionary = {
       adding: "Speichert...",
       submit: "Notiz hinzufügen"
     },
+    orderImages: {
+      heading: "Produktbilder",
+      intro: "Bilder des Produkts hochladen (z. B. vor dem Versand). Der Kunde sieht sie auf der Tracking-Seite.",
+      uploadLabel: "Bilder auswählen",
+      uploadSubmit: "Bilder hochladen",
+      uploading: "Wird hochgeladen …",
+      empty: "Noch keine Bilder hochgeladen.",
+      remove: "Entfernen",
+      confirmRemove: "Dieses Bild entfernen?"
+    },
     archive: {
       restoreReason: "Restore-Grund",
       archiveReason: "Archivierungsgrund",
@@ -1145,6 +1165,16 @@ const en: AdminDictionary = {
       newNote: "New internal note",
       adding: "Saving...",
       submit: "Add note"
+    },
+    orderImages: {
+      heading: "Product images",
+      intro: "Upload photos of the product (e.g. before it ships). The customer sees them on the tracking page.",
+      uploadLabel: "Choose images",
+      uploadSubmit: "Upload images",
+      uploading: "Uploading …",
+      empty: "No images uploaded yet.",
+      remove: "Remove",
+      confirmRemove: "Remove this image?"
     },
     archive: {
       restoreReason: "Restore reason",

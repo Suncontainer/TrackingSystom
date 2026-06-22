@@ -141,6 +141,26 @@ export const orders = pgTable(
   ]
 ).enableRLS();
 
+// Product photos uploaded by an admin (e.g. before shipping) and shown both in the
+// admin order detail and on the customer's public tracking page.
+export const orderImages = pgTable(
+  "order_images",
+  {
+    id: primaryUuid(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    storagePath: text("storage_path").notNull(),
+    url: text("url").notNull(),
+    createdBy: uuid("created_by").references(() => profiles.id, {
+      onDelete: "set null",
+      onUpdate: "cascade"
+    }),
+    createdAt: createdAtOnlyColumn()
+  },
+  (table) => [index("order_images_order_id_idx").on(table.orderId)]
+).enableRLS();
+
 export const orderStatusHistory = pgTable(
   "order_status_history",
   {

@@ -18,6 +18,7 @@ import {
   normalizeManualOrderNumber,
   normalizeTrackingNumber
 } from "@/features/orders/identifiers";
+import { listOrderImages, type OrderImage } from "@/features/orders/images";
 import { toPublicOrderSnapshot } from "@/features/orders/public-dto";
 import type { AppLocale } from "@/i18n/types";
 
@@ -31,6 +32,7 @@ export const genericLookupFailure = "We could not find an active order matching 
 export type PublicTrackingOrder = ReturnType<typeof toPublicOrderSnapshot> & {
   customerFirstName: string;
   formattedTrackingNumber: string;
+  images: OrderImage[];
   lastUpdatedAt: string;
 };
 
@@ -87,7 +89,7 @@ function normalizeLocale(locale: string): AppLocale {
   return locale === "en" ? "en" : "de";
 }
 
-function toPublicTrackingOrder(row: PublicOrderRow): PublicTrackingOrder {
+function toPublicTrackingOrder(row: PublicOrderRow, images: OrderImage[]): PublicTrackingOrder {
   return {
     ...toPublicOrderSnapshot({
       currentEstimatedDeliveryDate: row.currentEstimatedDeliveryDate,
@@ -100,6 +102,7 @@ function toPublicTrackingOrder(row: PublicOrderRow): PublicTrackingOrder {
     }),
     customerFirstName: row.customerFirstName,
     formattedTrackingNumber: formatTrackingNumber(row.trackingNumber),
+    images,
     lastUpdatedAt: row.lastUpdatedAt.toISOString()
   };
 }
@@ -236,7 +239,7 @@ export async function lookupTrackingOrder(input: unknown, headers: Headers): Pro
 
   return {
     ok: true,
-    order: toPublicTrackingOrder(row),
+    order: toPublicTrackingOrder(row, await listOrderImages(row.id)),
     token
   };
 }
@@ -260,7 +263,7 @@ export async function getTrackingOrderByToken(token: string): Promise<TrackingLo
 
   return {
     ok: true,
-    order: toPublicTrackingOrder(row),
+    order: toPublicTrackingOrder(row, await listOrderImages(row.id)),
     token
   };
 }

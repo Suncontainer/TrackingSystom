@@ -30,6 +30,7 @@ export type PublicDictionary = {
     summaryAriaLabel: string;
     timelineAriaLabel: string;
     trackingNumber: string;
+    productImages: string;
   };
   tokenError: {
     eyebrow: string;

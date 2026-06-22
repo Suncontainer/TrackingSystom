@@ -90,6 +90,18 @@ export function TrackingResult({ order, locale }: TrackingResultProps) {
         </div>
       </div>
 
+      {order.images.length > 0 ? (
+        <div className="tracking-images">
+          <p className="eyebrow">{dictionary.result.productImages}</p>
+          <div className="tracking-images__grid">
+            {order.images.map((image) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt="" key={image.id} loading="lazy" src={image.url} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <p className="tracking-notice">{dictionary.result.estimateNotice}</p>
     </section>
   );

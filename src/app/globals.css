@@ -1175,6 +1175,44 @@ textarea {
   cursor: default;
 }
 
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.image-grid__item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.image-grid__item img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.tracking-images {
+  margin-top: 24px;
+}
+
+.tracking-images__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.tracking-images__grid img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
 .empty-state {
   display: flex;
   align-items: center;

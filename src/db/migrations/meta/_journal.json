@@ -36,6 +36,13 @@
       "when": 1782085124014,
       "tag": "0004_dizzy_sway",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782087209959,
+      "tag": "0005_even_firelord",
+      "breakpoints": true
     }
   ]
 }

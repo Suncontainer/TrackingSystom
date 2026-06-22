@@ -30,7 +30,8 @@ export const en = {
     support: "Support",
     summaryAriaLabel: "Order summary",
     timelineAriaLabel: "Progress",
-    trackingNumber: "Tracking number"
+    trackingNumber: "Tracking number",
+    productImages: "Product images"
   },
   tokenError: {
     eyebrow: "Tracking",

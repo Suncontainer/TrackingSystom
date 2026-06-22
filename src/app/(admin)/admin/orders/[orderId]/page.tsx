@@ -2,12 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminPageShell } from "@/components/admin/admin-page-shell";
+import { OrderImagesSection } from "@/components/orders/order-images-section";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { OrderUpdateForm } from "@/components/orders/order-update-form";
 import { StatusChangeForm } from "@/components/orders/status-change-form";
 import { routes } from "@/config/routes";
 import { AuthorizationError } from "@/features/auth/errors";
 import { requireOrderAccess } from "@/features/auth/guards";
+import { listOrderImages } from "@/features/orders/images";
 import { getOrderDetail } from "@/features/orders/service";
 import { listActiveSellers } from "@/features/sellers/service";
 import { getAdminContext } from "@/i18n/get-admin-locale";
@@ -54,7 +56,7 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
   const { locale, t } = await getAdminContext();
   const dt = t.forms.orderDetail;
   const query = (searchParams ? await searchParams : {}) ?? {};
-  const { detail, sellers } = await loadOrderPageData(orderId);
+  const { detail, sellers, images } = await loadOrderPageData(orderId);
 
   return (
     <AdminPageShell eyebrow={dt.eyebrow} title={detail.order.orderNumber}>
@@ -179,6 +181,10 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
         )}
       </section>
 
+      {detail.canEdit ? (
+        <OrderImagesSection dict={t.forms.orderImages} images={images} orderId={detail.order.id} />
+      ) : null}
+
       <section className="admin-card admin-section">
         <div className="section-heading">
           <h2 className="font-heading">{dt.statusHistoryHeading}</h2>
@@ -243,12 +249,13 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
 async function loadOrderPageData(orderId: string) {
   try {
     const profile = await requireOrderAccess(orderId);
-    const [detail, sellers] = await Promise.all([
+    const [detail, sellers, images] = await Promise.all([
       getOrderDetail(orderId, profile),
-      listActiveSellers()
+      listActiveSellers(),
+      listOrderImages(orderId)
     ]);
 
-    return { detail, sellers };
+    return { detail, sellers, images };
   } catch (error) {
     if (error instanceof AuthorizationError || error instanceof NotFoundError) {
       notFound();
