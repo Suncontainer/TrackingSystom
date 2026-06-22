@@ -353,6 +353,7 @@ export type AdminDictionary = {
       uploadLabel: string;
       uploadSubmit: string;
       uploading: string;
+      uploadHint: string;
       empty: string;
       remove: string;
       confirmRemove: string;
@@ -835,6 +836,7 @@ const de: AdminDictionary = {
       uploadLabel: "Bilder auswählen",
       uploadSubmit: "Bilder hochladen",
       uploading: "Wird hochgeladen …",
+      uploadHint: "JPG, PNG, WebP oder GIF · bis zu 10 MB pro Bild · mehrere möglich",
       empty: "Noch keine Bilder hochgeladen.",
       remove: "Entfernen",
       confirmRemove: "Dieses Bild entfernen?"
@@ -1308,6 +1310,7 @@ const en: AdminDictionary = {
       uploadLabel: "Choose images",
       uploadSubmit: "Upload images",
       uploading: "Uploading …",
+      uploadHint: "JPG, PNG, WebP or GIF · up to 10 MB each · multiple allowed",
       empty: "No images uploaded yet.",
       remove: "Remove",
       confirmRemove: "Remove this image?"

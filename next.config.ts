@@ -64,6 +64,13 @@ function globalSecurityHeaders() {
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  experimental: {
+    // Product-image bytes upload directly to storage, so server actions stay small;
+    // this just gives a little headroom for any larger action payloads.
+    serverActions: {
+      bodySizeLimit: "5mb"
+    }
+  },
   images: {
     localPatterns: [
       {

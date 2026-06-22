@@ -18,7 +18,6 @@ type StatusChangeFormProps = {
   version: number;
   locale: AppLocale;
   dict: StatusChangeDict;
-  imageUploadLabel: string;
 };
 
 function getFieldError(errors: Record<string, string[]>, field: string) {
@@ -33,8 +32,7 @@ export function StatusChangeForm({
   orderId,
   version,
   locale,
-  dict,
-  imageUploadLabel
+  dict
 }: StatusChangeFormProps) {
   const [state, formAction, pending] = useActionState(changeOrderStatusAction, initialOrderFormState);
   const nextStandardStatus = getPermittedStandardNextStatus(currentStatus);
@@ -75,10 +73,6 @@ export function StatusChangeForm({
           {getFieldError(state.fieldErrors, "newStatus") ? (
             <p className="field-error">{getFieldError(state.fieldErrors, "newStatus")}</p>
           ) : null}
-        </div>
-        <div className="form-field">
-          <label htmlFor="status-images">{imageUploadLabel}</label>
-          <input accept="image/*" id="status-images" multiple name="images" type="file" />
         </div>
         <div className="form-field">
           <label htmlFor="status-estimated-delivery-date">{dict.estimatedDeliveryFrom}</label>

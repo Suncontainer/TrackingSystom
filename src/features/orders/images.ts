@@ -13,10 +13,10 @@ import { NotFoundError, ValidationError } from "@/lib/errors/app-error";
 import { createSupabaseServiceClient, PRODUCT_IMAGES_BUCKET } from "@/lib/supabase/admin";
 
 export type OrderImage = { id: string; url: string };
+export type ImageUploadTarget = { path: string; token: string };
 
 const MAX_FILES = 10;
-const MAX_BYTES = 10 * 1024 * 1024;
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "gif"];
 
 export async function listOrderImages(orderId: string): Promise<OrderImage[]> {
   if (isDemoMode()) {
@@ -32,28 +32,19 @@ export async function listOrderImages(orderId: string): Promise<OrderImage[]> {
     .orderBy(asc(orderImages.createdAt));
 }
 
-export async function addOrderImages(orderId: string, files: File[], actorId: string) {
+// Step 1 of a direct browser upload: create one signed upload URL per file so the
+// browser sends the bytes straight to storage (bypassing server-action body limits).
+export async function createImageUploadTargets(orderId: string, fileNames: string[]): Promise<ImageUploadTarget[]> {
   if (isDemoMode()) {
     throw new ValidationError("Image upload is not available in demo mode.");
   }
 
-  const valid = files.filter((file) => file && file.size > 0);
-
-  if (valid.length === 0) {
+  if (fileNames.length === 0) {
     throw new ValidationError("Select at least one image.");
   }
 
-  if (valid.length > MAX_FILES) {
+  if (fileNames.length > MAX_FILES) {
     throw new ValidationError(`Upload at most ${MAX_FILES} images at a time.`);
-  }
-
-  for (const file of valid) {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      throw new ValidationError("Only JPEG, PNG, WebP, or GIF images are allowed.");
-    }
-    if (file.size > MAX_BYTES) {
-      throw new ValidationError("Each image must be 10 MB or smaller.");
-    }
   }
 
   const db = getDb();
@@ -64,24 +55,47 @@ export async function addOrderImages(orderId: string, files: File[], actorId: st
   }
 
   const storage = createSupabaseServiceClient().storage.from(PRODUCT_IMAGES_BUCKET);
-  const rows: Array<{ orderId: string; storagePath: string; url: string; createdBy: string }> = [];
+  const targets: ImageUploadTarget[] = [];
 
-  for (const file of valid) {
-    const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-    const storagePath = `${orderId}/${randomUUID()}.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
+  for (const fileName of fileNames) {
+    const ext = (fileName.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const safeExt = ALLOWED_EXTENSIONS.includes(ext) ? ext : "jpg";
+    const path = `${orderId}/${randomUUID()}.${safeExt}`;
+    const { data, error } = await storage.createSignedUploadUrl(path);
 
-    const { error } = await storage.upload(storagePath, buffer, { contentType: file.type, upsert: false });
-
-    if (error) {
-      throw new ValidationError(`Image upload failed: ${error.message}`);
+    if (error || !data) {
+      throw new ValidationError(`Could not prepare the upload: ${error?.message ?? "unknown error"}`);
     }
 
-    const { data } = storage.getPublicUrl(storagePath);
-    rows.push({ orderId, storagePath, url: data.publicUrl, createdBy: actorId });
+    targets.push({ path: data.path, token: data.token });
   }
 
-  await db.insert(orderImages).values(rows);
+  return targets;
+}
+
+// Step 2: after the browser uploaded the files, record them. Paths are confined to
+// this order's folder so a caller can't attach arbitrary objects.
+export async function recordOrderImages(orderId: string, paths: string[], actorId: string) {
+  if (isDemoMode()) {
+    throw new ValidationError("Image upload is not available in demo mode.");
+  }
+
+  const prefix = `${orderId}/`;
+  const cleanPaths = [...new Set(paths.filter((path) => path.startsWith(prefix)))];
+
+  if (cleanPaths.length === 0) {
+    return;
+  }
+
+  const storage = createSupabaseServiceClient().storage.from(PRODUCT_IMAGES_BUCKET);
+  const rows = cleanPaths.map((path) => ({
+    orderId,
+    storagePath: path,
+    url: storage.getPublicUrl(path).data.publicUrl,
+    createdBy: actorId
+  }));
+
+  await getDb().insert(orderImages).values(rows);
   revalidatePath(routes.admin.orderDetails(orderId));
 }
 

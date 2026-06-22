@@ -2,48 +2,56 @@
 
 import { requireOrderAccess } from "@/features/auth/guards";
 import { assertCan } from "@/features/auth/permissions";
-import { AppError, ValidationError } from "@/lib/errors/app-error";
+import { AppError } from "@/lib/errors/app-error";
 
-import { type ImageActionState } from "./image-form-state";
-import { addOrderImages, deleteOrderImage } from "./images";
+import { createImageUploadTargets, deleteOrderImage, recordOrderImages, type ImageUploadTarget } from "./images";
 
-function errorState(error: unknown): ImageActionState {
-  if (error instanceof ValidationError || error instanceof AppError) {
-    return { formError: error.message, ok: false };
-  }
-
-  return { formError: "The request could not be completed.", ok: false };
+function errorMessage(error: unknown) {
+  return error instanceof AppError ? error.message : "The request could not be completed.";
 }
 
-export async function uploadOrderImagesAction(
-  _previousState: ImageActionState,
-  formData: FormData
-): Promise<ImageActionState> {
+type UploadTargetsResult =
+  | { ok: true; targets: ImageUploadTarget[] }
+  | { ok: false; error: string };
+
+export async function createImageUploadTargetsAction(
+  orderId: string,
+  fileNames: string[]
+): Promise<UploadTargetsResult> {
   try {
-    const orderId = String(formData.get("orderId") ?? "");
     const profile = await requireOrderAccess(orderId);
     assertCan(profile.role, "orders:update");
-    const files = formData.getAll("images").filter((entry): entry is File => entry instanceof File);
-    await addOrderImages(orderId, files, profile.id);
+    const targets = await createImageUploadTargets(orderId, fileNames);
+    return { ok: true, targets };
   } catch (error) {
-    return errorState(error);
+    return { ok: false, error: errorMessage(error) };
   }
+}
 
-  return { formError: null, ok: true };
+export async function recordOrderImagesAction(
+  orderId: string,
+  paths: string[]
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const profile = await requireOrderAccess(orderId);
+    assertCan(profile.role, "orders:update");
+    await recordOrderImages(orderId, paths, profile.id);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
 }
 
 export async function deleteOrderImageAction(
-  _previousState: ImageActionState,
-  formData: FormData
-): Promise<ImageActionState> {
+  orderId: string,
+  imageId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    const orderId = String(formData.get("orderId") ?? "");
     const profile = await requireOrderAccess(orderId);
     assertCan(profile.role, "orders:update");
-    await deleteOrderImage(String(formData.get("imageId") ?? ""));
+    await deleteOrderImage(imageId);
+    return { ok: true };
   } catch (error) {
-    return errorState(error);
+    return { ok: false, error: errorMessage(error) };
   }
-
-  return { formError: null, ok: true };
 }
