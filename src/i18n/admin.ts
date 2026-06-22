@@ -289,6 +289,7 @@ export type AdminDictionary = {
       notAssigned: string;
       seller: string;
       noSeller: string;
+      chooseSeller: string;
       fallbackSalesEmail: string;
       productDescription: string;
     };
@@ -770,6 +771,7 @@ const de: AdminDictionary = {
       notAssigned: "Nicht direkt zugewiesen",
       seller: "Verkäufer",
       noSeller: "Kein Verkäufer",
+      chooseSeller: "Verkäufer wählen",
       fallbackSalesEmail: "Fallback Vertriebs-E-Mail",
       productDescription: "Produktbeschreibung"
     },
@@ -1242,6 +1244,7 @@ const en: AdminDictionary = {
       notAssigned: "Not directly assigned",
       seller: "Seller",
       noSeller: "No seller",
+      chooseSeller: "Choose a seller",
       fallbackSalesEmail: "Fallback sales email",
       productDescription: "Product description"
     },

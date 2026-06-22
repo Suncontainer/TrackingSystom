@@ -170,19 +170,11 @@ const createOrderInputSchema = z
       });
     }
 
-    if (!input.assignedSalespersonId && !input.assignedSellerEmail && !input.assignedSalespersonEmail) {
+    if (!input.assignedSellerEmail) {
       ctx.addIssue({
         code: "custom",
-        message: "Select a seller or provide a fallback email.",
-        path: ["assignedSalespersonEmail"]
-      });
-    }
-
-    if (input.assignedSalespersonId && !uuidLikeSchema.safeParse(input.assignedSalespersonId).success) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Selected salesperson is invalid.",
-        path: ["assignedSalespersonId"]
+        message: "Select a seller.",
+        path: ["assignedSellerEmail"]
       });
     }
 

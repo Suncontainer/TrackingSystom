@@ -167,17 +167,6 @@ export function OrderCreateForm({
               type="text"
             />
           </div>
-          <div className="form-field">
-            <label htmlFor="preferred-language">{fields.language}</label>
-            <select
-              defaultValue={values?.preferredLanguage ?? "de"}
-              id="preferred-language"
-              name="preferredLanguage"
-            >
-              <option value="de">Deutsch</option>
-              <option value="en">English</option>
-            </select>
-          </div>
         </div>
 
         <div className="existing-customer-panel">
@@ -298,45 +287,21 @@ export function OrderCreateForm({
               defaultValue={fieldValue(values, "assignedSellerEmail")}
               id="assigned-seller-email"
               name="assignedSellerEmail"
+              required
             >
-              <option value="">{fields.noSeller}</option>
+              <option disabled value="">
+                {fields.chooseSeller}
+              </option>
               {sellers.map((seller) => (
                 <option key={seller.id} value={seller.email}>
                   {seller.name} · {seller.email}
                 </option>
               ))}
             </select>
-          </div>
-          <div className="form-field">
-            <label htmlFor="assigned-salesperson-email">{fields.fallbackSalesEmail}</label>
-            <input
-              defaultValue={fieldValue(values, "assignedSalespersonEmail")}
-              id="assigned-salesperson-email"
-              name="assignedSalespersonEmail"
-              type="email"
-            />
-            {getFieldError(state.fieldErrors, "assignedSalespersonEmail") ? (
-              <p className="field-error">{getFieldError(state.fieldErrors, "assignedSalespersonEmail")}</p>
+            {getFieldError(state.fieldErrors, "assignedSellerEmail") ? (
+              <p className="field-error">{getFieldError(state.fieldErrors, "assignedSellerEmail")}</p>
             ) : null}
           </div>
-        </div>
-        <div className="form-field">
-          <label htmlFor="product-description">{fields.productDescription}</label>
-          <textarea
-            defaultValue={fieldValue(values, "productDescription")}
-            id="product-description"
-            name="productDescription"
-            rows={4}
-          />
-        </div>
-        <div className="form-field">
-          <label htmlFor="initial-note">{dict.initialNote}</label>
-          <textarea
-            defaultValue={fieldValue(values, "initialInternalNote")}
-            id="initial-note"
-            name="initialInternalNote"
-            rows={4}
-          />
         </div>
       </section>
 
