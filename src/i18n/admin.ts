@@ -764,7 +764,7 @@ const de: AdminDictionary = {
     fields: {
       firstName: "Vorname",
       lastName: "Nachname",
-      email: "E-Mail",
+      email: "Kunden-E-Mail",
       phone: "Telefon",
       language: "Sprache",
       assignedSalesperson: "Zugewiesener Vertrieb",
@@ -1237,7 +1237,7 @@ const en: AdminDictionary = {
     fields: {
       firstName: "First name",
       lastName: "Last name",
-      email: "Email",
+      email: "Customer email",
       phone: "Phone",
       language: "Language",
       assignedSalesperson: "Assigned sales",

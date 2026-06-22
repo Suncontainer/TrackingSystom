@@ -19,15 +19,6 @@ function addDaysToDateInput(value: string, days: number) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-type CustomerMatch = {
-  archivedAt: Date | null;
-  email: string;
-  firstName: string;
-  id: string;
-  lastName: string;
-  preferredLanguage: string;
-};
-
 type SellerOption = {
   id: string;
   name: string;
@@ -35,8 +26,6 @@ type SellerOption = {
 };
 
 type OrderCreateFormProps = {
-  customerMatches: CustomerMatch[];
-  customerSearchQuery: string;
   sellers: SellerOption[];
   fields: OrderFormFieldsDict;
   dict: CreateFormDict;
@@ -50,23 +39,7 @@ function fieldValue(values: Record<string, string> | undefined, field: string) {
   return values?.[field] ?? "";
 }
 
-function isOptionChecked(
-  values: Record<string, string> | undefined,
-  field: string,
-  optionValue: string,
-  fallbackChecked: boolean
-) {
-  const submitted = values?.[field];
-  return submitted ? submitted === optionValue : fallbackChecked;
-}
-
-export function OrderCreateForm({
-  customerMatches,
-  customerSearchQuery,
-  sellers,
-  fields,
-  dict
-}: OrderCreateFormProps) {
+export function OrderCreateForm({ sellers, fields, dict }: OrderCreateFormProps) {
   const [state, formAction, pending] = useActionState(createOrderAction, initialOrderFormState);
   const values = state.values;
 
@@ -86,6 +59,10 @@ export function OrderCreateForm({
 
   return (
     <form action={formAction} className="admin-form admin-form--stacked">
+      {/* Every order from this page creates a new customer with an auto order number. */}
+      <input name="customerMode" type="hidden" value="new" />
+      <input name="orderNumberMode" type="hidden" value="auto" />
+
       {state.formError ? (
         <p className="form-feedback form-feedback--error" role="alert">
           {state.formError}
@@ -94,30 +71,9 @@ export function OrderCreateForm({
 
       <section className="admin-card admin-section">
         <div className="section-heading">
-          <h2 className="font-heading">{dict.customerModeHeading}</h2>
-          <p>{dict.customerModeIntro}</p>
+          <h2 className="font-heading">{dict.orderDataHeading}</h2>
+          <p>{dict.orderDataIntro}</p>
         </div>
-        <div className="form-segmented">
-          <label>
-            <input
-              defaultChecked={isOptionChecked(values, "customerMode", "new", true)}
-              name="customerMode"
-              type="radio"
-              value="new"
-            />
-            <span>{dict.newCustomer}</span>
-          </label>
-          <label>
-            <input
-              defaultChecked={isOptionChecked(values, "customerMode", "existing", false)}
-              name="customerMode"
-              type="radio"
-              value="existing"
-            />
-            <span>{dict.existingCustomer}</span>
-          </label>
-        </div>
-
         <div className="form-grid">
           <div className="form-field">
             <label htmlFor="customer-first-name">{fields.firstName}</label>
@@ -156,94 +112,6 @@ export function OrderCreateForm({
             />
             {getFieldError(state.fieldErrors, "customerEmail") ? (
               <p className="field-error">{getFieldError(state.fieldErrors, "customerEmail")}</p>
-            ) : null}
-          </div>
-          <div className="form-field">
-            <label htmlFor="customer-phone">{fields.phone}</label>
-            <input
-              defaultValue={fieldValue(values, "customerPhone")}
-              id="customer-phone"
-              name="customerPhone"
-              type="text"
-            />
-          </div>
-        </div>
-
-        <div className="existing-customer-panel">
-          <div>
-            <p className="panel-label">{dict.existingMatches}</p>
-            <p className="panel-copy">
-              {dict.searchTerm}: <strong>{customerSearchQuery || dict.noFilter}</strong>
-            </p>
-          </div>
-          <div className="existing-customer-list">
-            {customerMatches.length > 0 ? (
-              customerMatches.map((customer) => (
-                <label className="existing-customer-item" key={customer.id}>
-                  <input
-                    defaultChecked={values?.existingCustomerId === customer.id}
-                    name="existingCustomerId"
-                    type="radio"
-                    value={customer.id}
-                  />
-                  <span>
-                    <strong>
-                      {customer.firstName} {customer.lastName}
-                    </strong>
-                    <small>
-                      {customer.email} · {customer.preferredLanguage.toUpperCase()}
-                      {customer.archivedAt ? dict.archivedSuffix : ""}
-                    </small>
-                  </span>
-                </label>
-              ))
-            ) : (
-              <p className="panel-empty">{dict.noMatches}</p>
-            )}
-          </div>
-          {getFieldError(state.fieldErrors, "existingCustomerId") ? (
-            <p className="field-error">{getFieldError(state.fieldErrors, "existingCustomerId")}</p>
-          ) : null}
-        </div>
-      </section>
-
-      <section className="admin-card admin-section">
-        <div className="section-heading">
-          <h2 className="font-heading">{dict.orderDataHeading}</h2>
-          <p>{dict.orderDataIntro}</p>
-        </div>
-        <div className="form-segmented">
-          <label>
-            <input
-              defaultChecked={isOptionChecked(values, "orderNumberMode", "auto", true)}
-              name="orderNumberMode"
-              type="radio"
-              value="auto"
-            />
-            <span>{dict.orderNumberAuto}</span>
-          </label>
-          <label>
-            <input
-              defaultChecked={isOptionChecked(values, "orderNumberMode", "manual", false)}
-              name="orderNumberMode"
-              type="radio"
-              value="manual"
-            />
-            <span>{dict.orderNumberManual}</span>
-          </label>
-        </div>
-        <div className="form-grid">
-          <div className="form-field">
-            <label htmlFor="manual-order-number">{dict.manualOrderNumber}</label>
-            <input
-              defaultValue={fieldValue(values, "manualOrderNumber")}
-              id="manual-order-number"
-              name="manualOrderNumber"
-              placeholder="SC-2026-000001"
-              type="text"
-            />
-            {getFieldError(state.fieldErrors, "manualOrderNumber") ? (
-              <p className="field-error">{getFieldError(state.fieldErrors, "manualOrderNumber")}</p>
             ) : null}
           </div>
           <div className="form-field">
@@ -302,13 +170,6 @@ export function OrderCreateForm({
               <p className="field-error">{getFieldError(state.fieldErrors, "assignedSellerEmail")}</p>
             ) : null}
           </div>
-        </div>
-      </section>
-
-      <section className="admin-card admin-section">
-        <div className="section-heading">
-          <h2 className="font-heading">{dict.notesHeading}</h2>
-          <p>{dict.notesIntro}</p>
         </div>
         <button className="button-base button-primary" disabled={pending} type="submit">
           {pending ? dict.creating : dict.submit}
