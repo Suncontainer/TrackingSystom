@@ -8,6 +8,7 @@ import { ValidationError, ConflictError, NotFoundError } from "@/lib/errors/app-
 import { routes } from "@/config/routes";
 
 import { initialOrderFormState, type OrderFormState } from "./form-state";
+import { addOrderImages } from "./images";
 import {
   addInternalNote,
   changeOrderStatus,
@@ -130,8 +131,29 @@ export async function changeOrderStatusAction(
     const targetOrderId = String(formData.get("orderId") ?? "");
     const profile = await requireOrderAccess(targetOrderId);
     assertCan(profile.role, "orders:update");
-    const order = await changeOrderStatus(formDataToObject(formData), profile);
-    orderId = order.id;
+
+    // The product-image upload lives inside the status form, so it submits together
+    // with a status change. Upload first, then apply the status change.
+    const files = formData
+      .getAll("images")
+      .filter((entry): entry is File => entry instanceof File && entry.size > 0);
+
+    if (files.length > 0) {
+      await addOrderImages(targetOrderId, files, profile.id);
+    }
+
+    try {
+      const order = await changeOrderStatus(formDataToObject(formData), profile);
+      orderId = order.id;
+    } catch (error) {
+      // Uploading images without changing the status/dates is allowed; the status
+      // change reports "Nothing to update." which we ignore when images were added.
+      if (files.length > 0 && error instanceof ValidationError && error.message === "Nothing to update.") {
+        orderId = targetOrderId;
+      } else {
+        throw error;
+      }
+    }
   } catch (error) {
     return getActionErrorState(error);
   }

@@ -136,12 +136,18 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
             version={detail.order.version}
             locale={locale}
             dict={t.forms.statusChange}
+            imageUploadLabel={t.forms.orderImages.uploadLabel}
           />
         ) : (
           <p className="panel-empty">{dt.noStatusPermission}</p>
         )}
         {detail.canEdit ? (
-          <OrderImagesSection dict={t.forms.orderImages} images={images} orderId={detail.order.id} />
+          <OrderImagesSection
+            dict={t.forms.orderImages}
+            images={images}
+            orderId={detail.order.id}
+            showUpload={false}
+          />
         ) : null}
       </section>
 

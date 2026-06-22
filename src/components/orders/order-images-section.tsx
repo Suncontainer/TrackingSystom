@@ -23,9 +23,10 @@ type OrderImagesSectionProps = {
   orderId: string;
   images: OrderImage[];
   dict: OrderImagesDict;
+  showUpload?: boolean;
 };
 
-export function OrderImagesSection({ orderId, images, dict }: OrderImagesSectionProps) {
+export function OrderImagesSection({ orderId, images, dict, showUpload = true }: OrderImagesSectionProps) {
   const [uploadState, uploadAction, uploading] = useActionState(
     uploadOrderImagesAction,
     initialImageActionState
@@ -34,26 +35,30 @@ export function OrderImagesSection({ orderId, images, dict }: OrderImagesSection
 
   return (
     <div className="status-images">
-      <div className="section-heading">
-        <h2 className="font-heading">{dict.heading}</h2>
-        <p>{dict.intro}</p>
-      </div>
+      {showUpload ? (
+        <>
+          <div className="section-heading">
+            <h2 className="font-heading">{dict.heading}</h2>
+            <p>{dict.intro}</p>
+          </div>
 
-      <form action={uploadAction} className="admin-form">
-        <input name="orderId" type="hidden" value={orderId} />
-        <div className="form-field">
-          <label htmlFor="order-images-input">{dict.uploadLabel}</label>
-          <input accept="image/*" id="order-images-input" multiple name="images" required type="file" />
-        </div>
-        {uploadState.formError ? (
-          <p className="form-feedback form-feedback--error" role="alert">
-            {uploadState.formError}
-          </p>
-        ) : null}
-        <button className="button-base button-primary" disabled={uploading} type="submit">
-          {uploading ? dict.uploading : dict.uploadSubmit}
-        </button>
-      </form>
+          <form action={uploadAction} className="admin-form">
+            <input name="orderId" type="hidden" value={orderId} />
+            <div className="form-field">
+              <label htmlFor="order-images-input">{dict.uploadLabel}</label>
+              <input accept="image/*" id="order-images-input" multiple name="images" required type="file" />
+            </div>
+            {uploadState.formError ? (
+              <p className="form-feedback form-feedback--error" role="alert">
+                {uploadState.formError}
+              </p>
+            ) : null}
+            <button className="button-base button-primary" disabled={uploading} type="submit">
+              {uploading ? dict.uploading : dict.uploadSubmit}
+            </button>
+          </form>
+        </>
+      ) : null}
 
       {deleteState.formError ? (
         <p className="form-feedback form-feedback--error" role="alert">
