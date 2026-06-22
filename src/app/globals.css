@@ -539,6 +539,13 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+/* When only the estimated-delivery card remains, center it. */
+.tracking-details--single {
+  grid-template-columns: minmax(0, 300px);
+  justify-content: center;
+  text-align: center;
+}
+
 .tracking-timeline {
   display: flex;
   align-items: flex-start;
@@ -593,11 +600,22 @@ textarea {
   border: 3px solid var(--border-strong);
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
   opacity: 0.6;
+  transition: transform 0.2s ease;
 }
 
 .tracking-timeline__item--complete .tracking-timeline__icon {
   border-color: var(--brand-yellow);
   opacity: 1;
+}
+
+/* The current status stands out: same layout box (scale keeps the row + connector
+   aligned) but visibly larger and emphasised. */
+.tracking-timeline__item--current .tracking-timeline__icon {
+  transform: scale(1.45);
+  z-index: 2;
+  opacity: 1;
+  border-color: var(--brand-yellow);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.22);
 }
 
 .tracking-timeline__item strong {
@@ -608,6 +626,11 @@ textarea {
 
 .tracking-timeline__item--complete {
   color: var(--brand-black);
+}
+
+.tracking-timeline__item--current strong {
+  font-size: 1rem;
+  font-weight: 800;
 }
 
 .tracking-notice {

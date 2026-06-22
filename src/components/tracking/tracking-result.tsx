@@ -1,7 +1,5 @@
-import { CalendarDays, Mail, PackageCheck } from "lucide-react";
-import Link from "next/link";
+import { CalendarDays, PackageCheck } from "lucide-react";
 
-import { siteConfig } from "@/config/site";
 import type { PublicTrackingOrder } from "@/features/tracking/lookup";
 import { getOrderStatusIndex, orderStatusContent, orderStatusIcon, orderStatuses } from "@/features/orders/status";
 import { getPublicDictionary } from "@/i18n/get-locale";
@@ -11,12 +9,6 @@ type TrackingResultProps = {
   order: PublicTrackingOrder;
   locale: AppLocale;
 };
-
-function formatDate(value: string, locale: string) {
-  return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", {
-    dateStyle: "medium"
-  }).format(new Date(value));
-}
 
 function formatDateRange(start: string, end: string, locale: string) {
   const formatter = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", {
@@ -52,9 +44,17 @@ export function TrackingResult({ order, locale }: TrackingResultProps) {
         {orderStatuses.map((status, index) => {
           const content = orderStatusContent[status][locale];
           const isComplete = index <= currentStatusIndex;
+          const isCurrent = index === currentStatusIndex;
+          const itemClass = [
+            "tracking-timeline__item",
+            isComplete ? "tracking-timeline__item--complete" : "",
+            isCurrent ? "tracking-timeline__item--current" : ""
+          ]
+            .filter(Boolean)
+            .join(" ");
 
           return (
-            <li className={isComplete ? "tracking-timeline__item tracking-timeline__item--complete" : "tracking-timeline__item"} key={status}>
+            <li className={itemClass} key={status}>
               <video
                 className="tracking-timeline__icon"
                 src={orderStatusIcon[status]}
@@ -70,23 +70,13 @@ export function TrackingResult({ order, locale }: TrackingResultProps) {
         })}
       </ol>
 
-      <div className="tracking-details">
+      <div className="tracking-details tracking-details--single">
         <div>
           <CalendarDays size={20} aria-hidden="true" />
           <span>{dictionary.result.estimatedDelivery}</span>
           <strong>
             {formatDateRange(order.currentEstimatedDeliveryDate, order.currentEstimatedDeliveryDateEnd, locale)}
           </strong>
-        </div>
-        <div>
-          <CalendarDays size={20} aria-hidden="true" />
-          <span>{dictionary.result.lastUpdated}</span>
-          <strong>{formatDate(order.lastUpdatedAt, locale)}</strong>
-        </div>
-        <div>
-          <Mail size={20} aria-hidden="true" />
-          <span>{dictionary.result.support}</span>
-          <Link href={`mailto:${siteConfig.supportEmail}`}>{siteConfig.supportEmail}</Link>
         </div>
       </div>
 
