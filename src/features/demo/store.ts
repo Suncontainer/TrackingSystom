@@ -641,18 +641,19 @@ export async function changeDemoOrderStatus(data: {
 }, actor: Pick<Profile, "role">) {
   const store = await readDemoStore();
   const order = findDemoOrder(store, data.orderId);
-  const isOverride = isOverrideStatusTransition(order.status, data.newStatus);
+  const statusChanged = order.status !== data.newStatus;
+  const isOverride = statusChanged && isOverrideStatusTransition(order.status, data.newStatus);
   const nextStatus = getPermittedStandardNextStatus(order.status);
 
   if (order.archivedAt) {
     throw new ValidationError("Archived orders cannot change status.", { orderId: ["Restore the order first."] });
   }
 
-  if (isOverride && actor.role !== "SUPER_ADMIN") {
+  if (statusChanged && isOverride && actor.role !== "SUPER_ADMIN") {
     throw new ValidationError("Only super admins may override status transitions.", { newStatus: ["Choose the next standard status."] });
   }
 
-  if (!isOverride && nextStatus !== data.newStatus) {
+  if (statusChanged && !isOverride && nextStatus !== data.newStatus) {
     throw new ValidationError("Only the next standard status is allowed.", { newStatus: ["Choose the next status in sequence."] });
   }
 
@@ -662,23 +663,38 @@ export async function changeDemoOrderStatus(data: {
   const previousDateEnd = order.currentEstimatedDeliveryDateEnd;
   const deliveryDateChanged =
     previousDate !== data.estimatedDeliveryDate || previousDateEnd !== data.estimatedDeliveryDateEnd;
-  const deliveredFields = getDeliveredFields(data.newStatus, data.newStatus === "DELIVERED" ? todayDate() : null);
-  order.status = data.newStatus;
+
+  if (!statusChanged && !deliveryDateChanged) {
+    throw new ValidationError("Nothing to update.", { newStatus: ["Change the status or the estimated delivery dates."] });
+  }
+
   order.currentEstimatedDeliveryDate = data.estimatedDeliveryDate;
   order.currentEstimatedDeliveryDateEnd = data.estimatedDeliveryDateEnd;
-  order.actualDeliveryDate = deliveredFields.actualDeliveryDate;
-  order.deliveredAt = deliveredFields.deliveredAt?.toISOString() ?? null;
   order.updatedAt = now;
   order.version += 1;
-  order.statusHistory.unshift({
-    changeType: isOverride ? "OVERRIDE" : "STANDARD",
-    createdAt: now,
-    estimatedDeliveryDateSnapshot: data.estimatedDeliveryDate,
-    id: randomUUID(),
-    newStatus: data.newStatus,
-    previousStatus,
-    reason: data.reason || null
-  });
+
+  if (statusChanged) {
+    const deliveredFields = getDeliveredFields(data.newStatus, data.newStatus === "DELIVERED" ? todayDate() : null);
+    order.status = data.newStatus;
+    order.actualDeliveryDate = deliveredFields.actualDeliveryDate;
+    order.deliveredAt = deliveredFields.deliveredAt?.toISOString() ?? null;
+    order.statusHistory.unshift({
+      changeType: isOverride ? "OVERRIDE" : "STANDARD",
+      createdAt: now,
+      estimatedDeliveryDateSnapshot: data.estimatedDeliveryDate,
+      id: randomUUID(),
+      newStatus: data.newStatus,
+      previousStatus,
+      reason: data.reason || null
+    });
+    order.emailHistory.unshift(makeEmail({
+      category: "TRANSACTIONAL",
+      emailType: getStatusEmailType(data.newStatus),
+      recipientEmail: order.customerEmail,
+      subject: `${data.newStatus} - Sun Container`
+    }));
+  }
+
   if (deliveryDateChanged) {
     order.dateHistory.unshift({
       createdAt: now,
@@ -691,12 +707,6 @@ export async function changeDemoOrderStatus(data: {
       reason: data.reason || null
     });
   }
-  order.emailHistory.unshift(makeEmail({
-    category: "TRANSACTIONAL",
-    emailType: getStatusEmailType(data.newStatus),
-    recipientEmail: order.customerEmail,
-    subject: `${data.newStatus} - Sun Container`
-  }));
   await writeDemoStore(store);
 
   return { customerId: order.customerId, id: order.id, status: order.status, version: order.version };

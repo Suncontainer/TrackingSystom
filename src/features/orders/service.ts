@@ -1447,36 +1447,45 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       });
     }
 
-    if (existingOrder.status === data.newStatus) {
-      throw new ValidationError("Status is already selected.", {
-        newStatus: ["Choose a different status."]
-      });
-    }
-
-    const isOverride = isOverrideStatusTransition(existingOrder.status, data.newStatus);
+    // The status dropdown now lists every status; keeping the current one is allowed
+    // and simply applies an estimated-delivery-date update without a status transition.
+    const statusChanged = existingOrder.status !== data.newStatus;
+    const isOverride = statusChanged && isOverrideStatusTransition(existingOrder.status, data.newStatus);
     const standardNextStatus = getPermittedStandardNextStatus(existingOrder.status);
 
-    if (isOverride && !hasPermission(actor.role, "orders:override-status")) {
+    if (statusChanged && isOverride && !hasPermission(actor.role, "orders:override-status")) {
       throw new ValidationError("Only super admins may override status transitions.", {
         newStatus: ["Choose the next standard status."]
       });
     }
 
-    if (!isOverride && standardNextStatus !== data.newStatus) {
+    if (statusChanged && !isOverride && standardNextStatus !== data.newStatus) {
       throw new ValidationError("Only the next standard status is allowed.", {
         newStatus: ["Choose the next status in sequence."]
       });
     }
 
-    if (isOverride && !normalizeOptionalString(data.reason)) {
+    if (statusChanged && isOverride && !normalizeOptionalString(data.reason)) {
       throw new ValidationError("Override reason is required.", {
         reason: ["Explain why this status override is necessary."]
       });
     }
 
-    if (isOverride && !data.customerEmailDecision) {
+    if (statusChanged && isOverride && !data.customerEmailDecision) {
       throw new ValidationError("Customer email decision is required for overrides.", {
         customerEmailDecision: ["Choose whether to queue a customer email."]
+      });
+    }
+
+    const newDate = validateDateForField(data.estimatedDeliveryDate, "estimatedDeliveryDate");
+    const newDateEnd = validateDateForField(data.estimatedDeliveryDateEnd, "estimatedDeliveryDateEnd");
+    const deliveryDateChanged =
+      existingOrder.currentEstimatedDeliveryDate !== newDate ||
+      existingOrder.currentEstimatedDeliveryDateEnd !== newDateEnd;
+
+    if (!statusChanged && !deliveryDateChanged) {
+      throw new ValidationError("Nothing to update.", {
+        newStatus: ["Change the status or the estimated delivery dates."]
       });
     }
 
@@ -1485,23 +1494,21 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       data.newStatus === "DELIVERED" ? getTodayDateString() : null
     );
 
-    const newDate = validateDateForField(data.estimatedDeliveryDate, "estimatedDeliveryDate");
-    const newDateEnd = validateDateForField(data.estimatedDeliveryDateEnd, "estimatedDeliveryDateEnd");
-    const deliveryDateChanged =
-      existingOrder.currentEstimatedDeliveryDate !== newDate ||
-      existingOrder.currentEstimatedDeliveryDateEnd !== newDateEnd;
-
     const [updatedOrder] = await tx
       .update(orders)
       .set({
-        actualDeliveryDate: deliveredFields.actualDeliveryDate,
         currentEstimatedDeliveryDate: newDate,
         currentEstimatedDeliveryDateEnd: newDateEnd,
-        deliveredAt: deliveredFields.deliveredAt,
-        status: data.newStatus,
         updatedAt: new Date(),
         updatedBy: actor.id,
-        version: existingOrder.version + 1
+        version: existingOrder.version + 1,
+        ...(statusChanged
+          ? {
+              actualDeliveryDate: deliveredFields.actualDeliveryDate,
+              deliveredAt: deliveredFields.deliveredAt,
+              status: data.newStatus
+            }
+          : {})
       })
       .where(and(eq(orders.id, data.orderId), eq(orders.version, data.version)))
       .returning({
@@ -1515,26 +1522,58 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       throw new ConflictError("This order was updated by someone else. Reload the page and try again.");
     }
 
-    const [historyEntry] = await tx
-      .insert(orderStatusHistory)
-      .values({
-        changeType: isOverride ? "OVERRIDE" : "STANDARD",
-        changedBy: actor.id,
-        estimatedDeliveryDateSnapshot: newDate,
-        isOverride,
-        newStatus: data.newStatus,
-        orderId: data.orderId,
-        previousStatus: existingOrder.status,
-        reason: normalizeOptionalString(data.reason)
-      })
-      .returning({ id: orderStatusHistory.id });
+    if (statusChanged) {
+      const [historyEntry] = await tx
+        .insert(orderStatusHistory)
+        .values({
+          changeType: isOverride ? "OVERRIDE" : "STANDARD",
+          changedBy: actor.id,
+          estimatedDeliveryDateSnapshot: newDate,
+          isOverride,
+          newStatus: data.newStatus,
+          orderId: data.orderId,
+          previousStatus: existingOrder.status,
+          reason: normalizeOptionalString(data.reason)
+        })
+        .returning({ id: orderStatusHistory.id });
 
-    if (!historyEntry) {
-      throw new ConflictError("Status history could not be recorded.");
+      if (!historyEntry) {
+        throw new ConflictError("Status history could not be recorded.");
+      }
+
+      const customerLocale = normalizeLocale(existingOrder.preferredLanguage);
+      const queueCustomerEmail = shouldQueueStatusCustomerEmail({
+        currentStatus: existingOrder.status,
+        decision: data.customerEmailDecision ?? null,
+        nextStatus: data.newStatus
+      });
+
+      if (queueCustomerEmail) {
+        await tx.insert(emailOutbox).values({
+          category: "TRANSACTIONAL",
+          customerId: existingOrder.customerId,
+          emailType: getStatusEmailType(data.newStatus),
+          idempotencyKey: `status/${historyEntry.id}/customer`,
+          locale: customerLocale,
+          orderId: data.orderId,
+          queuedBy: actor.id,
+          recipientEmail: existingOrder.customerEmail,
+          recipientName: formatCustomerName(existingOrder.customerFirstName, existingOrder.customerLastName),
+          subject: buildStatusSubject(data.newStatus, customerLocale),
+          templateKey: getStatusTemplateKey(data.newStatus),
+          templateVariables: {
+            currentEstimatedDeliveryDate: newDate,
+            newStatus: data.newStatus,
+            orderId: data.orderId,
+            orderNumber: existingOrder.orderNumber,
+            trackingNumber: existingOrder.trackingNumber
+          }
+        });
+      }
     }
 
     // The estimated-delivery range is edited inline on the status form, so record a
-    // delivery-date history entry whenever it actually changes during a status change.
+    // delivery-date history entry whenever it actually changes.
     if (deliveryDateChanged) {
       await tx.insert(deliveryDateHistory).values({
         changedBy: actor.id,
@@ -1548,45 +1587,12 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       });
     }
 
-    const customerLocale = normalizeLocale(existingOrder.preferredLanguage);
-    const queueCustomerEmail = shouldQueueStatusCustomerEmail({
-      currentStatus: existingOrder.status,
-      decision: data.customerEmailDecision ?? null,
-      nextStatus: data.newStatus
-    });
-
-    if (queueCustomerEmail) {
-      await tx.insert(emailOutbox).values({
-        category: "TRANSACTIONAL",
-        customerId: existingOrder.customerId,
-        emailType: getStatusEmailType(data.newStatus),
-        idempotencyKey: `status/${historyEntry.id}/customer`,
-        locale: customerLocale,
-        orderId: data.orderId,
-        queuedBy: actor.id,
-        recipientEmail: existingOrder.customerEmail,
-        recipientName: formatCustomerName(existingOrder.customerFirstName, existingOrder.customerLastName),
-        subject: buildStatusSubject(data.newStatus, customerLocale),
-        templateKey: getStatusTemplateKey(data.newStatus),
-        templateVariables: {
-          currentEstimatedDeliveryDate: newDate,
-          newStatus: data.newStatus,
-          orderId: data.orderId,
-          orderNumber: existingOrder.orderNumber,
-          trackingNumber: existingOrder.trackingNumber
-        }
-      });
-    }
-
     await insertAuditEntry(tx, {
-      action: isOverride ? "status.override" : "status.changed",
+      action: statusChanged ? (isOverride ? "status.override" : "status.changed") : "delivery-date.changed",
       actorUserId: actor.id,
       afterData: {
-        actualDeliveryDate: deliveredFields.actualDeliveryDate,
         currentEstimatedDeliveryDate: newDate,
         currentEstimatedDeliveryDateEnd: newDateEnd,
-        customerEmailQueued: queueCustomerEmail,
-        deliveredAt: deliveredFields.deliveredAt?.toISOString() ?? null,
         status: data.newStatus,
         version: updatedOrder.version
       },

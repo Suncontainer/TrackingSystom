@@ -36,11 +36,16 @@ export function StatusChangeForm({
 }: StatusChangeFormProps) {
   const [state, formAction, pending] = useActionState(changeOrderStatusAction, initialOrderFormState);
   const nextStandardStatus = getPermittedStandardNextStatus(currentStatus);
+  // Super admins can set the order to any of the five statuses (keeping the current
+  // one just applies a delivery-date update); everyone else moves one step forward.
   const selectableStatuses = canOverride
-    ? orderStatuses.filter((status) => status !== currentStatus)
+    ? [...orderStatuses]
     : nextStandardStatus
       ? [nextStandardStatus]
       : [];
+  const defaultStatus = selectableStatuses.includes(currentStatus)
+    ? currentStatus
+    : (selectableStatuses[0] ?? "");
 
   return (
     <form action={formAction} className="admin-form">
@@ -54,7 +59,7 @@ export function StatusChangeForm({
       <div className="form-grid">
         <div className="form-field">
           <label htmlFor="status-new-status">{dict.newStatus}</label>
-          <select id="status-new-status" name="newStatus" required>
+          <select defaultValue={defaultStatus} id="status-new-status" name="newStatus" required>
             {selectableStatuses.length > 0 ? (
               selectableStatuses.map((status) => (
                 <option key={status} value={status}>
@@ -122,7 +127,6 @@ export function StatusChangeForm({
       <div className="preview-strip">
         <span>{dict.current}: {orderStatusContent[currentStatus][locale].label}</span>
         <span>{dict.eta}: {currentEstimatedDeliveryDate}</span>
-        <span>{dict.mandatoryEmailNote}</span>
       </div>
 
       <button className="button-base button-primary" disabled={pending || selectableStatuses.length === 0} type="submit">

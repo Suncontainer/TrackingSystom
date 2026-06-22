@@ -2,9 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminPageShell } from "@/components/admin/admin-page-shell";
-import { ArchiveOrderForm } from "@/components/orders/archive-order-form";
-import { CustomerPreview } from "@/components/orders/customer-preview";
-import { InternalNoteForm } from "@/components/orders/internal-note-form";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { OrderUpdateForm } from "@/components/orders/order-update-form";
 import { StatusChangeForm } from "@/components/orders/status-change-form";
@@ -142,13 +139,6 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
 
       <section className="admin-card admin-section">
         <div className="section-heading">
-          <h2 className="font-heading">{dt.customerPreviewHeading}</h2>
-        </div>
-        <CustomerPreview snapshot={detail.customerPreview} dict={t.forms.customerPreview} />
-      </section>
-
-      <section className="admin-card admin-section">
-        <div className="section-heading">
           <h2 className="font-heading">{dt.customerOrderHeading}</h2>
           <p>{dt.customerOrderIntro}</p>
         </div>
@@ -211,33 +201,6 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
 
       <section className="admin-card admin-section">
         <div className="section-heading">
-          <h2 className="font-heading">{dt.deliveryHistoryHeading}</h2>
-        </div>
-        {detail.dateHistory.length > 0 ? (
-          <div className="stack-list">
-            {detail.dateHistory.map((entry) => (
-              <article className="stack-list__item" key={entry.id}>
-                <div className="stack-list__heading">
-                  <strong>
-                    {formatDateRange(entry.previousDate, entry.previousDateEnd, locale)} &gt;{" "}
-                    {formatDateRange(entry.newDate, entry.newDateEnd, locale)}
-                  </strong>
-                  <span>{formatDate(entry.createdAt, locale)}</span>
-                </div>
-                <p className="table-secondary">
-                  {dt.customerNotification}: {entry.customerNotificationRequested ? dt.yes : dt.no}
-                </p>
-                {entry.reason ? <p>{entry.reason}</p> : null}
-              </article>
-            ))}
-          </div>
-        ) : (
-          <p className="panel-empty">{dt.noDeliveryChanges}</p>
-        )}
-      </section>
-
-      <section className="admin-card admin-section">
-        <div className="section-heading">
           <h2 className="font-heading">{dt.mandatoryEmailsHeading}</h2>
         </div>
         {detail.emailHistory.length > 0 ? (
@@ -273,61 +236,6 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
         )}
       </section>
 
-      {detail.notes.length > 0 || detail.canCreateNotes ? (
-        <section className="admin-card admin-section">
-          <div className="section-heading">
-            <h2 className="font-heading">{dt.internalNotesHeading}</h2>
-          </div>
-          {detail.canCreateNotes ? <InternalNoteForm orderId={detail.order.id} dict={t.forms.internalNote} /> : null}
-          {detail.notes.length > 0 ? (
-            <div className="stack-list">
-              {detail.notes.map((note) => (
-                <article className="stack-list__item" key={note.id}>
-                  <div className="stack-list__heading">
-                    <strong>{dt.internalNoteLabel}</strong>
-                    <span>{formatDate(note.createdAt, locale)}</span>
-                  </div>
-                  <p>{note.body}</p>
-                </article>
-              ))}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
-
-      {detail.auditHistory.length > 0 ? (
-        <section className="admin-card admin-section">
-          <div className="section-heading">
-            <h2 className="font-heading">{dt.auditHeading}</h2>
-          </div>
-          <div className="stack-list">
-            {detail.auditHistory.map((entry) => (
-              <article className="stack-list__item" key={entry.id}>
-                <div className="stack-list__heading">
-                  <strong>{entry.action}</strong>
-                  <span>{formatDate(entry.createdAt, locale)}</span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {detail.canArchive ? (
-        <section className="admin-card admin-section">
-          <div className="section-heading">
-            <h2 className="font-heading">{detail.order.archivedAt ? dt.restoreHeading : dt.archiveHeading}</h2>
-            <p>{dt.archiveIntro}</p>
-          </div>
-          <ArchiveOrderForm
-            archived={Boolean(detail.order.archivedAt)}
-            orderId={detail.order.id}
-            version={detail.order.version}
-            dict={t.forms.archive}
-            saving={t.forms.saving}
-          />
-        </section>
-      ) : null}
     </AdminPageShell>
   );
 }
