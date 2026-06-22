@@ -460,7 +460,7 @@ function formatDeliveryRangeForLocale(start: string, end: string | null, locale:
     return formatter.format(new Date(start));
   }
 
-  return formatter.formatRange(new Date(start), new Date(end));
+  return `${formatter.format(new Date(start))}–${formatter.format(new Date(end))}`;
 }
 
 function getStatusTemplateKey(status: DbOrderStatus) {

@@ -26,7 +26,9 @@ describe("email templates", () => {
     expect(rendered.subject).toContain("Sun Container");
     expect(rendered.html).toContain("SC-2026-0001");
     expect(rendered.html).toContain("https://example.com/track/token");
-    expect(rendered.text).toContain("SCT-ABC123");
+    // The raw tracking number is intentionally not shown to the customer.
+    expect(rendered.html).not.toContain("SCT-ABC123");
+    expect(rendered.text).not.toContain("SCT-ABC123");
     expect(rendered.html).not.toContain("internal");
     expect(rendered.text).not.toContain("internal");
   });

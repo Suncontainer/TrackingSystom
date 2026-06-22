@@ -27,7 +27,7 @@ function formatDateRange(start: string, end: string, locale: string) {
     return formatter.format(new Date(start));
   }
 
-  return formatter.formatRange(new Date(start), new Date(end));
+  return `${formatter.format(new Date(start))}–${formatter.format(new Date(end))}`;
 }
 
 export function TrackingResult({ order, locale }: TrackingResultProps) {

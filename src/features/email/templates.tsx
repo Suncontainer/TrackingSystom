@@ -50,7 +50,7 @@ function formatDateRange(start: string | undefined, end: string | undefined, loc
     return formatter.format(new Date(start));
   }
 
-  return formatter.formatRange(new Date(start), new Date(end));
+  return `${formatter.format(new Date(start))}–${formatter.format(new Date(end))}`;
 }
 
 function Layout({ children, locale, preview, title }: TemplateProps) {
@@ -114,7 +114,6 @@ function renderOrderReceived(locale: AppLocale, variables: EmailTemplateVariable
     `${title}`,
     `${variables.customerName ?? ""}`,
     `${variables.orderNumber ?? ""}`,
-    `${variables.trackingNumber ?? ""}`,
     `${formatDateRange(variables.estimatedDeliveryDate ?? variables.currentEstimatedDeliveryDate, variables.estimatedDeliveryDateEnd ?? variables.currentEstimatedDeliveryDateEnd, locale)}`,
     variables.secureTrackingUrl ?? ""
   ].filter(Boolean).join("\n");
@@ -126,7 +125,6 @@ function renderOrderReceived(locale: AppLocale, variables: EmailTemplateVariable
     <>
       {paragraph(locale === "de" ? `Hallo ${variables.customerName ?? ""}, Ihr Auftrag wurde aufgenommen.` : `Hello ${variables.customerName ?? ""}, your order has been created.`)}
       {paragraph(`${locale === "de" ? "Auftrag" : "Order"}: ${variables.orderNumber ?? "-"}`)}
-      {paragraph(`${locale === "de" ? "Tracking" : "Tracking"}: ${variables.trackingNumber ?? "-"}`)}
       {paragraph(`${locale === "de" ? "Voraussichtliche Lieferung" : "Estimated delivery"}: ${formatDateRange(variables.estimatedDeliveryDate ?? variables.currentEstimatedDeliveryDate, variables.estimatedDeliveryDateEnd ?? variables.currentEstimatedDeliveryDateEnd, locale)}`)}
       {link(variables.secureTrackingUrl, trackingLabel)}
     </>,

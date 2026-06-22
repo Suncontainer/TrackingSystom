@@ -44,7 +44,7 @@ function formatDateRange(start: string | null, end: string | null, locale: AppLo
     return formatter.format(new Date(start));
   }
 
-  return formatter.formatRange(new Date(start), new Date(end));
+  return `${formatter.format(new Date(start))}–${formatter.format(new Date(end))}`;
 }
 
 function getSearchValue(value: string | string[] | undefined) {

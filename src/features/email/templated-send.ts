@@ -26,7 +26,7 @@ function formatRange(start: string, end: string | null, locale: AppLocale) {
     return formatter.format(new Date(start));
   }
 
-  return formatter.formatRange(new Date(start), new Date(end));
+  return `${formatter.format(new Date(start))}–${formatter.format(new Date(end))}`;
 }
 
 function interpolate(template: string, vars: Record<string, string>) {
