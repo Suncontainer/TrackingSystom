@@ -1,4 +1,4 @@
-import { Body, Container, Head, Hr, Html, Preview, Section, Text } from "@react-email/components";
+import { Body, Container, Head, Hr, Html, Img, Preview, Section, Text } from "@react-email/components";
 import { render as renderReactEmail } from "@react-email/render";
 import type { ReactNode } from "react";
 
@@ -17,6 +17,7 @@ export type EmailTemplateVariables = {
   estimatedDeliveryDateEnd?: string;
   newDate?: string;
   newDateEnd?: string;
+  imageUrls?: string[];
   orderAdminUrl?: string;
   orderNumber?: string;
   previousDate?: string;
@@ -125,6 +126,28 @@ function lookupFooter(locale: AppLocale, variables: EmailTemplateVariables) {
       {link(variables.publicTrackingUrl, locale === "de" ? "Zur Tracking-Seite" : "Go to the tracking page")}
       {link(variables.secureTrackingUrl, locale === "de" ? "Status direkt ansehen" : "View status directly")}
     </>
+  );
+}
+
+function imageBlock(variables: EmailTemplateVariables) {
+  const urls = variables.imageUrls ?? [];
+  if (urls.length === 0) {
+    return null;
+  }
+
+  return (
+    <Section style={{ margin: "8px 0 16px" }}>
+      {urls.map((url, index) => (
+        <a href={url} key={index} style={{ display: "inline-block", margin: "0 8px 8px 0" }}>
+          <Img
+            alt=""
+            src={url}
+            width="180"
+            style={{ border: "1px solid #e5e1d8", borderRadius: "6px", height: "auto", maxWidth: "180px" }}
+          />
+        </a>
+      ))}
+    </Section>
   );
 }
 
@@ -344,9 +367,10 @@ function renderAdminTemplate(locale: AppLocale, variables: EmailTemplateVariable
           {part}
         </Text>
       ))}
+      {imageBlock(variables)}
       {lookupFooter(locale, variables)}
     </>,
-    [body, lookupFooterText(locale, variables)].filter(Boolean).join("\n"),
+    [body, ...(variables.imageUrls ?? []), lookupFooterText(locale, variables)].filter(Boolean).join("\n"),
     subject
   );
 }

@@ -2,10 +2,10 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 
-import { desc, eq, isNull } from "drizzle-orm";
+import { asc, desc, eq, isNull } from "drizzle-orm";
 
 import { getDb } from "@/db/client";
-import { customers, emailOutbox, orders } from "@/db/schema";
+import { customers, emailOutbox, orderImages, orders } from "@/db/schema";
 import { formatCustomerName } from "@/features/customers/normalization";
 import { isDemoMode } from "@/features/demo/store";
 import { formatTrackingNumber } from "@/features/orders/identifiers";
@@ -133,6 +133,13 @@ export async function queueTemplatedCustomerEmail(
   const subject = interpolate(locale === "de" ? template.subjectDe : template.subjectEn, vars);
   const body = interpolate(locale === "de" ? template.bodyDe : template.bodyEn, vars);
 
+  const orderImageRows = await db
+    .select({ url: orderImages.url })
+    .from(orderImages)
+    .where(eq(orderImages.orderId, input.orderId))
+    .orderBy(asc(orderImages.createdAt));
+  const imageUrls = orderImageRows.map((row) => row.url);
+
   await db.insert(emailOutbox).values({
     category: "TRANSACTIONAL",
     customerId: order.customerId,
@@ -147,7 +154,8 @@ export async function queueTemplatedCustomerEmail(
     templateKey: template.key,
     templateVariables: {
       customBody: body,
-      customSubject: subject
+      customSubject: subject,
+      imageUrls
     }
   });
 

@@ -14,6 +14,7 @@ import {
   emailOutbox,
   emailTemplates,
   internalNotes,
+  orderImages,
   orderStatusHistory,
   orders,
   orderStatusValues,
@@ -1473,6 +1474,13 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
             .limit(1)
         : [];
 
+      const orderImageRows = await tx
+        .select({ url: orderImages.url })
+        .from(orderImages)
+        .where(eq(orderImages.orderId, data.orderId))
+        .orderBy(asc(orderImages.createdAt));
+      const imageUrls = orderImageRows.map((row) => row.url);
+
       if (mappedTemplate) {
         const content = renderTemplateContent(mappedTemplate, customerLocale, {
           customerName: recipientName,
@@ -1495,7 +1503,8 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
           templateKey: mappedTemplate.key,
           templateVariables: {
             customBody: content.body,
-            customSubject: content.subject
+            customSubject: content.subject,
+            imageUrls
           }
         });
 
@@ -1515,7 +1524,8 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
             templateKey: mappedTemplate.key,
             templateVariables: {
               customBody: content.body,
-              customSubject: content.subject
+              customSubject: content.subject,
+              imageUrls
             }
           });
         }
