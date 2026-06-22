@@ -116,6 +116,10 @@ function getTemplateVariables(row: ClaimedEmail, secureTrackingUrl: string | und
     variables.secureTrackingUrl = secureTrackingUrl;
   }
 
+  if (!variables.publicTrackingUrl) {
+    variables.publicTrackingUrl = getAbsoluteUrl("/");
+  }
+
   if (!variables.trackingNumber && row.trackingNumber) {
     variables.trackingNumber = row.trackingNumber;
   }

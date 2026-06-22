@@ -22,6 +22,7 @@ export type EmailTemplateVariables = {
   previousDate?: string;
   previousDateEnd?: string;
   productDescription?: string | null;
+  publicTrackingUrl?: string;
   secureTrackingUrl?: string;
   trackingNumber?: string;
 };
@@ -95,6 +96,50 @@ function link(url: string | undefined, label: string) {
   );
 }
 
+function formatTracking(value: string | undefined) {
+  if (!value) {
+    return "";
+  }
+  const compact = value.replace(/[^a-z0-9]/gi, "").toUpperCase();
+  const body = compact.startsWith("SC") ? compact.slice(2) : compact;
+  const groups = body.match(/.{1,4}/g) ?? [];
+  return ["SC", ...groups].join("-");
+}
+
+// Shared "how to track" block for customer-facing emails: tracking number, the
+// customer's email, a hint, a link to the public lookup page, and the secure
+// direct-status button.
+function lookupFooter(locale: AppLocale, variables: EmailTemplateVariables) {
+  const tracking = formatTracking(variables.trackingNumber);
+  return (
+    <>
+      {tracking ? paragraph(`${locale === "de" ? "Trackingnummer" : "Tracking number"}: ${tracking}`) : null}
+      {variables.customerEmail
+        ? paragraph(`${locale === "de" ? "E-Mail" : "Email"}: ${variables.customerEmail}`)
+        : null}
+      {paragraph(
+        locale === "de"
+          ? "So prüfen Sie Ihren Status: Öffnen Sie die Tracking-Seite und geben Sie Ihre Trackingnummer und Ihre E-Mail-Adresse ein."
+          : "To check your status: open the tracking page and enter your tracking number and your email address."
+      )}
+      {link(variables.publicTrackingUrl, locale === "de" ? "Zur Tracking-Seite" : "Go to the tracking page")}
+      {link(variables.secureTrackingUrl, locale === "de" ? "Status direkt ansehen" : "View status directly")}
+    </>
+  );
+}
+
+function lookupFooterText(locale: AppLocale, variables: EmailTemplateVariables) {
+  const tracking = formatTracking(variables.trackingNumber);
+  return [
+    tracking ? `${locale === "de" ? "Trackingnummer" : "Tracking number"}: ${tracking}` : "",
+    variables.customerEmail ? `${locale === "de" ? "E-Mail" : "Email"}: ${variables.customerEmail}` : "",
+    variables.publicTrackingUrl ?? "",
+    variables.secureTrackingUrl ?? ""
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 async function render(title: string, preview: string, locale: AppLocale, children: ReactNode, text: string, subject: string) {
   const html = await renderReactEmail(
     <Layout locale={locale} preview={preview} title={title}>
@@ -109,14 +154,15 @@ async function render(title: string, preview: string, locale: AppLocale, childre
 function renderOrderReceived(locale: AppLocale, variables: EmailTemplateVariables) {
   const subject = locale === "de" ? "Auftragsbestätigung - Sun Container" : "Order Confirmation - Sun Container";
   const title = locale === "de" ? "Ihr Auftrag wurde erfasst" : "Your order has been received";
-  const trackingLabel = locale === "de" ? "Auftrag ansehen" : "View order";
+  const deliveryLine = `${locale === "de" ? "Voraussichtliche Lieferung" : "Estimated delivery"}: ${formatDateRange(variables.estimatedDeliveryDate ?? variables.currentEstimatedDeliveryDate, variables.estimatedDeliveryDateEnd ?? variables.currentEstimatedDeliveryDateEnd, locale)}`;
   const text = [
-    `${title}`,
-    `${variables.customerName ?? ""}`,
-    `${variables.orderNumber ?? ""}`,
-    `${formatDateRange(variables.estimatedDeliveryDate ?? variables.currentEstimatedDeliveryDate, variables.estimatedDeliveryDateEnd ?? variables.currentEstimatedDeliveryDateEnd, locale)}`,
-    variables.secureTrackingUrl ?? ""
-  ].filter(Boolean).join("\n");
+    title,
+    variables.customerName ?? "",
+    deliveryLine,
+    lookupFooterText(locale, variables)
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return render(
     title,
@@ -124,9 +170,8 @@ function renderOrderReceived(locale: AppLocale, variables: EmailTemplateVariable
     locale,
     <>
       {paragraph(locale === "de" ? `Hallo ${variables.customerName ?? ""}, Ihr Auftrag wurde aufgenommen.` : `Hello ${variables.customerName ?? ""}, your order has been created.`)}
-      {paragraph(`${locale === "de" ? "Auftrag" : "Order"}: ${variables.orderNumber ?? "-"}`)}
-      {paragraph(`${locale === "de" ? "Voraussichtliche Lieferung" : "Estimated delivery"}: ${formatDateRange(variables.estimatedDeliveryDate ?? variables.currentEstimatedDeliveryDate, variables.estimatedDeliveryDateEnd ?? variables.currentEstimatedDeliveryDateEnd, locale)}`)}
-      {link(variables.secureTrackingUrl, trackingLabel)}
+      {paragraph(deliveryLine)}
+      {lookupFooter(locale, variables)}
     </>,
     text,
     subject
@@ -299,8 +344,9 @@ function renderAdminTemplate(locale: AppLocale, variables: EmailTemplateVariable
           {part}
         </Text>
       ))}
+      {lookupFooter(locale, variables)}
     </>,
-    body,
+    [body, lookupFooterText(locale, variables)].filter(Boolean).join("\n"),
     subject
   );
 }

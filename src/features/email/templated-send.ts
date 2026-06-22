@@ -147,10 +147,7 @@ export async function queueTemplatedCustomerEmail(
     templateKey: template.key,
     templateVariables: {
       customBody: body,
-      customSubject: subject,
-      customerName,
-      orderNumber: order.orderNumber,
-      trackingNumber: vars.trackingNumber
+      customSubject: subject
     }
   });
 

@@ -1424,6 +1424,7 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
     const [existingOrder] = await tx
       .select({
         archivedAt: orders.archivedAt,
+        assignedSalespersonEmail: orders.assignedSalespersonEmail,
         currentEstimatedDeliveryDate: orders.currentEstimatedDeliveryDate,
         currentEstimatedDeliveryDateEnd: orders.currentEstimatedDeliveryDateEnd,
         customerEmail: customers.email,
@@ -1590,11 +1591,30 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
             templateKey: mappedTemplate.key,
             templateVariables: {
               customBody: content.body,
-              customSubject: content.subject,
-              orderNumber: existingOrder.orderNumber,
-              trackingNumber: formatTrackingNumber(existingOrder.trackingNumber)
+              customSubject: content.subject
             }
           });
+
+          // Notify the assigned seller with a copy of the same update.
+          if (existingOrder.assignedSalespersonEmail) {
+            await tx.insert(emailOutbox).values({
+              category: "INTERNAL",
+              customerId: existingOrder.customerId,
+              emailType: "ADMIN_TEMPLATE",
+              idempotencyKey: `status/${historyEntry.id}/seller`,
+              locale: customerLocale,
+              orderId: data.orderId,
+              queuedBy: actor.id,
+              recipientEmail: existingOrder.assignedSalespersonEmail,
+              recipientName,
+              subject: content.subject,
+              templateKey: mappedTemplate.key,
+              templateVariables: {
+                customBody: content.body,
+                customSubject: content.subject
+              }
+            });
+          }
         } else {
           await tx.insert(emailOutbox).values({
             category: "TRANSACTIONAL",

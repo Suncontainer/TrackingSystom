@@ -24,11 +24,11 @@ describe("email templates", () => {
     });
 
     expect(rendered.subject).toContain("Sun Container");
-    expect(rendered.html).toContain("SC-2026-0001");
+    // Customers look up by tracking number + email, so both are shown; order number is not.
+    expect(rendered.html).toContain("SC-TABC-123");
+    expect(rendered.html).toContain("customer@example.com");
+    expect(rendered.html).not.toContain("SC-2026-0001");
     expect(rendered.html).toContain("https://example.com/track/token");
-    // The raw tracking number is intentionally not shown to the customer.
-    expect(rendered.html).not.toContain("SCT-ABC123");
-    expect(rendered.text).not.toContain("SCT-ABC123");
     expect(rendered.html).not.toContain("internal");
     expect(rendered.text).not.toContain("internal");
   });
