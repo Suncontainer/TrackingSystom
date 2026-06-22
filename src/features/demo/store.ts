@@ -484,8 +484,8 @@ export async function createDemoOrder(data: {
   customerMode: "new" | "existing";
   customerPhone?: string | undefined;
   existingCustomerId?: string | undefined;
-  initialEstimatedDeliveryDate: string;
-  initialEstimatedDeliveryDateEnd: string;
+  initialEstimatedDeliveryDate?: string | undefined;
+  initialEstimatedDeliveryDateEnd?: string | undefined;
   initialInternalNote?: string | undefined;
   manualOrderNumber?: string | undefined;
   orderNumberMode: "auto" | "manual";
@@ -506,6 +506,8 @@ export async function createDemoOrder(data: {
     : formatOrderNumber(new Date().getUTCFullYear(), sequence + 4);
   const now = new Date().toISOString();
   const id = randomUUID();
+  const earliest = data.initialEstimatedDeliveryDate || todayDate();
+  const latest = data.initialEstimatedDeliveryDateEnd || earliest;
   const order: DemoOrderRecord = {
     actualDeliveryDate: null,
     archivedAt: null,
@@ -514,8 +516,8 @@ export async function createDemoOrder(data: {
     assignedSalespersonId: data.assignedSalespersonId || demoSalesperson.id,
     assignedSalespersonLastName: demoSalesperson.lastName,
     createdAt: now,
-    currentEstimatedDeliveryDate: data.initialEstimatedDeliveryDate,
-    currentEstimatedDeliveryDateEnd: data.initialEstimatedDeliveryDateEnd,
+    currentEstimatedDeliveryDate: earliest,
+    currentEstimatedDeliveryDateEnd: latest,
     customerEmail,
     customerFirstName,
     customerId,
@@ -523,23 +525,10 @@ export async function createDemoOrder(data: {
     customerPhone: data.customerPhone || null,
     dateHistory: [],
     deliveredAt: null,
-    emailHistory: [
-      makeEmail({
-        category: "TRANSACTIONAL",
-        emailType: "ORDER_RECEIVED",
-        recipientEmail: customerEmail,
-        subject: "Auftragsbestaetigung - Sun Container"
-      }),
-      makeEmail({
-        category: "INTERNAL",
-        emailType: "SALESPERSON_NEW_ORDER",
-        recipientEmail: data.assignedSellerEmail || data.assignedSalespersonEmail || demoSalesperson.email,
-        subject: `New tracked order - ${orderNumber}`
-      })
-    ],
+    emailHistory: [],
     id,
-    initialEstimatedDeliveryDate: data.initialEstimatedDeliveryDate,
-    initialEstimatedDeliveryDateEnd: data.initialEstimatedDeliveryDateEnd,
+    initialEstimatedDeliveryDate: earliest,
+    initialEstimatedDeliveryDateEnd: latest,
     notes: data.initialInternalNote ? [{
       body: data.initialInternalNote,
       createdAt: now,
@@ -553,7 +542,7 @@ export async function createDemoOrder(data: {
     statusHistory: [{
       changeType: "CREATED",
       createdAt: now,
-      estimatedDeliveryDateSnapshot: data.initialEstimatedDeliveryDate,
+      estimatedDeliveryDateSnapshot: earliest,
       id: randomUUID(),
       newStatus: "ORDER_CONFIRMED",
       previousStatus: null,
@@ -687,12 +676,14 @@ export async function changeDemoOrderStatus(data: {
       previousStatus,
       reason: data.reason || null
     });
-    order.emailHistory.unshift(makeEmail({
-      category: "TRANSACTIONAL",
-      emailType: getStatusEmailType(data.newStatus),
-      recipientEmail: order.customerEmail,
-      subject: `${data.newStatus} - Sun Container`
-    }));
+    if (data.customerEmailDecision === "send") {
+      order.emailHistory.unshift(makeEmail({
+        category: "TRANSACTIONAL",
+        emailType: getStatusEmailType(data.newStatus),
+        recipientEmail: order.customerEmail,
+        subject: `${data.newStatus} - Sun Container`
+      }));
+    }
   }
 
   if (deliveryDateChanged) {

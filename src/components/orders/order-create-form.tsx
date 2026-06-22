@@ -1,23 +1,10 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState } from "react";
 
 import { createOrderAction } from "@/features/orders/actions";
 import { initialOrderFormState } from "@/features/orders/form-state";
 import type { CreateFormDict, OrderFormFieldsDict } from "@/i18n/admin";
-
-const DEFAULT_DELIVERY_WINDOW_DAYS = 3;
-
-function addDaysToDateInput(value: string, days: number) {
-  const [year, month, day] = value.split("-").map(Number);
-  if (!year || !month || !day) {
-    return "";
-  }
-  const date = new Date(year, month - 1, day);
-  date.setDate(date.getDate() + days);
-  const pad = (part: number) => String(part).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
 
 type SellerOption = {
   id: string;
@@ -43,23 +30,10 @@ export function OrderCreateForm({ sellers, fields, dict }: OrderCreateFormProps)
   const [state, formAction, pending] = useActionState(createOrderAction, initialOrderFormState);
   const values = state.values;
 
-  const latestDeliveryRef = useRef<HTMLInputElement>(null);
-  const latestDeliveryTouched = useRef(false);
-
-  function handleEarliestDeliveryChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const latest = latestDeliveryRef.current;
-    if (!latest || latestDeliveryTouched.current) {
-      return;
-    }
-    const suggestion = event.target.value
-      ? addDaysToDateInput(event.target.value, DEFAULT_DELIVERY_WINDOW_DAYS)
-      : "";
-    latest.value = suggestion;
-  }
-
   return (
     <form action={formAction} className="admin-form admin-form--stacked">
-      {/* Every order from this page creates a new customer with an auto order number. */}
+      {/* Every order from this page creates a new customer with an auto order number.
+          Delivery dates and notifications are handled later in the order's status section. */}
       <input name="customerMode" type="hidden" value="new" />
       <input name="orderNumberMode" type="hidden" value="auto" />
 
@@ -112,41 +86,6 @@ export function OrderCreateForm({ sellers, fields, dict }: OrderCreateFormProps)
             />
             {getFieldError(state.fieldErrors, "customerEmail") ? (
               <p className="field-error">{getFieldError(state.fieldErrors, "customerEmail")}</p>
-            ) : null}
-          </div>
-          <div className="form-field">
-            <label htmlFor="estimated-delivery-date">{dict.estimatedDeliveryFrom}</label>
-            <input
-              defaultValue={fieldValue(values, "initialEstimatedDeliveryDate")}
-              id="estimated-delivery-date"
-              name="initialEstimatedDeliveryDate"
-              onChange={handleEarliestDeliveryChange}
-              required
-              type="date"
-            />
-            {getFieldError(state.fieldErrors, "initialEstimatedDeliveryDate") ? (
-              <p className="field-error">
-                {getFieldError(state.fieldErrors, "initialEstimatedDeliveryDate")}
-              </p>
-            ) : null}
-          </div>
-          <div className="form-field">
-            <label htmlFor="estimated-delivery-date-end">{dict.estimatedDeliveryTo}</label>
-            <input
-              defaultValue={fieldValue(values, "initialEstimatedDeliveryDateEnd")}
-              id="estimated-delivery-date-end"
-              name="initialEstimatedDeliveryDateEnd"
-              onChange={() => {
-                latestDeliveryTouched.current = true;
-              }}
-              ref={latestDeliveryRef}
-              required
-              type="date"
-            />
-            {getFieldError(state.fieldErrors, "initialEstimatedDeliveryDateEnd") ? (
-              <p className="field-error">
-                {getFieldError(state.fieldErrors, "initialEstimatedDeliveryDateEnd")}
-              </p>
             ) : null}
           </div>
           <div className="form-field">

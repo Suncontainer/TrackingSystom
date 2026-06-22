@@ -63,8 +63,7 @@ import {
   getDeliveredFields,
   getPermittedStandardNextStatus,
   getStatusEmailType,
-  isOverrideStatusTransition,
-  shouldQueueStatusCustomerEmail
+  isOverrideStatusTransition
 } from "./workflow";
 
 const assignedSalesperson = alias(profiles, "assigned_salesperson");
@@ -85,8 +84,8 @@ const createOrderInputSchema = z
     customerMode: customerModeSchema,
     customerPhone: z.string().trim().optional(),
     existingCustomerId: z.string().trim().optional(),
-    initialEstimatedDeliveryDate: z.string().trim(),
-    initialEstimatedDeliveryDateEnd: z.string().trim(),
+    initialEstimatedDeliveryDate: z.string().trim().optional(),
+    initialEstimatedDeliveryDateEnd: z.string().trim().optional(),
     initialInternalNote: z.string().trim().optional(),
     manualOrderNumber: z.string().trim().optional(),
     orderNumberMode: orderNumberModeSchema,
@@ -142,22 +141,8 @@ const createOrderInputSchema = z
       }
     }
 
-    if (!input.initialEstimatedDeliveryDate) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Earliest estimated delivery date is required.",
-        path: ["initialEstimatedDeliveryDate"]
-      });
-    }
-
-    if (!input.initialEstimatedDeliveryDateEnd) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Latest estimated delivery date is required.",
-        path: ["initialEstimatedDeliveryDateEnd"]
-      });
-    }
-
+    // Delivery dates are optional at creation; the admin sets them later in the
+    // order's status section. We only validate ordering when both are provided.
     if (
       input.initialEstimatedDeliveryDate &&
       input.initialEstimatedDeliveryDateEnd &&
@@ -417,14 +402,6 @@ function mapDbError(error: unknown): never {
   }
 
   throw error;
-}
-
-function buildOrderReceivedSubject(locale: AppLocale) {
-  return locale === "de" ? "Auftragsbestaetigung - Sun Container" : "Order confirmation - Sun Container";
-}
-
-function buildSalespersonSubject(orderNumber: string) {
-  return `New tracked order - ${orderNumber}`;
 }
 
 function buildStatusSubject(status: DbOrderStatus, locale: AppLocale) {
@@ -920,9 +897,13 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
 
   try {
     const createdOrder = await db.transaction(async (tx) => {
-      const estimatedDate = validateEstimatedDate(data.initialEstimatedDeliveryDate);
+      // Delivery dates are not collected at creation; default to today until the
+      // admin sets the real range in the order's status section.
+      const estimatedDate = validateEstimatedDate(
+        normalizeOptionalString(data.initialEstimatedDeliveryDate) ?? getTodayDateString()
+      );
       const estimatedDateEnd = validateDateForField(
-        data.initialEstimatedDeliveryDateEnd,
+        normalizeOptionalString(data.initialEstimatedDeliveryDateEnd) ?? estimatedDate,
         "initialEstimatedDeliveryDateEnd"
       );
       const customer =
@@ -1085,57 +1066,8 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
         });
       }
 
-      const customerName = formatCustomerName(customerFirstName, customerLastName);
-
-      await tx.insert(emailOutbox).values([
-        {
-          category: "TRANSACTIONAL",
-          customerId,
-          emailType: "ORDER_RECEIVED",
-          idempotencyKey: `order-created/customer/${createdOrder.id}`,
-          locale: customerLocale,
-          orderId: createdOrder.id,
-          queuedBy: actor.id,
-          recipientEmail: customerEmail,
-          recipientName: customerName,
-          subject: buildOrderReceivedSubject(customerLocale),
-          templateKey: "order-received",
-          templateVariables: {
-            customerName,
-            customerEmail,
-            estimatedDeliveryDate: createdOrder.currentEstimatedDeliveryDate,
-            estimatedDeliveryDateEnd: createdOrder.currentEstimatedDeliveryDateEnd,
-            orderId: createdOrder.id,
-            orderNumber: createdOrder.orderNumber,
-            trackingNumber: createdOrder.trackingNumber
-          }
-        },
-        {
-          category: "INTERNAL",
-          customerId,
-          emailType: "SALESPERSON_NEW_ORDER",
-          idempotencyKey: `order-created/sales/${createdOrder.id}`,
-          locale: "de",
-          orderId: createdOrder.id,
-          queuedBy: actor.id,
-          recipientEmail: fallbackSalesEmail,
-          recipientName: assignedSalespersonProfile
-            ? formatCustomerName(assignedSalespersonProfile.firstName, assignedSalespersonProfile.lastName)
-            : null,
-          subject: buildSalespersonSubject(createdOrder.orderNumber),
-          templateKey: "salesperson-new-order",
-          templateVariables: {
-            customerName,
-            customerEmail,
-            estimatedDeliveryDate: createdOrder.currentEstimatedDeliveryDate,
-            estimatedDeliveryDateEnd: createdOrder.currentEstimatedDeliveryDateEnd,
-            orderId: createdOrder.id,
-            orderNumber: createdOrder.orderNumber,
-            productDescription: createdOrder.productDescription,
-            trackingNumber: createdOrder.trackingNumber
-          }
-        }
-      ]);
+      // No emails are sent on creation. The admin notifies the customer/seller
+      // later from the order's status section, with an explicit send choice.
 
       await insertAuditEntry(tx, {
         action: "order.created",
@@ -1152,30 +1084,6 @@ export async function createOrder(input: unknown, actor: Pick<Profile, "email" |
         },
         entityId: createdOrder.id,
         entityType: "order",
-        orderId: createdOrder.id
-      });
-
-      await insertAuditEntry(tx, {
-        action: "email.queued",
-        actorUserId: actor.id,
-        afterData: {
-          idempotencyKey: `order-created/customer/${createdOrder.id}`,
-          subject: buildOrderReceivedSubject(customerLocale),
-          templateKey: "order-received"
-        },
-        entityType: "email_outbox",
-        orderId: createdOrder.id
-      });
-
-      await insertAuditEntry(tx, {
-        action: "email.queued",
-        actorUserId: actor.id,
-        afterData: {
-          idempotencyKey: `order-created/sales/${createdOrder.id}`,
-          subject: buildSalespersonSubject(createdOrder.orderNumber),
-          templateKey: "salesperson-new-order"
-        },
-        entityType: "email_outbox",
         orderId: createdOrder.id
       });
 
@@ -1470,12 +1378,6 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       });
     }
 
-    if (statusChanged && isOverride && !data.customerEmailDecision) {
-      throw new ValidationError("Customer email decision is required for overrides.", {
-        customerEmailDecision: ["Choose whether to queue a customer email."]
-      });
-    }
-
     const newDate = validateDateForField(data.estimatedDeliveryDate, "estimatedDeliveryDate");
     const newDateEnd = validateDateForField(data.estimatedDeliveryDateEnd, "estimatedDeliveryDateEnd");
     const deliveryDateChanged =
@@ -1541,11 +1443,8 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       }
 
       const customerLocale = normalizeLocale(existingOrder.preferredLanguage);
-      const queueCustomerEmail = shouldQueueStatusCustomerEmail({
-        currentStatus: existingOrder.status,
-        decision: data.customerEmailDecision ?? null,
-        nextStatus: data.newStatus
-      });
+      // Emails go out only when the admin explicitly chooses to notify.
+      const queueCustomerEmail = data.customerEmailDecision === "send";
 
       if (queueCustomerEmail) {
         const recipientName = formatCustomerName(

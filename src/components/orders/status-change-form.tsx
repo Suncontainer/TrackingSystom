@@ -108,18 +108,16 @@ export function StatusChangeForm({
         </div>
       </div>
 
-      {canOverride ? (
-        <div className="form-segmented">
-          <label>
-            <input name="customerEmailDecision" type="radio" value="send" />
-            <span>{dict.sendCustomerEmail}</span>
-          </label>
-          <label>
-            <input name="customerEmailDecision" type="radio" value="skip" />
-            <span>{dict.skipCustomerEmail}</span>
-          </label>
-        </div>
-      ) : null}
+      <div className="form-segmented">
+        <label>
+          <input defaultChecked name="customerEmailDecision" type="radio" value="skip" />
+          <span>{dict.skipCustomerEmail}</span>
+        </label>
+        <label>
+          <input name="customerEmailDecision" type="radio" value="send" />
+          <span>{dict.sendCustomerEmail}</span>
+        </label>
+      </div>
 
       <button className="button-base button-primary" disabled={pending || selectableStatuses.length === 0} type="submit">
         {pending ? dict.changing : dict.submit}
