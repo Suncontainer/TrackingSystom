@@ -2,8 +2,10 @@ import { AdminPageShell } from "@/components/admin/admin-page-shell";
 import { appRoleValues } from "@/db/schema/enums";
 import { requirePermission } from "@/features/auth/guards";
 import {
+  createUserAction,
   resetUserPasswordAction,
   setUserActiveAction,
+  updateUserNameAction,
   updateUserRoleAction
 } from "@/features/users/manage-actions";
 import { listTeamMembers } from "@/features/users/service";
@@ -46,28 +48,72 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
           ? u.okDeactivated
           : okKey === "reset"
             ? u.okReset
-            : null;
+            : okKey === "created"
+              ? u.okCreated
+              : okKey === "name"
+                ? u.okName
+                : null;
 
   const members = await listTeamMembers().catch(() => []);
 
   return (
     <AdminPageShell eyebrow={u.eyebrow} title={u.title}>
+      {okMessage ? (
+        <p className="form-feedback" role="status">
+          {okMessage}
+        </p>
+      ) : null}
+      {errorMessage ? (
+        <p className="form-feedback form-feedback--error" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
+
+      <section className="admin-card admin-section">
+        <div className="section-heading">
+          <h2 className="font-heading">{u.addHeading}</h2>
+          <p>{u.addIntro}</p>
+        </div>
+        <form action={createUserAction} className="admin-form">
+          <div className="form-grid">
+            <div className="form-field">
+              <label htmlFor="new-user-first">{u.firstNameLabel}</label>
+              <input id="new-user-first" name="firstName" required type="text" />
+            </div>
+            <div className="form-field">
+              <label htmlFor="new-user-last">{u.lastNameLabel}</label>
+              <input id="new-user-last" name="lastName" required type="text" />
+            </div>
+            <div className="form-field">
+              <label htmlFor="new-user-email">{u.emailLabel}</label>
+              <input id="new-user-email" name="email" required type="email" />
+            </div>
+            <div className="form-field">
+              <label htmlFor="new-user-password">{u.passwordLabel}</label>
+              <input id="new-user-password" minLength={8} name="password" required type="password" />
+            </div>
+            <div className="form-field">
+              <label htmlFor="new-user-role">{u.colRole}</label>
+              <select defaultValue="SALES" id="new-user-role" name="role">
+                {appRoleValues.map((role) => (
+                  <option key={role} value={role}>
+                    {u.roleLabels[role]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <button className="button-base button-primary" type="submit">
+            {u.addSubmit}
+          </button>
+        </form>
+      </section>
+
       <section className="admin-card admin-section">
         <div className="section-heading">
           <h2 className="font-heading">{u.heading}</h2>
           <p>{u.intro}</p>
         </div>
-
-        {okMessage ? (
-          <p className="form-feedback" role="status">
-            {okMessage}
-          </p>
-        ) : null}
-        {errorMessage ? (
-          <p className="form-feedback form-feedback--error" role="alert">
-            {errorMessage}
-          </p>
-        ) : null}
 
         {members.length === 0 ? (
           <p className="panel-empty">{u.empty}</p>
@@ -91,8 +137,25 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                   return (
                     <tr key={member.id}>
                       <td>
-                        {member.firstName} {member.lastName}
-                        {isSelf ? <span className="badge badge--muted"> {u.youBadge}</span> : null}
+                        <form action={updateUserNameAction} className="inline-form">
+                          <input type="hidden" name="userId" value={member.id} />
+                          <input
+                            aria-label={u.firstNameLabel}
+                            defaultValue={member.firstName}
+                            name="firstName"
+                            type="text"
+                          />
+                          <input
+                            aria-label={u.lastNameLabel}
+                            defaultValue={member.lastName}
+                            name="lastName"
+                            type="text"
+                          />
+                          <button className="button-base button-ghost" type="submit">
+                            {u.saveName}
+                          </button>
+                        </form>
+                        {isSelf ? <span className="badge badge--muted">{u.youBadge}</span> : null}
                       </td>
                       <td>{member.email}</td>
                       <td>

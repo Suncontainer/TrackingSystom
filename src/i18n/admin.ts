@@ -153,6 +153,16 @@ export type AdminDictionary = {
     okDeactivated: string;
     okReset: string;
     errorGeneric: string;
+    addHeading: string;
+    addIntro: string;
+    firstNameLabel: string;
+    lastNameLabel: string;
+    emailLabel: string;
+    passwordLabel: string;
+    addSubmit: string;
+    saveName: string;
+    okCreated: string;
+    okName: string;
   };
   sellers: {
     eyebrow: string;
@@ -615,7 +625,17 @@ const de: AdminDictionary = {
     okActivated: "Konto aktiviert.",
     okDeactivated: "Konto deaktiviert.",
     okReset: "Passwort-Reset-E-Mail gesendet.",
-    errorGeneric: "Die Anfrage konnte nicht abgeschlossen werden."
+    errorGeneric: "Die Anfrage konnte nicht abgeschlossen werden.",
+    addHeading: "Teammitglied hinzufügen",
+    addIntro: "Legen Sie ein neues Konto mit Rolle und Startpasswort an.",
+    firstNameLabel: "Vorname",
+    lastNameLabel: "Nachname",
+    emailLabel: "E-Mail",
+    passwordLabel: "Startpasswort",
+    addSubmit: "Benutzer anlegen",
+    saveName: "Name speichern",
+    okCreated: "Benutzer angelegt.",
+    okName: "Name aktualisiert."
   },
   sellers: {
     eyebrow: "Kontakte",
@@ -1077,7 +1097,17 @@ const en: AdminDictionary = {
     okActivated: "Account activated.",
     okDeactivated: "Account deactivated.",
     okReset: "Password reset email sent.",
-    errorGeneric: "The request could not be completed."
+    errorGeneric: "The request could not be completed.",
+    addHeading: "Add team member",
+    addIntro: "Create a new account with a role and an initial password.",
+    firstNameLabel: "First name",
+    lastNameLabel: "Last name",
+    emailLabel: "Email",
+    passwordLabel: "Initial password",
+    addSubmit: "Create user",
+    saveName: "Save name",
+    okCreated: "User created.",
+    okName: "Name updated."
   },
   sellers: {
     eyebrow: "Contacts",

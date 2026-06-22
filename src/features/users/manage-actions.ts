@@ -9,7 +9,13 @@ import { requirePermission } from "@/features/auth/guards";
 import { AppError } from "@/lib/errors/app-error";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-import { getMemberEmail, setMemberActive, updateMemberRole } from "./service";
+import {
+  createTeamMember,
+  getMemberEmail,
+  setMemberActive,
+  updateMemberName,
+  updateMemberRole
+} from "./service";
 
 function backToUsers(query: Record<string, string>): never {
   const search = new URLSearchParams(query);
@@ -18,6 +24,41 @@ function backToUsers(query: Record<string, string>): never {
 
 function feedbackFor(error: unknown) {
   return error instanceof AppError ? error.message : "The request could not be completed.";
+}
+
+export async function createUserAction(formData: FormData) {
+  await requirePermission("users:manage");
+
+  try {
+    await createTeamMember({
+      firstName: String(formData.get("firstName") ?? ""),
+      lastName: String(formData.get("lastName") ?? ""),
+      email: String(formData.get("email") ?? ""),
+      role: String(formData.get("role") ?? ""),
+      password: String(formData.get("password") ?? "")
+    });
+  } catch (error) {
+    console.error("[users] createUserAction", error);
+    backToUsers({ error: feedbackFor(error) });
+  }
+
+  revalidatePath(routes.admin.users);
+  backToUsers({ ok: "created" });
+}
+
+export async function updateUserNameAction(formData: FormData) {
+  await requirePermission("users:manage");
+  const userId = String(formData.get("userId") ?? "");
+
+  try {
+    await updateMemberName(userId, String(formData.get("firstName") ?? ""), String(formData.get("lastName") ?? ""));
+  } catch (error) {
+    console.error("[users] updateUserNameAction", error);
+    backToUsers({ error: feedbackFor(error) });
+  }
+
+  revalidatePath(routes.admin.users);
+  backToUsers({ ok: "name" });
 }
 
 export async function updateUserRoleAction(formData: FormData) {

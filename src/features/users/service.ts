@@ -1,11 +1,13 @@
 import "server-only";
 
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
+import { z } from "zod";
 
 import { getDb } from "@/db/client";
 import { profiles } from "@/db/schema";
 import { appRoleValues, type AppRole } from "@/db/schema/enums";
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors/app-error";
+import { createSupabaseServiceClient } from "@/lib/supabase/admin";
 
 export type TeamMember = {
   id: string;
@@ -91,4 +93,88 @@ export async function getMemberEmail(userId: string) {
   const db = getDb();
   const member = await getMember(db, userId);
   return member.email;
+}
+
+const createMemberSchema = z.object({
+  firstName: z.string().trim().min(1, "First name is required."),
+  lastName: z.string().trim().min(1, "Last name is required."),
+  email: z.string().trim().min(1, "Email is required."),
+  role: z.enum(appRoleValues),
+  password: z.string().min(8, "Password must be at least 8 characters.")
+});
+
+function toFieldErrors(error: z.ZodError) {
+  const fieldErrors: Record<string, string[]> = {};
+  for (const issue of error.issues) {
+    const key = issue.path[0];
+    if (typeof key === "string") {
+      (fieldErrors[key] ??= []).push(issue.message);
+    }
+  }
+  return fieldErrors;
+}
+
+// Creates the Supabase auth user (service role) and the matching profile row. The
+// profile id MUST equal the auth user id, which is how the app links the two.
+export async function createTeamMember(input: unknown) {
+  const parsed = createMemberSchema.safeParse(input);
+
+  if (!parsed.success) {
+    throw new ValidationError("User data is invalid.", toFieldErrors(parsed.error));
+  }
+
+  if (!z.email().safeParse(parsed.data.email).success) {
+    throw new ValidationError("User data is invalid.", { email: ["Email is invalid."] });
+  }
+
+  const email = parsed.data.email.toLowerCase();
+  const db = getDb();
+  const [existing] = await db
+    .select({ id: profiles.id })
+    .from(profiles)
+    .where(eq(sql`lower(${profiles.email})`, email))
+    .limit(1);
+
+  if (existing) {
+    throw new ConflictError("A user with this email already exists.");
+  }
+
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password: parsed.data.password,
+    email_confirm: true
+  });
+
+  if (error || !data.user) {
+    throw new ValidationError(error?.message ?? "The auth account could not be created.");
+  }
+
+  try {
+    await db.insert(profiles).values({
+      id: data.user.id,
+      firstName: parsed.data.firstName,
+      lastName: parsed.data.lastName,
+      email,
+      role: parsed.data.role,
+      isActive: true
+    });
+  } catch (insertError) {
+    // Keep auth and profiles in sync: drop the auth user if the profile insert fails.
+    await supabase.auth.admin.deleteUser(data.user.id).catch(() => undefined);
+    throw insertError;
+  }
+}
+
+export async function updateMemberName(userId: string, firstName: string, lastName: string) {
+  if (!firstName.trim() || !lastName.trim()) {
+    throw new ValidationError("First and last name are required.");
+  }
+
+  const db = getDb();
+  await getMember(db, userId);
+  await db
+    .update(profiles)
+    .set({ firstName: firstName.trim(), lastName: lastName.trim(), updatedAt: new Date() })
+    .where(eq(profiles.id, userId));
 }
