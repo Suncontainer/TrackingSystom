@@ -18,6 +18,8 @@ export const routes = {
     emails: "/admin/emails",
     users: "/admin/users",
     sellers: "/admin/sellers",
+    templates: "/admin/templates",
+    templateEdit: (templateId: string) => `/admin/templates/${encodeURIComponent(templateId)}`,
     settings: "/admin/settings"
   },
   api: {

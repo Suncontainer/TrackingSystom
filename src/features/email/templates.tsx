@@ -9,6 +9,8 @@ import type { AppLocale } from "@/i18n/types";
 export type EmailTemplateVariables = {
   currentEstimatedDeliveryDate?: string;
   currentEstimatedDeliveryDateEnd?: string;
+  customBody?: string;
+  customSubject?: string;
   customerEmail?: string;
   customerName?: string;
   estimatedDeliveryDate?: string;
@@ -281,12 +283,38 @@ function renderOptionalService(locale: AppLocale, variables: EmailTemplateVariab
   );
 }
 
+function renderAdminTemplate(locale: AppLocale, variables: EmailTemplateVariables) {
+  const subject = variables.customSubject ?? "";
+  const body = variables.customBody ?? "";
+  const paragraphs = body
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return render(
+    subject,
+    subject,
+    locale,
+    <>
+      {paragraphs.map((part, index) => (
+        <Text key={index} style={{ fontSize: "15px", lineHeight: "24px", margin: "0 0 12px", whiteSpace: "pre-line" }}>
+          {part}
+        </Text>
+      ))}
+    </>,
+    body,
+    subject
+  );
+}
+
 export async function renderEmailTemplate(input: {
   emailType: EmailType;
   locale: AppLocale;
   templateVariables: EmailTemplateVariables;
 }) {
   switch (input.emailType) {
+    case "ADMIN_TEMPLATE":
+      return renderAdminTemplate(input.locale, input.templateVariables);
     case "ORDER_RECEIVED":
       return renderOrderReceived(input.locale, input.templateVariables);
     case "PROCUREMENT_STARTED":

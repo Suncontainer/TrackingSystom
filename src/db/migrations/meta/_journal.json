@@ -43,6 +43,13 @@
       "when": 1782087209959,
       "tag": "0005_even_firelord",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782088123540,
+      "tag": "0006_peaceful_orphan",
+      "breakpoints": true
     }
   ]
 }

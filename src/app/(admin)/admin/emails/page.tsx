@@ -1,8 +1,11 @@
 import { AdminPageShell } from "@/components/admin/admin-page-shell";
+import { SendTemplateForm } from "@/components/templates/send-template-form";
 import { requirePermission } from "@/features/auth/guards";
 import { hasPermission } from "@/features/auth/permissions";
 import { retryEmailAction } from "@/features/email/actions";
 import { listEmailHistory } from "@/features/email/outbox";
+import { listSelectableOrders } from "@/features/email/templated-send";
+import { listEmailTemplates } from "@/features/templates/service";
 import { getAdminContext } from "@/i18n/get-admin-locale";
 import type { AppLocale } from "@/i18n/types";
 
@@ -30,10 +33,25 @@ export default async function EmailsPage() {
   const { locale, t } = await getAdminContext();
   const e = t.emails;
   const canRetry = hasPermission(profile.role, "emails:retry");
-  const emails = await listEmailHistory().catch(() => []);
+  const canSendTemplate = hasPermission(profile.role, "emails:send-optional");
+  const [emails, sendTemplates, sendOrders] = await Promise.all([
+    listEmailHistory().catch(() => []),
+    canSendTemplate ? listEmailTemplates().catch(() => []) : Promise.resolve([]),
+    canSendTemplate ? listSelectableOrders().catch(() => []) : Promise.resolve([])
+  ]);
 
   return (
     <AdminPageShell eyebrow={e.eyebrow} title={e.title}>
+      {canSendTemplate ? (
+        <section className="admin-card admin-section">
+          <div className="section-heading">
+            <h2 className="font-heading">{t.templates.send.heading}</h2>
+            <p>{t.templates.send.intro}</p>
+          </div>
+          <SendTemplateForm dict={t.templates.send} orders={sendOrders} templates={sendTemplates} />
+        </section>
+      ) : null}
+
       <section className="admin-card admin-section">
         <div className="section-heading">
           <h2 className="font-heading">{e.heading}</h2>

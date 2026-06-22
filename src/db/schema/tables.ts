@@ -70,6 +70,21 @@ export const customers = pgTable(
   ]
 ).enableRLS();
 
+// Editable, bilingual email templates an admin can send to a customer on demand.
+export const emailTemplates = pgTable(
+  "email_templates",
+  {
+    id: primaryUuid(),
+    key: text("key").notNull().unique("email_templates_key_unique"),
+    name: text("name").notNull(),
+    subjectDe: text("subject_de").notNull(),
+    bodyDe: text("body_de").notNull(),
+    subjectEn: text("subject_en").notNull(),
+    bodyEn: text("body_en").notNull(),
+    ...timestampColumns()
+  }
+).enableRLS();
+
 // Sellers are lightweight customer-care contacts (name + email, no login) that an
 // admin can manage and assign to orders as the sales contact.
 export const sellers = pgTable(

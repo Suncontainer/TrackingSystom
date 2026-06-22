@@ -6,12 +6,15 @@ import { OrderImagesSection } from "@/components/orders/order-images-section";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { OrderUpdateForm } from "@/components/orders/order-update-form";
 import { StatusChangeForm } from "@/components/orders/status-change-form";
+import { SendTemplateForm } from "@/components/templates/send-template-form";
 import { routes } from "@/config/routes";
 import { AuthorizationError } from "@/features/auth/errors";
 import { requireOrderAccess } from "@/features/auth/guards";
+import { hasPermission } from "@/features/auth/permissions";
 import { listOrderImages } from "@/features/orders/images";
 import { getOrderDetail } from "@/features/orders/service";
 import { listActiveSellers } from "@/features/sellers/service";
+import { listEmailTemplates } from "@/features/templates/service";
 import { getAdminContext } from "@/i18n/get-admin-locale";
 import type { AppLocale } from "@/i18n/types";
 import { NotFoundError } from "@/lib/errors/app-error";
@@ -56,7 +59,7 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
   const { locale, t } = await getAdminContext();
   const dt = t.forms.orderDetail;
   const query = (searchParams ? await searchParams : {}) ?? {};
-  const { detail, sellers, images } = await loadOrderPageData(orderId);
+  const { detail, sellers, images, templates, canSendEmail } = await loadOrderPageData(orderId);
 
   return (
     <AdminPageShell eyebrow={dt.eyebrow} title={detail.order.orderNumber}>
@@ -71,6 +74,9 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
       ) : null}
       {getSearchValue(query.statusChanged) === "1" ? (
         <p className="form-feedback" role="status">{dt.flashStatusChanged}</p>
+      ) : null}
+      {getSearchValue(query.emailSent) === "1" ? (
+        <p className="form-feedback" role="status">{t.templates.send.flashSent}</p>
       ) : null}
       {getSearchValue(query.dateChanged) === "1" ? (
         <p className="form-feedback" role="status">{dt.flashDateChanged}</p>
@@ -185,6 +191,16 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
         <OrderImagesSection dict={t.forms.orderImages} images={images} orderId={detail.order.id} />
       ) : null}
 
+      {canSendEmail ? (
+        <section className="admin-card admin-section">
+          <div className="section-heading">
+            <h2 className="font-heading">{t.templates.send.heading}</h2>
+            <p>{t.templates.send.intro}</p>
+          </div>
+          <SendTemplateForm dict={t.templates.send} orderId={detail.order.id} templates={templates} />
+        </section>
+      ) : null}
+
       <section className="admin-card admin-section">
         <div className="section-heading">
           <h2 className="font-heading">{dt.statusHistoryHeading}</h2>
@@ -249,13 +265,15 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
 async function loadOrderPageData(orderId: string) {
   try {
     const profile = await requireOrderAccess(orderId);
-    const [detail, sellers, images] = await Promise.all([
+    const canSendEmail = hasPermission(profile.role, "emails:send-optional");
+    const [detail, sellers, images, templates] = await Promise.all([
       getOrderDetail(orderId, profile),
       listActiveSellers(),
-      listOrderImages(orderId)
+      listOrderImages(orderId),
+      canSendEmail ? listEmailTemplates() : Promise.resolve([])
     ]);
 
-    return { detail, sellers, images };
+    return { detail, sellers, images, templates, canSendEmail };
   } catch (error) {
     if (error instanceof AuthorizationError || error instanceof NotFoundError) {
       notFound();

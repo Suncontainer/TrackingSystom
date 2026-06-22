@@ -37,7 +37,8 @@ export const emailTypeValues = [
   "SATISFACTION_SURVEY",
   "MAINTENANCE_RECOMMENDATION",
   "WARRANTY_REMINDER",
-  "PROMOTIONAL"
+  "PROMOTIONAL",
+  "ADMIN_TEMPLATE"
 ] as const;
 
 export const appRoleEnum = pgEnum("app_role", appRoleValues);

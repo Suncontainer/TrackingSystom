@@ -14,6 +14,7 @@ export type AdminDictionary = {
     emails: string;
     users: string;
     sellers: string;
+    templates: string;
     settings: string;
     logout: string;
     language: string;
@@ -174,6 +175,39 @@ export type AdminDictionary = {
     empty: string;
     created: string;
     removed: string;
+  };
+  templates: {
+    eyebrow: string;
+    title: string;
+    heading: string;
+    intro: string;
+    colName: string;
+    colSubject: string;
+    colActions: string;
+    editAction: string;
+    empty: string;
+    flashUpdated: string;
+    editEyebrow: string;
+    nameLabel: string;
+    germanHeading: string;
+    englishHeading: string;
+    subjectLabel: string;
+    bodyLabel: string;
+    placeholders: string;
+    save: string;
+    saving: string;
+    back: string;
+    send: {
+      heading: string;
+      intro: string;
+      templateLabel: string;
+      choose: string;
+      orderLabel: string;
+      chooseOrder: string;
+      submit: string;
+      sending: string;
+      flashSent: string;
+    };
   };
   settings: {
     eyebrow: string;
@@ -424,6 +458,7 @@ export type DeliveryDateDict = AdminDictionary["forms"]["deliveryDate"];
 export type InternalNoteDict = AdminDictionary["forms"]["internalNote"];
 export type ArchiveDict = AdminDictionary["forms"]["archive"];
 export type SellersDict = AdminDictionary["sellers"];
+export type TemplatesDict = AdminDictionary["templates"];
 
 const de: AdminDictionary = {
   localeName: "Deutsch",
@@ -436,6 +471,7 @@ const de: AdminDictionary = {
     emails: "E-Mails",
     users: "Benutzer",
     sellers: "Verkäufer",
+    templates: "Vorlagen",
     settings: "Einstellungen",
     logout: "Abmelden",
     language: "Sprache"
@@ -602,6 +638,39 @@ const de: AdminDictionary = {
     empty: "Noch keine Verkäufer angelegt.",
     created: "Verkäufer hinzugefügt.",
     removed: "Verkäufer entfernt."
+  },
+  templates: {
+    eyebrow: "Kommunikation",
+    title: "E-Mail-Vorlagen",
+    heading: "Vorlagen",
+    intro: "Bearbeiten Sie die Vorlagen, die Sie an Kunden senden können.",
+    colName: "Name",
+    colSubject: "Betreff (DE)",
+    colActions: "Aktionen",
+    editAction: "Bearbeiten",
+    empty: "Keine Vorlagen vorhanden.",
+    flashUpdated: "Vorlage gespeichert.",
+    editEyebrow: "Vorlage bearbeiten",
+    nameLabel: "Name",
+    germanHeading: "Deutsch",
+    englishHeading: "Englisch",
+    subjectLabel: "Betreff",
+    bodyLabel: "Text",
+    placeholders: "Platzhalter: {customerName}, {orderNumber}, {trackingNumber}, {deliveryDate}",
+    save: "Vorlage speichern",
+    saving: "Speichert …",
+    back: "Zurück zu den Vorlagen",
+    send: {
+      heading: "E-Mail an Kunden senden",
+      intro: "Wählen Sie eine Vorlage. Sie wird mit den Auftragsdaten ausgefüllt und an den Kunden gesendet.",
+      templateLabel: "Vorlage",
+      choose: "Vorlage wählen",
+      orderLabel: "Auftrag",
+      chooseOrder: "Auftrag wählen",
+      submit: "E-Mail senden",
+      sending: "Wird gesendet …",
+      flashSent: "E-Mail wurde in die Warteschlange gestellt."
+    }
   },
   settings: {
     eyebrow: "System",
@@ -864,6 +933,7 @@ const en: AdminDictionary = {
     emails: "Emails",
     users: "Users",
     sellers: "Sellers",
+    templates: "Templates",
     settings: "Settings",
     logout: "Sign out",
     language: "Language"
@@ -1030,6 +1100,39 @@ const en: AdminDictionary = {
     empty: "No sellers added yet.",
     created: "Seller added.",
     removed: "Seller removed."
+  },
+  templates: {
+    eyebrow: "Communication",
+    title: "Email templates",
+    heading: "Templates",
+    intro: "Edit the templates you can send to customers.",
+    colName: "Name",
+    colSubject: "Subject (DE)",
+    colActions: "Actions",
+    editAction: "Edit",
+    empty: "No templates available.",
+    flashUpdated: "Template saved.",
+    editEyebrow: "Edit template",
+    nameLabel: "Name",
+    germanHeading: "German",
+    englishHeading: "English",
+    subjectLabel: "Subject",
+    bodyLabel: "Body",
+    placeholders: "Placeholders: {customerName}, {orderNumber}, {trackingNumber}, {deliveryDate}",
+    save: "Save template",
+    saving: "Saving …",
+    back: "Back to templates",
+    send: {
+      heading: "Send email to customer",
+      intro: "Pick a template. It is filled with the order details and sent to the customer.",
+      templateLabel: "Template",
+      choose: "Choose a template",
+      orderLabel: "Order",
+      chooseOrder: "Choose an order",
+      submit: "Send email",
+      sending: "Sending …",
+      flashSent: "Email queued for sending."
+    }
   },
   settings: {
     eyebrow: "System",
