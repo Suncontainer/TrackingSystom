@@ -56,6 +56,11 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.name}`
   },
   description: "Private Sun Container customer order tracking portal.",
+  icons: {
+    icon: "/logo/Logo_1.png",
+    shortcut: "/logo/Logo_1.png",
+    apple: "/logo/Logo_1.png"
+  },
   robots: {
     index: false,
     follow: false

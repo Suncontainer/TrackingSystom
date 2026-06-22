@@ -6,6 +6,9 @@ import type { EmailType } from "@/db/schema";
 import { siteConfig } from "@/config/site";
 import type { AppLocale } from "@/i18n/types";
 
+// Absolute URL so email clients can load the logo from the public folder.
+const LOGO_URL = new URL("/logo/Logo_1.png", siteConfig.appUrl).toString();
+
 export type EmailTemplateVariables = {
   currentEstimatedDeliveryDate?: string;
   currentEstimatedDeliveryDateEnd?: string;
@@ -62,9 +65,12 @@ function Layout({ children, locale, preview, title }: TemplateProps) {
       <Preview>{preview}</Preview>
       <Body style={{ backgroundColor: "#faf9f4", color: "#2f2f2b", fontFamily: "Arial, sans-serif", margin: 0 }}>
         <Container style={{ backgroundColor: "#ffffff", border: "1px solid #e5e1d8", margin: "24px auto", padding: "28px", width: "560px" }}>
-          <Text style={{ color: "#8d6500", fontSize: "13px", fontWeight: 700, margin: "0 0 14px", textTransform: "uppercase" }}>
-            Sun Container
-          </Text>
+          <Img
+            alt="Sun Container"
+            src={LOGO_URL}
+            width="190"
+            style={{ display: "block", height: "auto", margin: "0 0 18px", maxWidth: "190px" }}
+          />
           <Text style={{ fontSize: "24px", fontWeight: 700, lineHeight: "32px", margin: "0 0 18px" }}>{title}</Text>
           <Section>{children}</Section>
           <Hr style={{ borderColor: "#e5e1d8", margin: "24px 0" }} />
