@@ -653,8 +653,10 @@ export async function changeDemoOrderStatus(data: {
   const deliveryDateChanged =
     previousDate !== data.estimatedDeliveryDate || previousDateEnd !== data.estimatedDeliveryDateEnd;
 
-  if (!statusChanged && !deliveryDateChanged) {
-    throw new ValidationError("Nothing to update.", { newStatus: ["Change the status or the estimated delivery dates."] });
+  const queueCustomerEmail = data.customerEmailDecision === "send";
+
+  if (!statusChanged && !deliveryDateChanged && !queueCustomerEmail) {
+    throw new ValidationError("Nothing to update.", { newStatus: ["Change the status, the delivery dates, or choose to send an email."] });
   }
 
   order.currentEstimatedDeliveryDate = data.estimatedDeliveryDate;
@@ -676,14 +678,15 @@ export async function changeDemoOrderStatus(data: {
       previousStatus,
       reason: data.reason || null
     });
-    if (data.customerEmailDecision === "send") {
-      order.emailHistory.unshift(makeEmail({
-        category: "TRANSACTIONAL",
-        emailType: getStatusEmailType(data.newStatus),
-        recipientEmail: order.customerEmail,
-        subject: `${data.newStatus} - Sun Container`
-      }));
-    }
+  }
+
+  if (queueCustomerEmail) {
+    order.emailHistory.unshift(makeEmail({
+      category: "TRANSACTIONAL",
+      emailType: getStatusEmailType(data.newStatus),
+      recipientEmail: order.customerEmail,
+      subject: `${data.newStatus} - Sun Container`
+    }));
   }
 
   if (deliveryDateChanged) {

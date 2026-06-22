@@ -126,6 +126,9 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
           <h2 className="font-heading">{dt.statusChangeHeading}</h2>
           <p>{dt.statusChangeIntro}</p>
         </div>
+        {detail.canEdit ? (
+          <OrderImagesSection dict={t.forms.orderImages} images={images} orderId={detail.order.id} />
+        ) : null}
         {detail.canUpdateWorkflow ? (
           <StatusChangeForm
             canOverride={detail.canOverrideStatus}
@@ -140,9 +143,6 @@ export default async function OrderDetailsPage({ params, searchParams }: OrderDe
         ) : (
           <p className="panel-empty">{dt.noStatusPermission}</p>
         )}
-        {detail.canEdit ? (
-          <OrderImagesSection dict={t.forms.orderImages} images={images} orderId={detail.order.id} />
-        ) : null}
       </section>
 
       <section className="admin-card admin-section">

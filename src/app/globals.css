@@ -1198,6 +1198,12 @@ textarea {
   cursor: default;
 }
 
+.status-images {
+  margin-bottom: 24px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+}
+
 .image-upload {
   display: grid;
   gap: 10px;

@@ -1383,10 +1383,13 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
     const deliveryDateChanged =
       existingOrder.currentEstimatedDeliveryDate !== newDate ||
       existingOrder.currentEstimatedDeliveryDateEnd !== newDateEnd;
+    // Emails go out only when the admin explicitly chooses to notify — and that
+    // choice is honoured even if the status/dates are unchanged.
+    const queueCustomerEmail = data.customerEmailDecision === "send";
 
-    if (!statusChanged && !deliveryDateChanged) {
+    if (!statusChanged && !deliveryDateChanged && !queueCustomerEmail) {
       throw new ValidationError("Nothing to update.", {
-        newStatus: ["Change the status or the estimated delivery dates."]
+        newStatus: ["Change the status, the delivery dates, or choose to send an email."]
       });
     }
 
@@ -1441,50 +1444,72 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       if (!historyEntry) {
         throw new ConflictError("Status history could not be recorded.");
       }
+    }
 
+    // Send the customer + seller notification whenever the admin chose to — this is
+    // independent of whether the status actually changed, so they can (re)send for the
+    // current status too.
+    if (queueCustomerEmail) {
       const customerLocale = normalizeLocale(existingOrder.preferredLanguage);
-      // Emails go out only when the admin explicitly chooses to notify.
-      const queueCustomerEmail = data.customerEmailDecision === "send";
+      const recipientName = formatCustomerName(
+        existingOrder.customerFirstName,
+        existingOrder.customerLastName
+      );
+      const emailKey = `status/${data.orderId}/${updatedOrder.version}`;
+      // Prefer the editable template mapped to this status; fall back to the built-in
+      // status email if that template is missing.
+      const mappedKey = STATUS_TEMPLATE_KEYS[data.newStatus];
+      const [mappedTemplate] = mappedKey
+        ? await tx
+            .select({
+              key: emailTemplates.key,
+              subjectDe: emailTemplates.subjectDe,
+              bodyDe: emailTemplates.bodyDe,
+              subjectEn: emailTemplates.subjectEn,
+              bodyEn: emailTemplates.bodyEn
+            })
+            .from(emailTemplates)
+            .where(eq(emailTemplates.key, mappedKey))
+            .limit(1)
+        : [];
 
-      if (queueCustomerEmail) {
-        const recipientName = formatCustomerName(
-          existingOrder.customerFirstName,
-          existingOrder.customerLastName
-        );
-        // Prefer the editable template mapped to this status; fall back to the
-        // built-in status email if that template is missing.
-        const mappedKey = STATUS_TEMPLATE_KEYS[data.newStatus];
-        const [mappedTemplate] = mappedKey
-          ? await tx
-              .select({
-                key: emailTemplates.key,
-                subjectDe: emailTemplates.subjectDe,
-                bodyDe: emailTemplates.bodyDe,
-                subjectEn: emailTemplates.subjectEn,
-                bodyEn: emailTemplates.bodyEn
-              })
-              .from(emailTemplates)
-              .where(eq(emailTemplates.key, mappedKey))
-              .limit(1)
-          : [];
+      if (mappedTemplate) {
+        const content = renderTemplateContent(mappedTemplate, customerLocale, {
+          customerName: recipientName,
+          orderNumber: existingOrder.orderNumber,
+          trackingNumber: formatTrackingNumber(existingOrder.trackingNumber),
+          deliveryDate: formatDeliveryRangeForLocale(newDate, newDateEnd, customerLocale)
+        });
 
-        if (mappedTemplate) {
-          const content = renderTemplateContent(mappedTemplate, customerLocale, {
-            customerName: recipientName,
-            orderNumber: existingOrder.orderNumber,
-            trackingNumber: formatTrackingNumber(existingOrder.trackingNumber),
-            deliveryDate: formatDeliveryRangeForLocale(newDate, newDateEnd, customerLocale)
-          });
+        await tx.insert(emailOutbox).values({
+          category: "TRANSACTIONAL",
+          customerId: existingOrder.customerId,
+          emailType: "ADMIN_TEMPLATE",
+          idempotencyKey: `${emailKey}/customer`,
+          locale: customerLocale,
+          orderId: data.orderId,
+          queuedBy: actor.id,
+          recipientEmail: existingOrder.customerEmail,
+          recipientName,
+          subject: content.subject,
+          templateKey: mappedTemplate.key,
+          templateVariables: {
+            customBody: content.body,
+            customSubject: content.subject
+          }
+        });
 
+        // Notify the assigned seller with a copy of the same update.
+        if (existingOrder.assignedSalespersonEmail) {
           await tx.insert(emailOutbox).values({
-            category: "TRANSACTIONAL",
+            category: "INTERNAL",
             customerId: existingOrder.customerId,
             emailType: "ADMIN_TEMPLATE",
-            idempotencyKey: `status/${historyEntry.id}/customer`,
+            idempotencyKey: `${emailKey}/seller`,
             locale: customerLocale,
             orderId: data.orderId,
             queuedBy: actor.id,
-            recipientEmail: existingOrder.customerEmail,
+            recipientEmail: existingOrder.assignedSalespersonEmail,
             recipientName,
             subject: content.subject,
             templateKey: mappedTemplate.key,
@@ -1493,49 +1518,28 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
               customSubject: content.subject
             }
           });
-
-          // Notify the assigned seller with a copy of the same update.
-          if (existingOrder.assignedSalespersonEmail) {
-            await tx.insert(emailOutbox).values({
-              category: "INTERNAL",
-              customerId: existingOrder.customerId,
-              emailType: "ADMIN_TEMPLATE",
-              idempotencyKey: `status/${historyEntry.id}/seller`,
-              locale: customerLocale,
-              orderId: data.orderId,
-              queuedBy: actor.id,
-              recipientEmail: existingOrder.assignedSalespersonEmail,
-              recipientName,
-              subject: content.subject,
-              templateKey: mappedTemplate.key,
-              templateVariables: {
-                customBody: content.body,
-                customSubject: content.subject
-              }
-            });
-          }
-        } else {
-          await tx.insert(emailOutbox).values({
-            category: "TRANSACTIONAL",
-            customerId: existingOrder.customerId,
-            emailType: getStatusEmailType(data.newStatus),
-            idempotencyKey: `status/${historyEntry.id}/customer`,
-            locale: customerLocale,
-            orderId: data.orderId,
-            queuedBy: actor.id,
-            recipientEmail: existingOrder.customerEmail,
-            recipientName,
-            subject: buildStatusSubject(data.newStatus, customerLocale),
-            templateKey: getStatusTemplateKey(data.newStatus),
-            templateVariables: {
-              currentEstimatedDeliveryDate: newDate,
-              newStatus: data.newStatus,
-              orderId: data.orderId,
-              orderNumber: existingOrder.orderNumber,
-              trackingNumber: existingOrder.trackingNumber
-            }
-          });
         }
+      } else {
+        await tx.insert(emailOutbox).values({
+          category: "TRANSACTIONAL",
+          customerId: existingOrder.customerId,
+          emailType: getStatusEmailType(data.newStatus),
+          idempotencyKey: `${emailKey}/customer`,
+          locale: customerLocale,
+          orderId: data.orderId,
+          queuedBy: actor.id,
+          recipientEmail: existingOrder.customerEmail,
+          recipientName,
+          subject: buildStatusSubject(data.newStatus, customerLocale),
+          templateKey: getStatusTemplateKey(data.newStatus),
+          templateVariables: {
+            currentEstimatedDeliveryDate: newDate,
+            newStatus: data.newStatus,
+            orderId: data.orderId,
+            orderNumber: existingOrder.orderNumber,
+            trackingNumber: existingOrder.trackingNumber
+          }
+        });
       }
     }
 
