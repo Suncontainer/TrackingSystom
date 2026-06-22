@@ -2,20 +2,23 @@ import type { NextConfig } from "next";
 
 function buildCsp() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseOrigin = supabaseUrl ? new URL(supabaseUrl).origin : null;
   const sentryDsn = process.env.SENTRY_DSN;
   const connectSources = [
     "'self'",
-    supabaseUrl ? new URL(supabaseUrl).origin : null,
+    supabaseOrigin,
     sentryDsn ? new URL(sentryDsn).origin : null,
     process.env.UPSTASH_REDIS_REST_URL ? new URL(process.env.UPSTASH_REDIS_REST_URL).origin : null
   ].filter(Boolean);
+  // Product images are served from Supabase Storage, so that origin must be allowed.
+  const imageSources = ["'self'", "data:", "blob:", supabaseOrigin].filter(Boolean);
   const directives = [
     "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",
     "form-action 'self'",
-    "img-src 'self' data: blob:",
+    `img-src ${imageSources.join(" ")}`,
     "font-src 'self' data:",
     "style-src 'self' 'unsafe-inline'",
     `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://challenges.cloudflare.com`,

@@ -22,7 +22,7 @@ export const de = {
     estimateNotice: "Lieferdaten sind aktuelle Schätzungen und können sich im weiteren Verlauf ändern.",
     estimatedDelivery: "Voraussichtliche Lieferung",
     eyebrow: "Sendungsstatus",
-    greeting: "Hallo {name}, Ihr Auftrag ist auf dem Weg.",
+    greeting: "Hallo {name}, hier ist der aktuelle Status Ihres Auftrags.",
     lastUpdated: "Zuletzt aktualisiert",
     orderNumber: "Auftragsnummer",
     product: "Produkt",

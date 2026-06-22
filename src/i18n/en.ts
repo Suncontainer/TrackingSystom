@@ -22,7 +22,7 @@ export const en = {
     estimateNotice: "Delivery dates are current estimates and may change as the order progresses.",
     estimatedDelivery: "Estimated delivery",
     eyebrow: "Tracking status",
-    greeting: "Hello {name}, your order is on its way.",
+    greeting: "Hello {name}, here is the current status of your order.",
     lastUpdated: "Last updated",
     orderNumber: "Order number",
     product: "Product",
