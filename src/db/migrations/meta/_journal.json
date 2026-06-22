@@ -50,6 +50,13 @@
       "when": 1782088123540,
       "tag": "0006_peaceful_orphan",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782090000000,
+      "tag": "0007_trim_templates",
+      "breakpoints": true
     }
   ]
 }

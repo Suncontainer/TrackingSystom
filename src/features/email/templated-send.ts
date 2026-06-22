@@ -36,7 +36,7 @@ function interpolate(template: string, vars: Record<string, string>) {
 // Maps each order status to the template key sent automatically on a status change.
 export const STATUS_TEMPLATE_KEYS: Record<string, string> = {
   ORDER_CONFIRMED: "order-confirmation",
-  PROCUREMENT: "general-update",
+  PROCUREMENT: "procurement",
   IN_PRODUCTION: "in-production",
   IN_TRANSIT: "on-the-way",
   DELIVERED: "delivered"
