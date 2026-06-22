@@ -3,11 +3,8 @@
 import { Trash2 } from "lucide-react";
 import { useActionState } from "react";
 
-import {
-  deleteOrderImageAction,
-  initialImageActionState,
-  uploadOrderImagesAction
-} from "@/features/orders/image-actions";
+import { deleteOrderImageAction, uploadOrderImagesAction } from "@/features/orders/image-actions";
+import { initialImageActionState } from "@/features/orders/image-form-state";
 
 export type OrderImagesDict = {
   heading: string;
@@ -36,7 +33,7 @@ export function OrderImagesSection({ orderId, images, dict }: OrderImagesSection
   const [deleteState, deleteAction] = useActionState(deleteOrderImageAction, initialImageActionState);
 
   return (
-    <section className="admin-card admin-section">
+    <div className="status-images">
       <div className="section-heading">
         <h2 className="font-heading">{dict.heading}</h2>
         <p>{dict.intro}</p>
@@ -91,6 +88,6 @@ export function OrderImagesSection({ orderId, images, dict }: OrderImagesSection
       ) : (
         <p className="panel-empty">{dict.empty}</p>
       )}
-    </section>
+    </div>
   );
 }

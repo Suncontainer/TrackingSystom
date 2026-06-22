@@ -4,17 +4,8 @@ import { requireOrderAccess } from "@/features/auth/guards";
 import { assertCan } from "@/features/auth/permissions";
 import { AppError, ValidationError } from "@/lib/errors/app-error";
 
+import { type ImageActionState } from "./image-form-state";
 import { addOrderImages, deleteOrderImage } from "./images";
-
-export type ImageActionState = {
-  formError: string | null;
-  ok: boolean;
-};
-
-export const initialImageActionState: ImageActionState = {
-  formError: null,
-  ok: false
-};
 
 function errorState(error: unknown): ImageActionState {
   if (error instanceof ValidationError || error instanceof AppError) {

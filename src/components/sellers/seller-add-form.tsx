@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 
-import { createSellerAction, initialSellerFormState } from "@/features/sellers/actions";
+import { createSellerAction } from "@/features/sellers/actions";
+import { initialSellerFormState } from "@/features/sellers/form-state";
 import type { SellersDict } from "@/i18n/admin";
 
 type SellerAddFormProps = {

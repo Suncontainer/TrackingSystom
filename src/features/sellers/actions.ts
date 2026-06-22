@@ -7,18 +7,8 @@ import { routes } from "@/config/routes";
 import { requirePermission } from "@/features/auth/guards";
 import { AppError, ValidationError } from "@/lib/errors/app-error";
 
+import { type SellerFormState } from "./form-state";
 import { createSeller, deleteSeller } from "./service";
-
-export type SellerFormState = {
-  fieldErrors: Record<string, string[]>;
-  formError: string | null;
-  values?: Record<string, string>;
-};
-
-export const initialSellerFormState: SellerFormState = {
-  fieldErrors: {},
-  formError: null
-};
 
 function errorState(error: unknown, values?: Record<string, string>): SellerFormState {
   const submitted = values ? { values } : {};

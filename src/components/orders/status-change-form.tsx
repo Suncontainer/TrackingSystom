@@ -103,31 +103,17 @@ export function StatusChangeForm({
       </div>
 
       {canOverride ? (
-        <>
-          <div className="form-field">
-            <label htmlFor="status-reason">{dict.overrideReason}</label>
-            <textarea id="status-reason" name="reason" rows={3} />
-            {getFieldError(state.fieldErrors, "reason") ? (
-              <p className="field-error">{getFieldError(state.fieldErrors, "reason")}</p>
-            ) : null}
-          </div>
-          <div className="form-segmented">
-            <label>
-              <input name="customerEmailDecision" type="radio" value="send" />
-              <span>{dict.sendCustomerEmail}</span>
-            </label>
-            <label>
-              <input name="customerEmailDecision" type="radio" value="skip" />
-              <span>{dict.skipCustomerEmail}</span>
-            </label>
-          </div>
-        </>
+        <div className="form-segmented">
+          <label>
+            <input name="customerEmailDecision" type="radio" value="send" />
+            <span>{dict.sendCustomerEmail}</span>
+          </label>
+          <label>
+            <input name="customerEmailDecision" type="radio" value="skip" />
+            <span>{dict.skipCustomerEmail}</span>
+          </label>
+        </div>
       ) : null}
-
-      <div className="preview-strip">
-        <span>{dict.current}: {orderStatusContent[currentStatus][locale].label}</span>
-        <span>{dict.eta}: {currentEstimatedDeliveryDate}</span>
-      </div>
 
       <button className="button-base button-primary" disabled={pending || selectableStatuses.length === 0} type="submit">
         {pending ? dict.changing : dict.submit}

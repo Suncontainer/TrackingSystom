@@ -33,6 +33,33 @@ function interpolate(template: string, vars: Record<string, string>) {
   return template.replace(/\{(\w+)\}/g, (match, key: string) => vars[key] ?? match);
 }
 
+// Maps each order status to the template key sent automatically on a status change.
+export const STATUS_TEMPLATE_KEYS: Record<string, string> = {
+  ORDER_CONFIRMED: "order-confirmation",
+  PROCUREMENT: "general-update",
+  IN_PRODUCTION: "in-production",
+  IN_TRANSIT: "on-the-way",
+  DELIVERED: "delivered"
+};
+
+type TemplateContentInput = {
+  subjectDe: string;
+  bodyDe: string;
+  subjectEn: string;
+  bodyEn: string;
+};
+
+export function renderTemplateContent(
+  template: TemplateContentInput,
+  locale: AppLocale,
+  vars: Record<string, string>
+) {
+  return {
+    subject: interpolate(locale === "de" ? template.subjectDe : template.subjectEn, vars),
+    body: interpolate(locale === "de" ? template.bodyDe : template.bodyEn, vars)
+  };
+}
+
 // Active orders for the Emails-page send composer (where there is no order context).
 export async function listSelectableOrders() {
   if (isDemoMode()) {

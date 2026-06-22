@@ -9,17 +9,8 @@ import { assertCan } from "@/features/auth/permissions";
 import { queueTemplatedCustomerEmail } from "@/features/email/templated-send";
 import { AppError, ValidationError } from "@/lib/errors/app-error";
 
+import { type TemplateFormState } from "./form-state";
 import { updateEmailTemplate } from "./service";
-
-export type TemplateFormState = {
-  fieldErrors: Record<string, string[]>;
-  formError: string | null;
-};
-
-export const initialTemplateFormState: TemplateFormState = {
-  fieldErrors: {},
-  formError: null
-};
 
 function errorState(error: unknown): TemplateFormState {
   if (error instanceof ValidationError) {

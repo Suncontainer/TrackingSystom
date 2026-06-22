@@ -3,7 +3,8 @@
 import { Trash2 } from "lucide-react";
 import { useActionState } from "react";
 
-import { deleteSellerAction, initialSellerFormState } from "@/features/sellers/actions";
+import { deleteSellerAction } from "@/features/sellers/actions";
+import { initialSellerFormState } from "@/features/sellers/form-state";
 
 type SellerDeleteButtonProps = {
   sellerId: string;

@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 
-import { initialTemplateFormState, updateTemplateAction } from "@/features/templates/actions";
+import { updateTemplateAction } from "@/features/templates/actions";
+import { initialTemplateFormState } from "@/features/templates/form-state";
 import type { TemplatesDict } from "@/i18n/admin";
 
 type TemplateEditFormProps = {

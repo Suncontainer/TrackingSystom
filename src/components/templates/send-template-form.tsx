@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 
-import { initialTemplateFormState, sendTemplatedEmailAction } from "@/features/templates/actions";
+import { sendTemplatedEmailAction } from "@/features/templates/actions";
+import { initialTemplateFormState } from "@/features/templates/form-state";
 import type { TemplatesDict } from "@/i18n/admin";
 
 type TemplateOption = { id: string; name: string };

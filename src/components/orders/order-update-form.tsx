@@ -70,17 +70,6 @@ export function OrderUpdateForm({ order, sellers, fields, saving, saveChanges }:
           ) : null}
         </div>
         <div className="form-field">
-          <label htmlFor="edit-customer-phone">{fields.phone}</label>
-          <input defaultValue={order.customerPhone ?? ""} id="edit-customer-phone" name="customerPhone" type="text" />
-        </div>
-        <div className="form-field">
-          <label htmlFor="edit-preferred-language">{fields.language}</label>
-          <select defaultValue={order.preferredLanguage} id="edit-preferred-language" name="preferredLanguage">
-            <option value="de">Deutsch</option>
-            <option value="en">English</option>
-          </select>
-        </div>
-        <div className="form-field">
           <label htmlFor="edit-assigned-seller-email">{fields.seller}</label>
           <select
             defaultValue={order.assignedSalespersonEmail ?? ""}
@@ -95,28 +84,12 @@ export function OrderUpdateForm({ order, sellers, fields, saving, saveChanges }:
             ))}
           </select>
         </div>
-        <div className="form-field">
-          <label htmlFor="edit-assigned-salesperson-email">{fields.fallbackSalesEmail}</label>
-          <input
-            defaultValue={order.assignedSalespersonEmail ?? ""}
-            id="edit-assigned-salesperson-email"
-            name="assignedSalespersonEmail"
-            type="email"
-          />
-          {getFieldError(state.fieldErrors, "assignedSalespersonEmail") ? (
-            <p className="field-error">{getFieldError(state.fieldErrors, "assignedSalespersonEmail")}</p>
-          ) : null}
-        </div>
       </div>
-      <div className="form-field">
-        <label htmlFor="edit-product-description">{fields.productDescription}</label>
-        <textarea
-          defaultValue={order.productDescription ?? ""}
-          id="edit-product-description"
-          name="productDescription"
-          rows={4}
-        />
-      </div>
+      {/* Preserve fields that are no longer shown so edits don't clear them. */}
+      <input name="customerPhone" type="hidden" value={order.customerPhone ?? ""} />
+      <input name="preferredLanguage" type="hidden" value={order.preferredLanguage} />
+      <input name="productDescription" type="hidden" value={order.productDescription ?? ""} />
+      <input name="assignedSalespersonEmail" type="hidden" value={order.assignedSalespersonEmail ?? ""} />
       <button className="button-base button-primary" disabled={pending} type="submit">
         {pending ? saving : saveChanges}
       </button>

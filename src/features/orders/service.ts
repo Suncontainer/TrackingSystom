@@ -12,6 +12,7 @@ import {
   customers,
   deliveryDateHistory,
   emailOutbox,
+  emailTemplates,
   internalNotes,
   orderStatusHistory,
   orders,
@@ -44,6 +45,7 @@ import {
   updateDemoOrderDetails
 } from "@/features/demo/store";
 import { triggerImmediateEmailDispatch } from "@/features/email/outbox";
+import { renderTemplateContent, STATUS_TEMPLATE_KEYS } from "@/features/email/templated-send";
 import { getAppSettings } from "@/features/settings/service";
 
 import {
@@ -457,6 +459,16 @@ function buildDeliveryDateSubject(locale: AppLocale) {
   return locale === "de"
     ? "Aktualisierte Lieferzeit - Sun Container"
     : "Updated delivery date - Sun Container";
+}
+
+function formatDeliveryRangeForLocale(start: string, end: string | null, locale: AppLocale) {
+  const formatter = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", { dateStyle: "medium" });
+
+  if (!end || start === end) {
+    return formatter.format(new Date(start));
+  }
+
+  return formatter.formatRange(new Date(start), new Date(end));
 }
 
 function getStatusTemplateKey(status: DbOrderStatus) {
@@ -1465,12 +1477,6 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       });
     }
 
-    if (statusChanged && isOverride && !normalizeOptionalString(data.reason)) {
-      throw new ValidationError("Override reason is required.", {
-        reason: ["Explain why this status override is necessary."]
-      });
-    }
-
     if (statusChanged && isOverride && !data.customerEmailDecision) {
       throw new ValidationError("Customer email decision is required for overrides.", {
         customerEmailDecision: ["Choose whether to queue a customer email."]
@@ -1549,26 +1555,76 @@ export async function changeOrderStatus(input: unknown, actor: Pick<Profile, "id
       });
 
       if (queueCustomerEmail) {
-        await tx.insert(emailOutbox).values({
-          category: "TRANSACTIONAL",
-          customerId: existingOrder.customerId,
-          emailType: getStatusEmailType(data.newStatus),
-          idempotencyKey: `status/${historyEntry.id}/customer`,
-          locale: customerLocale,
-          orderId: data.orderId,
-          queuedBy: actor.id,
-          recipientEmail: existingOrder.customerEmail,
-          recipientName: formatCustomerName(existingOrder.customerFirstName, existingOrder.customerLastName),
-          subject: buildStatusSubject(data.newStatus, customerLocale),
-          templateKey: getStatusTemplateKey(data.newStatus),
-          templateVariables: {
-            currentEstimatedDeliveryDate: newDate,
-            newStatus: data.newStatus,
-            orderId: data.orderId,
+        const recipientName = formatCustomerName(
+          existingOrder.customerFirstName,
+          existingOrder.customerLastName
+        );
+        // Prefer the editable template mapped to this status; fall back to the
+        // built-in status email if that template is missing.
+        const mappedKey = STATUS_TEMPLATE_KEYS[data.newStatus];
+        const [mappedTemplate] = mappedKey
+          ? await tx
+              .select({
+                key: emailTemplates.key,
+                subjectDe: emailTemplates.subjectDe,
+                bodyDe: emailTemplates.bodyDe,
+                subjectEn: emailTemplates.subjectEn,
+                bodyEn: emailTemplates.bodyEn
+              })
+              .from(emailTemplates)
+              .where(eq(emailTemplates.key, mappedKey))
+              .limit(1)
+          : [];
+
+        if (mappedTemplate) {
+          const content = renderTemplateContent(mappedTemplate, customerLocale, {
+            customerName: recipientName,
             orderNumber: existingOrder.orderNumber,
-            trackingNumber: existingOrder.trackingNumber
-          }
-        });
+            trackingNumber: formatTrackingNumber(existingOrder.trackingNumber),
+            deliveryDate: formatDeliveryRangeForLocale(newDate, newDateEnd, customerLocale)
+          });
+
+          await tx.insert(emailOutbox).values({
+            category: "TRANSACTIONAL",
+            customerId: existingOrder.customerId,
+            emailType: "ADMIN_TEMPLATE",
+            idempotencyKey: `status/${historyEntry.id}/customer`,
+            locale: customerLocale,
+            orderId: data.orderId,
+            queuedBy: actor.id,
+            recipientEmail: existingOrder.customerEmail,
+            recipientName,
+            subject: content.subject,
+            templateKey: mappedTemplate.key,
+            templateVariables: {
+              customBody: content.body,
+              customSubject: content.subject,
+              orderNumber: existingOrder.orderNumber,
+              trackingNumber: formatTrackingNumber(existingOrder.trackingNumber)
+            }
+          });
+        } else {
+          await tx.insert(emailOutbox).values({
+            category: "TRANSACTIONAL",
+            customerId: existingOrder.customerId,
+            emailType: getStatusEmailType(data.newStatus),
+            idempotencyKey: `status/${historyEntry.id}/customer`,
+            locale: customerLocale,
+            orderId: data.orderId,
+            queuedBy: actor.id,
+            recipientEmail: existingOrder.customerEmail,
+            recipientName,
+            subject: buildStatusSubject(data.newStatus, customerLocale),
+            templateKey: getStatusTemplateKey(data.newStatus),
+            templateVariables: {
+              currentEstimatedDeliveryDate: newDate,
+              newStatus: data.newStatus,
+              orderId: data.orderId,
+              orderNumber: existingOrder.orderNumber,
+              trackingNumber: existingOrder.trackingNumber
+            }
+          });
+        }
       }
     }
 
